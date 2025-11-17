@@ -1,0 +1,59 @@
+name: webmobile1
+services:
+  db:
+    image: mysql:8.0.39
+    container_name: ssafy_db
+    restart: always
+    ports:
+      - "32000:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      TZ: "Asia/Seoul"
+    privileged: true
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d
+    networks:
+      - backend
+  coturn:
+    image: instrumentisto/coturn:4.5.2
+    container_name: ssafy_turn
+    restart: always
+    ports:
+      - "${TURN_PORT:-3478}:3478"
+      - "${TURN_PORT:-3478}:3478/udp"
+    environment:
+      TZ: "Asia/Seoul"
+    command:
+      - --log-file=stdout
+      - --realm=${TURN_REALM:-ssafy.com}
+      - --server-name=${TURN_REALM:-ssafy.com}
+      - --fingerprint
+      - --lt-cred-mech
+      - --no-tls
+      - --no-dtls
+      - --user=${TURN_USER:-myuser}:${TURN_PASSWORD:-mypassword}
+      - --external-ip=${TURN_PUBLIC_IP:-127.0.0.1} # 로컬 테스트용 기본값; 다른 기기에서 접속하려면 접근 가능한 IP로 변경
+      - --listening-port=3478
+      - --min-port=49160
+      - --max-port=49200
+    networks:
+      - backend
+  kurento:
+    image: kurento/kurento-media-server:6.18.0
+    restart: always
+    ports:
+      - "8888:8888"
+    environment:
+      TZ: "Asia/Seoul"
+      KMS_STUN_IP: "ssafy_turn"
+      KMS_STUN_PORT: "${TURN_PORT:-3478}"
+      KMS_TURN_URL: "${TURN_USER:-myuser}:${TURN_PASSWORD:-mypassword}@ssafy_turn:${TURN_PORT:-3478}?transport=udp"
+    container_name: ssafy_kurento
+    depends_on:
+      - coturn
+    networks:
+      - backend
+
+networks:
+  backend:
+
