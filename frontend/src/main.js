@@ -1,210 +1,29 @@
-
 // 기본 플러그인 Import
 import { createApp, h } from 'vue'
+import ElementPlus from 'element-plus'
 import store from './store'
-import ElementPlus from './common/lib/element-plus'
 import App from './App.vue'
-import VueAxios from './common/lib/axios'
-import axios from './common/lib/axios'
+import { VueAxios, axios } from './common/lib/axios'
 import router from './common/lib/vue-router'
 
-import 'element-plus/theme-chalk/src/base.scss'
+import 'element-plus/dist/index.css'
 
-// Element UI Components [시작]
-import {
-  ElAlert,
-  ElAside,
-  ElAutocomplete,
-  ElAvatar,
-  ElBacktop,
-  ElBadge,
-  ElBreadcrumb,
-  ElBreadcrumbItem,
-  ElButton,
-  ElButtonGroup,
-  ElCalendar,
-  ElCard,
-  ElCarousel,
-  ElCarouselItem,
-  ElCascader,
-  ElCascaderPanel,
-  ElCheckbox,
-  ElCheckboxButton,
-  ElCheckboxGroup,
-  ElCol,
-  ElCollapse,
-  ElCollapseItem,
-  ElCollapseTransition,
-  ElColorPicker,
-  ElContainer,
-  ElDatePicker,
-  ElDialog,
-  ElDivider,
-  ElDrawer,
-  ElDropdown,
-  ElDropdownItem,
-  ElDropdownMenu,
-  ElFooter,
-  ElForm,
-  ElFormItem,
-  ElHeader,
-  ElIcon,
-  ElImage,
-  ElInput,
-  ElInputNumber,
-  ElLink,
-  ElMain,
-  ElMenu,
-  ElMenuItem,
-  ElMenuItemGroup,
-  ElOption,
-  ElOptionGroup,
-  ElPageHeader,
-  ElPagination,
-  ElPopconfirm,
-  ElPopover,
-  ElPopper,
-  ElProgress,
-  ElRadio,
-  ElRadioButton,
-  ElRadioGroup,
-  ElRate,
-  ElRow,
-  ElScrollbar,
-  ElSelect,
-  ElSkeleton,
-  ElSkeletonItem,
-  ElSlider,
-  ElStep,
-  ElSteps,
-  ElSubMenu,
-  ElSwitch,
-  ElTabPane,
-  ElTable,
-  ElTableColumn,
-  ElTabs,
-  ElTag,
-  ElTimePicker,
-  ElTimeSelect,
-  ElTimeline,
-  ElTimelineItem,
-  ElTooltip,
-  ElTransfer,
-  ElTree,
-  ElUpload,
-  ElInfiniteScroll,
-  ElLoading,
-  ElMessage,
-  ElMessageBox,
-  ElNotification,
-} from 'element-plus';
-
-const components = [
-  ElAlert,
-  ElAside,
-  ElAutocomplete,
-  ElAvatar,
-  ElBacktop,
-  ElBadge,
-  ElBreadcrumb,
-  ElBreadcrumbItem,
-  ElButton,
-  ElButtonGroup,
-  ElCalendar,
-  ElCard,
-  ElCarousel,
-  ElCarouselItem,
-  ElCascader,
-  ElCascaderPanel,
-  ElCheckbox,
-  ElCheckboxButton,
-  ElCheckboxGroup,
-  ElCol,
-  ElCollapse,
-  ElCollapseItem,
-  ElCollapseTransition,
-  ElColorPicker,
-  ElContainer,
-  ElDatePicker,
-  ElDialog,
-  ElDivider,
-  ElDrawer,
-  ElDropdown,
-  ElDropdownItem,
-  ElDropdownMenu,
-  ElFooter,
-  ElForm,
-  ElFormItem,
-  ElHeader,
-  ElIcon,
-  ElImage,
-  ElInput,
-  ElInputNumber,
-  ElLink,
-  ElMain,
-  ElMenu,
-  ElMenuItem,
-  ElMenuItemGroup,
-  ElOption,
-  ElOptionGroup,
-  ElPageHeader,
-  ElPagination,
-  ElPopconfirm,
-  ElPopover,
-  ElPopper,
-  ElProgress,
-  ElRadio,
-  ElRadioButton,
-  ElRadioGroup,
-  ElRate,
-  ElRow,
-  ElScrollbar,
-  ElSelect,
-  ElSkeleton,
-  ElSkeletonItem,
-  ElSlider,
-  ElStep,
-  ElSteps,
-  ElSubMenu,
-  ElSwitch,
-  ElTabPane,
-  ElTable,
-  ElTableColumn,
-  ElTabs,
-  ElTag,
-  ElTimePicker,
-  ElTimeSelect,
-  ElTimeline,
-  ElTimelineItem,
-  ElTooltip,
-  ElTransfer,
-  ElTree,
-  ElUpload,
-]
-
-const plugins = [
-  ElInfiniteScroll,
-  ElLoading,
-  ElMessage,
-  ElMessageBox,
-  ElNotification,
-]
-// Element UI Components [끝]
+// 앱 시작 시 localStorage에서 accessToken을 가져와서 axios 헤더에 설정
+const accessToken = localStorage.getItem('accessToken')
+if (accessToken) {
+  axios.defaults.headers.Authorization = 'Bearer ' + accessToken
+}
 
 const app = createApp({
   render: ()=>h(App)
 })
-app.use(ElementPlus)
 app.use(VueAxios, axios)
 app.use(store)
 app.use(router)
-
-components.forEach(component => {
-  app.component(component.name, component)
-})
-
-plugins.forEach(plugin => {
-  app.use(plugin)
+// ElementPlus를 app.use()로 등록하면 모든 컴포넌트와 플러그인이 자동으로 등록됩니다.
+// 별도로 플러그인을 등록할 필요가 없습니다.
+app.use(ElementPlus, {
+  // options
 })
 
 app.mount('#app')

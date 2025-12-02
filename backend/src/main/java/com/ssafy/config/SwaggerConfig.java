@@ -13,29 +13,28 @@ import springfox.documentation.spi.service.contexts.SecurityContext;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger.web.UiConfiguration;
 import springfox.documentation.swagger.web.UiConfigurationBuilder;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
+import springfox.documentation.swagger2.annotations.EnableSwagger2WebMvc;
 
+import java.util.Collections;
 import java.util.List;
-
-import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * API 문서 관련 swagger2 설정 정의.
  */
 @Configuration
-@EnableSwagger2
+@EnableSwagger2WebMvc
 public class SwaggerConfig {
 
     @Bean
     public Docket api() {
-        return new Docket(DocumentationType.SWAGGER_2).useDefaultResponseMessages(false)
+        return new Docket(DocumentationType.SWAGGER_2)
+                .useDefaultResponseMessages(false)
                 .select()
-                .apis(RequestHandlerSelectors.any())
-                .paths(PathSelectors.ant("/api/**"))
+                .apis(RequestHandlerSelectors.basePackage("com.ssafy.api.controller"))
+                .paths(PathSelectors.any())
                 .build()
-                .securityContexts(newArrayList(securityContext()))
-                .securitySchemes(newArrayList(apiKey()))
-                ;
+                .securityContexts(Collections.singletonList(securityContext()))
+                .securitySchemes(Collections.singletonList(apiKey()));
     }
 
     private ApiKey apiKey() {
@@ -56,7 +55,7 @@ public class SwaggerConfig {
         AuthorizationScope authorizationScope = new AuthorizationScope(AUTHORIZATION_SCOPE_GLOBAL, AUTHORIZATION_SCOPE_GLOBAL_DESC);
         AuthorizationScope[] authorizationScopes = new AuthorizationScope[1];
         authorizationScopes[0] = authorizationScope;
-        return newArrayList(new SecurityReference(SECURITY_SCHEMA_NAME, authorizationScopes));
+        return Collections.singletonList(new SecurityReference(SECURITY_SCHEMA_NAME, authorizationScopes));
     }
 
     @Bean

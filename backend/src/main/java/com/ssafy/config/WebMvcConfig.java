@@ -39,8 +39,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
     		registry.addResourceHandler("swagger-ui.html")
     				.addResourceLocations("classpath:/META-INF/resources/");
 
-    		registry.addResourceHandler("/webjars/**")
-    				.addResourceLocations("classpath:/META-INF/resources/webjars/");
+        registry.addResourceHandler("/webjars/**")
+    				.addResourceLocations("/webjars/").resourceChain(false);
     		
     		/*
     		 * 
@@ -57,6 +57,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
 			.addResourceLocations("classpath:/dist/img/");
         registry.addResourceHandler("/js/**")
 				.addResourceLocations("classpath:/dist/js/");
+        registry.addResourceHandler("/assets/**")
+				.addResourceLocations("classpath:/dist/assets/")
+				.setCachePeriod(0);
+        registry.addResourceHandler("/favicon.ico")
+				.addResourceLocations("classpath:/dist/");
+        // index.html 직접 제공
+        registry.addResourceHandler("/index.html")
+				.addResourceLocations("classpath:/dist/");
     }
 
     public Filter requestLoggingFilter() {
