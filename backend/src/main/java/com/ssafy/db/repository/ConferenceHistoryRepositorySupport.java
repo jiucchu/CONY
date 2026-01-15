@@ -1,0 +1,19 @@
+package com.ssafy.db.repository;
+
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.ssafy.db.entity.QConferenceHistory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class ConferenceHistoryRepositorySupport {
+    @Autowired private JPAQueryFactory jpaQueryFactory;
+
+    QConferenceHistory qConferenceHistory = QConferenceHistory.conferenceHistory;
+
+    public Long deleteByUserId(String userId) {
+        return jpaQueryFactory.delete(qConferenceHistory)
+                .where(qConferenceHistory.user.userId.eq(userId))
+                .execute();
+    }
+}

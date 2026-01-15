@@ -24,4 +24,10 @@ public class UserRepositorySupport {
         if(user == null) return Optional.empty();
         return Optional.ofNullable(user);
     }
+
+    public Long deleteByUserId(String userId) {
+        return jpaQueryFactory.delete(qUser)
+                .where(qUser.userId.eq(userId))
+                .execute();
+    }
 }

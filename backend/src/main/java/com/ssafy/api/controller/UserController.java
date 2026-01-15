@@ -1,14 +1,11 @@
 package com.ssafy.api.controller;
 
+import com.ssafy.api.request.UserUpdateInfoPatchReq;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.ssafy.api.request.UserLoginPostReq;
 import com.ssafy.api.request.UserRegisterPostReq;
@@ -75,4 +72,90 @@ public class UserController {
 		
 		return ResponseEntity.status(200).body(UserRes.of(user));
 	}
+
+	@GetMapping("/{userId}")
+	@ApiOperation(value = "아이디 중복 확인", notes = "아이디 중복 여부를 확인한다.")
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "사용 가능"),
+			@ApiResponse(code = 409, message = "이미 존재하는 사용자 ID"),
+			@ApiResponse(code = 500, message = "서버 오류")
+	})
+	public ResponseEntity<String> duplicateCheck(@PathVariable("userId") String userId) {
+		User user = userService.getUserByUserId(userId);
+		if(user != null) {
+			return ResponseEntity.status(409).body("이미 존재하는 사용자 ID 입니다");
+		}
+
+		return ResponseEntity.ok().body("");
+	}
+
+
+	@PatchMapping("/{userId}")
+	@ApiOperation(value = "회원 정보 수정", notes = "회원 정보를 수정한다.")
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "성공"),
+			@ApiResponse(code = 403, message = "인증 실패"),
+			@ApiResponse(code = 500, message = "서버 오류")
+	})
+	public ResponseEntity<String> updateUserInfo(@PathVariable("userId") String userId
+												, @ApiParam(value="회원 정보 수정", required = true) @RequestBody UserUpdateInfoPatchReq updateInfo
+												, @ApiIgnore Authentication authentication) {
+
+		SsafyUserDetails userDetails = (SsafyUserDetails) authentication.getDetails();
+		if(!userId.equals(userDetails.getUsername())) {
+			return ResponseEntity.status(403).body("권한 없음");
+		}
+
+		userService.updateUser(userId, updateInfo);
+		return ResponseEntity.ok().body("SUCCESS");
+	}
+
+	@DeleteMapping("/{userId}")
+	public ResponseEntity<String> withdraw(@PathVariable("userId") String userId
+											, @ApiIgnore Authentication authentication) {
+		SsafyUserDetails userDetails = (SsafyUserDetails) authentication.getDetails();
+		if(!userId.equals(userDetails.getUsername())) {
+			return ResponseEntity.status(403).body("권한 없음");
+		}
+
+		userService.withdraw(userId);
+		return ResponseEntity.ok().body("SUCCESS");
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
