@@ -1,4 +1,4 @@
-package com.coni.manage;
+package com.cony.manage;
 
 import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
 import org.springframework.boot.SpringApplication;

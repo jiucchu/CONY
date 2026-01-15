@@ -1,4 +1,4 @@
-package com.coni.manage;
+package com.cony.manage;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
