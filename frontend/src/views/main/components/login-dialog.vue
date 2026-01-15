@@ -8,16 +8,30 @@
       <form @submit.prevent="clickLogin" ref="loginForm">
         <div class="form-group">
           <label for="id">아이디</label>
-          <input type="text" id="id" v-model="state.form.id" autocomplete="off" />
+          <input 
+            type="text" 
+            id="id" 
+            v-model="state.form.id" 
+            @input="validateId"
+            maxlength="16"
+            autocomplete="off" 
+          />
           <span v-if="errors.id" class="error">{{ errors.id }}</span>
         </div>
         <div class="form-group">
           <label for="password">비밀번호</label>
-          <input type="password" id="password" v-model="state.form.password" autocomplete="off" />
+          <input 
+            type="password" 
+            id="password" 
+            v-model="state.form.password" 
+            @input="validatePassword"
+            maxlength="16"
+            autocomplete="off" 
+          />
           <span v-if="errors.password" class="error">{{ errors.password }}</span>
         </div>
         <div class="dialog-footer">
-          <button type="submit" class="btn-primary">로그인</button>
+          <button type="submit" class="btn-primary" :disabled="!isFormValid">로그인</button>
         </div>
       </form>
     </div>
@@ -35,6 +49,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1000;
 }
 .login-dialog {
   background: white;
@@ -86,11 +101,16 @@
   border-radius: 4px;
   cursor: pointer;
 }
+.btn-primary:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
 </style>
 
 <script>
-import { reactive, ref, watch } from 'vue'
+import { reactive, ref, watch, computed } from 'vue'
 import { useStore } from 'vuex'
+import { ElMessage } from 'element-plus'
 
 export default {
   name: 'LoginDialog',
@@ -121,45 +141,55 @@ export default {
 
     watch(() => props.open, (newVal) => {
       state.dialogVisible = newVal
+      if (newVal) {
+        state.form.id = ''
+        state.form.password = ''
+        errors.id = ''
+        errors.password = ''
+      }
     })
 
-    const validate = () => {
-      let valid = true
+    const validateId = () => {
       if (!state.form.id) {
-        errors.id = 'Please input ID'
-        valid = false
+        errors.id = '아이디를 입력해주세요.'
       } else {
         errors.id = ''
       }
+    }
 
-      if (!state.form.password) {
-        errors.password = 'Please input password'
-        valid = false
+    const validatePassword = () => {
+      const pw = state.form.password
+      // PRD: 영문+숫자+특수문자 조합, 9~16자
+      const regex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{9,16}$/
+      if (!regex.test(pw)) {
+        errors.password = '영문+숫자+특수문자 조합, 9~16자로 입력해주세요.'
       } else {
         errors.password = ''
       }
-
-      return valid
     }
 
+    const isFormValid = computed(() => {
+      return state.form.id && !errors.id && state.form.password && !errors.password
+    })
+
     const clickLogin = async () => {
-      if (validate()) {
-        console.log('submit')
-        await store.dispatch('accountStore/loginAction', { id: state.form.id, password: state.form.password })
-        console.log('accessToken ' + store.getters['accountStore/getToken'])
-        handleClose()
-      } else {
-        alert('Validate error!')
+      if (isFormValid.value) {
+        try {
+          await store.dispatch('accountStore/loginAction', { id: state.form.id, password: state.form.password })
+          handleClose()
+        } catch (err) {
+            // Error handling is done in axios interceptor (if 401/403) or generic catch
+            // But interceptor throws error, so we catch here to stop spinner or show extra msg?
+            // Actually axios interceptor alerts.
+        }
       }
     }
 
     const handleClose = () => {
-      state.form.id = ''
-      state.form.password = ''
       emit('closeLoginDialog')
     }
 
-    return { state, errors, loginForm, clickLogin, handleClose }
+    return { state, errors, loginForm, clickLogin, handleClose, validateId, validatePassword, isFormValid }
   }
 }
 </script>

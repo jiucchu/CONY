@@ -37,10 +37,16 @@ export default {
     const state = reactive({
       menuItems: computed(() => {
         const MenuItems = store.getters['menuStore/getMenus']
-        return Object.keys(MenuItems).map(key => ({
-          icon: MenuItems[key].icon,
-          title: MenuItems[key].name
-        }))
+        const isLoggedIn = !!store.getters['accountStore/getToken']
+        return Object.keys(MenuItems)
+          .filter(key => {
+            if (key === 'history' && !isLoggedIn) return false
+            return true
+          })
+          .map(key => ({
+            icon: MenuItems[key].icon,
+            title: MenuItems[key].name
+          }))
       }),
       activeIndex: computed(() => store.getters['menuStore/getActiveMenuIndex'])
     })
@@ -53,7 +59,11 @@ export default {
     const menuSelect = (index) => {
       store.commit('menuStore/setMenuActive', index)
       const MenuItems = store.getters['menuStore/getMenus']
-      const keys = Object.keys(MenuItems)
+      const isLoggedIn = !!store.getters['accountStore/getToken']
+      let keys = Object.keys(MenuItems).filter(key => {
+          if (key === 'history' && !isLoggedIn) return false
+          return true
+      })
       router.push({ name: keys[index] })
     }
 
