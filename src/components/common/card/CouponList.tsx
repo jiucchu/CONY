@@ -1,0 +1,105 @@
+'use client';
+
+import styled from "styled-components";
+import { COLORS } from "@/constants/colors";
+import VerticalGiftCard from "./atomic/VerticalGiftCard";
+import { Coupon } from "@/types/coupon/coupon";
+
+const SectionContainer = styled.div`
+  width: 100%;
+  margin-bottom: 24px;
+`;
+
+const SectionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 0 4px;
+`;
+
+const TitleContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const FairyIcon = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const FontText = styled.p<{ fontSize: number; fontWeight: number; color: string }>`
+  font-family: 'pretendard', sans-serif;
+  font-size: ${props => props.fontSize}px;
+  color: ${props => props.color};
+  margin: 0;
+  font-weight: ${props => props.fontWeight};
+`;
+
+const MoreLink = styled.a`
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: ${COLORS.text.secondary};
+  text-decoration: none;
+  cursor: pointer;
+  
+  &:hover {
+    color: ${COLORS.text.primary};
+  }
+`;
+
+const CardsContainer = styled.div`
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: ${COLORS.text.secondary} transparent;
+  
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: ${COLORS.text.secondary};
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: ${COLORS.text.primary};
+  }
+`;
+
+interface CouponListProps {
+  coupons: Coupon[];
+  title: string;
+  onMoreClick?: () => void;
+}
+
+const CouponList = ({ coupons, title, onMoreClick }: CouponListProps) => {
+  return (
+    <SectionContainer>
+      <SectionHeader>
+        <TitleContainer>
+          <FairyIcon></FairyIcon>
+          <FontText fontSize={22} fontWeight={900} color={COLORS.primary}>🧚{title}</FontText>
+        </TitleContainer>
+        <MoreLink onClick={onMoreClick}>더보기&gt;</MoreLink>
+      </SectionHeader>
+      <CardsContainer>
+        {coupons.map((coupon) => (
+          <VerticalGiftCard key={coupon.coupon_id} coupon={coupon} />
+        ))}
+      </CardsContainer>
+    </SectionContainer>
+  );
+};
+
+export default CouponList;
