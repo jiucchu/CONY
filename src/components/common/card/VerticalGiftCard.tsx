@@ -6,12 +6,13 @@ import { COLORS } from "@/constants/colors";
 const VerticalGiftCardContainer = styled.div`
   justify-content: center;
   align-items: center;
+  position: relative;
   background-color: #FFFFFF;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
-  width: 180px;
-  height: 270px;
+  width: 160px;
+  height: 240px;
   padding: 20px;
 
 `;
@@ -69,16 +70,16 @@ const VerticalGiftCard = ({ coupon }: { coupon: Coupon }) => {
 
   return (
     <VerticalGiftCardContainer>
+      <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10 }}>
+              <DdayComponent dday={daysUntilExpiration} />
+      </div>
       <ImageContainer>
-        <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
-            <DdayComponent dday={daysUntilExpiration} />
-        </div>
         <ProductImage src={coupon.image_url} alt={coupon.title} />
       </ImageContainer>
       <InfoContainer>
-        <CouponText fontSize={16} fontWeight={600} color={COLORS.text.secondary}>{coupon.brand}</CouponText>
-        <CouponText fontSize={23} fontWeight={800} color={COLORS.text.primary}>{coupon.title}</CouponText>
-        <CouponText fontSize={18} fontWeight={700} color={COLORS.text.primary}>{formattedPrice}</CouponText>
+        <CouponText fontSize={13} fontWeight={600} color={COLORS.text.secondary}>{coupon.brand}</CouponText>
+        <CouponText fontSize={20} fontWeight={800} color={COLORS.text.primary}>{coupon.title}</CouponText>
+        <CouponText fontSize={16} fontWeight={700} color={COLORS.text.primary}>{formattedPrice}</CouponText>
       </InfoContainer>
     </VerticalGiftCardContainer>
   );
