@@ -1,9 +1,10 @@
 import { Coupon } from "@/types/coupon/coupon";
 import styled from "styled-components";
-import DdayComponent from "./DdayView";
+import DdayView from "./DdayView";
 import { COLORS } from "@/constants/colors";
 import barcodeImage from "@/assets/barcode.png";
 import { calculateDaysUntilExpiration } from "@/utils/DayUtils";
+
 const HorizontalGiftCardContainer = styled.div`
   background-color: #FFFFFF;
   border-radius: 10px;
@@ -88,11 +89,9 @@ const HorizontalGiftCard = ({ coupon }: { coupon: Coupon }) => {
   return (
     <HorizontalGiftCardContainer>
       <div style={{ position: 'absolute', top: '15px', right: '15px' }}>
-              <DdayComponent dday={daysUntilExpiration} />
+              <DdayView dday={daysUntilExpiration} size="Small" />
       </div>
       <ImageContainer>
-
-
         <ProductImage src={coupon.image_url} alt={coupon.title} />
       </ImageContainer>
       <InfoContainer>

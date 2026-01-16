@@ -1,8 +1,9 @@
 import { Coupon } from "@/types/coupon/coupon";
 import styled from "styled-components";
-import DdayComponent from "./DdayView";
+import DdayView from "./DdayView";
 import { COLORS } from "@/constants/colors";
 import { calculateDaysUntilExpiration } from "@/utils/DayUtils";
+import { SizeType } from "@/types/common";
 
 const VerticalGiftCardContainer = styled.div`
   justify-content: center;
@@ -64,7 +65,7 @@ const VerticalGiftCard = ({ coupon }: { coupon: Coupon }) => {
   return (
     <VerticalGiftCardContainer>
       <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10 }}>
-              <DdayComponent dday={daysUntilExpiration} />
+              <DdayView dday={daysUntilExpiration} size="Small" />
       </div>
       <ImageContainer>
         <ProductImage src={coupon.image_url} alt={coupon.title} />
