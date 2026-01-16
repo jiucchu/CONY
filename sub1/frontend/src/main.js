@@ -12,6 +12,7 @@ import 'element-plus/dist/index.css'
 const accessToken = localStorage.getItem('accessToken')
 if (accessToken) {
   axios.defaults.headers.Authorization = 'Bearer ' + accessToken
+  store.commit('accountStore/setToken', accessToken)
 }
 
 const app = createApp({
@@ -25,5 +26,12 @@ app.use(router)
 app.use(ElementPlus, {
   // options
 })
+
+// 앱 시작 시 토큰이 있으면 유저 정보 조회
+if (accessToken) {
+  store.dispatch('accountStore/fetchUserInfo').catch(() => {
+    // 에러 발생 시 무시 (인터셉터에서 처리)
+  })
+}
 
 app.mount('#app')
