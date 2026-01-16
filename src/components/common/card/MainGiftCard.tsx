@@ -17,6 +17,7 @@ const MainGiftCardContainer = styled.div`
   aspect-ratio: 1.4;
   padding: 8%;
 
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
 `;
 
 // 이미지 영역 확인을 위해해 color 임시로 넣어두었습니다.
