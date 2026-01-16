@@ -29,6 +29,9 @@ public class UserServiceImpl implements UserService {
 		user.setUserId(userRegisterInfo.getId());
 		// 보안을 위해서 유저 패스워드 암호화 하여 디비에 저장.
 		user.setPassword(passwordEncoder.encode(userRegisterInfo.getPassword()));
+		user.setDepartment(userRegisterInfo.getDepartment());
+		user.setPosition(userRegisterInfo.getPosition());
+		user.setName(userRegisterInfo.getName());
 		return userRepository.save(user);
 	}
 
@@ -37,5 +40,11 @@ public class UserServiceImpl implements UserService {
 		// 디비에 유저 정보 조회 (userId 를 통한 조회).
 		User user = userRepositorySupport.findUserByUserId(userId).orElse(null);
 		return user;
+	}
+
+	@Override
+	public boolean existsByUserId(String userId) {
+		// 아이디 중복 확인
+		return userRepositorySupport.findUserByUserId(userId).isPresent();
 	}
 }
