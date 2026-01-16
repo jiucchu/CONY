@@ -3,7 +3,7 @@ import styled from "styled-components";
 import DdayComponent from "./DdayView";
 import { COLORS } from "@/constants/colors";
 import barcodeImage from "@/assets/barcode.png";
-
+import { calculateDaysUntilExpiration } from "@/utils/DayUtils";
 const HorizontalGiftCardContainer = styled.div`
   background-color: #FFFFFF;
   border-radius: 10px;
@@ -82,14 +82,6 @@ const BarcodeButton = styled.button<{ width: number }>`
 `;
 
 const HorizontalGiftCard = ({ coupon }: { coupon: Coupon }) => {
-  const calculateDaysUntilExpiration = (expirationDate: string): number => {
-    const today = new Date();
-    const expiration = new Date(expirationDate);
-    const diffTime = expiration.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
-
   const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiration_date);
   const formattedPrice = coupon.price.toLocaleString('ko-KR');
 

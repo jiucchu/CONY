@@ -4,7 +4,7 @@ import DdayComponent from "./DdayView";
 import { COLORS } from "@/constants/colors";
 import { calculateDaysUntilExpiration } from "@/utils/DayUtils";
 
-const VerticalGiftCardContainer = styled.div`
+const MainGiftCardContainer = styled.div`
   justify-content: center;
   align-items: center;
   position: relative;
@@ -57,12 +57,13 @@ const CouponText = styled.p<{ fontSize: number; fontWeight: number; color: strin
 
 
 
-const VerticalGiftCard = ({ coupon }: { coupon: Coupon }) => {
+const MainGiftCard = ({ coupon }: { coupon: Coupon }) => {
+
   const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiration_date);
   const formattedPrice = coupon.price.toLocaleString('ko-KR');
 
   return (
-    <VerticalGiftCardContainer>
+    <MainGiftCardContainer>
       <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10 }}>
               <DdayComponent dday={daysUntilExpiration} />
       </div>
@@ -74,8 +75,8 @@ const VerticalGiftCard = ({ coupon }: { coupon: Coupon }) => {
         <CouponText fontSize={20} fontWeight={800} color={COLORS.text.primary}>{coupon.title}</CouponText>
         <CouponText fontSize={16} fontWeight={700} color={COLORS.text.primary}>{formattedPrice}</CouponText>
       </InfoContainer>
-    </VerticalGiftCardContainer>
+    </MainGiftCardContainer>
   );
 };
 
-export default VerticalGiftCard;
+export default MainGiftCard;
