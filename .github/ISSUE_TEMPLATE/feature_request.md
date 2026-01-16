@@ -1,18 +1,10 @@
 ---
-name: Feature request
-about: Suggest an idea for this project
-title: 'feat: '
-labels: ''
-assignees: ''
-
----
-
----
 name: ✨ 기능 개발 (Feature Request)
 about: 새로운 기능을 개발할 때 사용합니다.
-title: "[Feat] "
+title: 'feat: '
 labels: enhancement
 assignees: ''
+
 ---
 
 ## 💡 기능 설명 (Description)
@@ -25,6 +17,6 @@ assignees: ''
 - [ ] 단위 테스트 (JUnit) 작성
 
 ## 📅 예상 일정 (Optional)
-- 2024.00.00 까지
+- 2026.00.00 까지
 
 ## 🔗 참고 자료 (References)
