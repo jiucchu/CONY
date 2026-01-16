@@ -2,7 +2,7 @@ import { Coupon } from "@/types/coupon/coupon";
 import styled from "styled-components";
 import DdayView from "./DdayView";
 import { COLORS } from "@/constants/colors";
-import barcodeImage from "@/assets/barcode.png";
+import BarcodeButton from "./BarcodeButton";
 import { calculateDaysUntilExpiration } from "@/utils/DayUtils";
 
 const HorizontalGiftCardContainer = styled.div`
@@ -55,33 +55,6 @@ const CouponText = styled.p<{ fontSize: number; fontWeight: number; color: strin
 `;
 
 
-const BarcodeButton = styled.button<{ width: number }>`
-  width: ${props => props.width}px;
-  height: ${props => props.width}px;
-  min-width: ${props => props.width}px;
-  background-color: #FFFFFF;
-  border: 2px solid #E5E5E5;
-  border-radius: 8px;
-  padding: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  align-self: center;
-
-  &:hover {
-    background-color: #F9F9F9;
-  }
-  
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    filter: grayscale(100%);
-    opacity: 0.7;
-  }
-`;
-
 const HorizontalGiftCard = ({ coupon }: { coupon: Coupon }) => {
   const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiration_date);
   const formattedPrice = coupon.price.toLocaleString('ko-KR');
@@ -102,9 +75,7 @@ const HorizontalGiftCard = ({ coupon }: { coupon: Coupon }) => {
         </div>
       </InfoContainer>
       <div style={{ position: 'absolute', bottom: '15px', right: '15px' }}>
-      <BarcodeButton width={45}>
-        <img src={typeof barcodeImage === 'string' ? barcodeImage : barcodeImage.src} alt="barcode" />
-      </BarcodeButton>
+        <BarcodeButton width={45} />
       </div>
     </HorizontalGiftCardContainer>
   );
