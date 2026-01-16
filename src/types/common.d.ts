@@ -4,3 +4,5 @@ export interface BaseComponentProps {
   className?: string;
   children?: React.ReactNode;
 }
+
+export type SizeType = 'Small' | 'Medium' | 'Large';
