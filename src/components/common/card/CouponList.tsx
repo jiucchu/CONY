@@ -56,24 +56,15 @@ const CardsContainer = styled.div`
   overflow-x: auto;
   overflow-y: hidden;
   padding-bottom: 8px;
-  scrollbar-width: thin;
-  scrollbar-color: ${COLORS.text.secondary} transparent;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
   
   &::-webkit-scrollbar {
-    height: 6px;
+    display: none;
   }
   
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background-color: ${COLORS.text.secondary};
-    border-radius: 3px;
-  }
-  
-  &::-webkit-scrollbar-thumb:hover {
-    background-color: ${COLORS.text.primary};
+  > * {
+    flex-shrink: 0;
   }
 `;
 
@@ -84,6 +75,8 @@ interface CouponListProps {
 }
 
 const CouponList = ({ coupons, title, onMoreClick }: CouponListProps) => {
+  const displayCoupons = coupons.slice(0, 10);
+  
   return (
     <SectionContainer>
       <SectionHeader>
@@ -94,7 +87,7 @@ const CouponList = ({ coupons, title, onMoreClick }: CouponListProps) => {
         <MoreLink onClick={onMoreClick}>더보기&gt;</MoreLink>
       </SectionHeader>
       <CardsContainer>
-        {coupons.map((coupon) => (
+        {displayCoupons.map((coupon) => (
           <VerticalGiftCard key={coupon.coupon_id} coupon={coupon} />
         ))}
       </CardsContainer>
