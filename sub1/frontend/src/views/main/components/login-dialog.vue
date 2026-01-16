@@ -17,7 +17,9 @@
           <span v-if="errors.password" class="error">{{ errors.password }}</span>
         </div>
         <div class="dialog-footer">
-          <button type="submit" class="btn-primary">로그인</button>
+          <button type="submit" class="btn-primary" :disabled="!isFormValid || loading">
+            {{ loading ? '로그인 중...' : '로그인' }}
+          </button>
         </div>
       </form>
     </div>
@@ -89,7 +91,7 @@
 </style>
 
 <script>
-import { reactive, ref, watch } from 'vue'
+import { reactive, ref, watch, computed } from 'vue'
 import { useStore } from 'vuex'
 
 export default {
@@ -121,35 +123,85 @@ export default {
 
     watch(() => props.open, (newVal) => {
       state.dialogVisible = newVal
-    })
-
-    const validate = () => {
-      let valid = true
-      if (!state.form.id) {
-        errors.id = 'Please input ID'
-        valid = false
-      } else {
+      if (newVal) {
+        // 팝업이 열릴 때 폼 초기화
+        state.form.id = ''
+        state.form.password = ''
         errors.id = ''
-      }
-
-      if (!state.form.password) {
-        errors.password = 'Please input password'
-        valid = false
-      } else {
         errors.password = ''
       }
+    })
 
-      return valid
+    // 실시간 유효성 검사
+    watch(() => state.form.id, (newVal) => {
+      validateId(newVal)
+    })
+
+    watch(() => state.form.password, (newVal) => {
+      validatePassword(newVal)
+    })
+
+    const validateId = (id) => {
+      if (!id) {
+        errors.id = '필수 입력 항목입니다.'
+        return false
+      } else if (id.length > 16) {
+        errors.id = '최대 16자까지 입력 가능합니다.'
+        return false
+      } else {
+        errors.id = ''
+        return true
+      }
     }
 
-    const clickLogin = async () => {
-      if (validate()) {
-        console.log('submit')
-        await store.dispatch('accountStore/loginAction', { id: state.form.id, password: state.form.password })
-        console.log('accessToken ' + store.getters['accountStore/getToken'])
-        handleClose()
+    const validatePassword = (password) => {
+      if (!password) {
+        errors.password = '필수 입력 항목입니다.'
+        return false
+      } else if (password.length < 9) {
+        errors.password = '최소 9글자를 입력해야 합니다.'
+        return false
+      } else if (password.length > 16) {
+        errors.password = '최대 16글자까지 입력 가능합니다.'
+        return false
       } else {
-        alert('Validate error!')
+        // 영문 + 숫자 + 특수문자 조합 체크
+        const hasLetter = /[a-zA-Z]/.test(password)
+        const hasNumber = /[0-9]/.test(password)
+        const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password)
+        
+        if (!hasLetter || !hasNumber || !hasSpecial) {
+          errors.password = '비밀번호는 영문, 숫자, 특수문자가 조합되어야 합니다.'
+          return false
+        } else {
+          errors.password = ''
+          return true
+        }
+      }
+    }
+
+    const validate = () => {
+      const idValid = validateId(state.form.id)
+      const passwordValid = validatePassword(state.form.password)
+      return idValid && passwordValid
+    }
+
+    const loading = ref(false)
+
+    const clickLogin = async () => {
+      if (!validate()) {
+        return
+      }
+      
+      loading.value = true
+      try {
+        await store.dispatch('accountStore/loginAction', { id: state.form.id, password: state.form.password })
+        handleClose()
+      } catch (error) {
+        // 에러는 인터셉터에서 처리됨
+        console.error('Login error:', error)
+      } finally {
+        loading.value = false
       }
     }
 
@@ -159,7 +211,20 @@ export default {
       emit('closeLoginDialog')
     }
 
-    return { state, errors, loginForm, clickLogin, handleClose }
+    const isFormValid = computed(() => {
+      return state.form.id && 
+             state.form.id.length <= 16 && 
+             state.form.password && 
+             state.form.password.length >= 9 && 
+             state.form.password.length <= 16 &&
+             /[a-zA-Z]/.test(state.form.password) &&
+             /[0-9]/.test(state.form.password) &&
+             /[!@#$%^&*(),.?":{}|<>]/.test(state.form.password) &&
+             !errors.id && 
+             !errors.password
+    })
+
+    return { state, errors, loginForm, clickLogin, handleClose, loading, isFormValid }
   }
 }
 </script>
