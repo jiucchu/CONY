@@ -11,9 +11,9 @@
           />
           <i class="icon-search"></i>
         </div>
-        <div class="button-wrapper">
+        <div class="button-wrapper" v-if="!isLoggedIn">
           <button @click="clickRegister">회원가입</button>
-          <button @click="clickLogin">로그인</button>
+          <button @click="clickLogin" class="btn-primary">로그인</button>
         </div>
       </div>
     </div>
@@ -22,7 +22,7 @@
       <div class="menu-icon-wrapper"><i class="icon-search"></i></div>
       <div class="mobile-sidebar-wrapper" v-if="!state.isCollapse">
         <div class="mobile-sidebar">
-          <div class="mobile-sidebar-tool-wrapper">
+          <div class="mobile-sidebar-tool-wrapper" v-if="!isLoggedIn">
             <div class="logo-wrapper"><div class="ic ic-logo"></div></div>
             <button class="mobile-sidebar-btn login-btn" @click="clickLogin">로그인</button>
             <button class="mobile-sidebar-btn register-btn" @click="clickRegister">회원가입</button>
@@ -68,12 +68,24 @@ export default {
       isCollapse: true,
       menuItems: computed(() => {
         const MenuItems = store.getters['menuStore/getMenus']
+        const isLoggedIn = store.getters['accountStore/isLoggedIn']
+        // 비로그인 상태에서는 홈만 표시
+        if (!isLoggedIn) {
+          return Object.keys(MenuItems)
+            .filter(key => key === 'home')
+            .map(key => ({
+              icon: MenuItems[key].icon,
+              title: MenuItems[key].name
+            }))
+        }
+        // 로그인 상태에서는 모든 메뉴 표시
         return Object.keys(MenuItems).map(key => ({
           icon: MenuItems[key].icon,
           title: MenuItems[key].name
         }))
       }),
-      activeIndex: computed(() => store.getters['menuStore/getActiveMenuIndex'])
+      activeIndex: computed(() => store.getters['menuStore/getActiveMenuIndex']),
+      isLoggedIn: computed(() => store.getters['accountStore/isLoggedIn'])
     })
 
     if (state.activeIndex === -1) {
@@ -82,11 +94,19 @@ export default {
     }
 
     const menuSelect = function (index) {
-      store.commit('menuStore/setMenuActive', index)
       const MenuItems = store.getters['menuStore/getMenus']
-      let keys = Object.keys(MenuItems)
+      const isLoggedIn = store.getters['accountStore/isLoggedIn']
+      // 필터링된 메뉴 키 가져오기
+      let menuKeys
+      if (!isLoggedIn) {
+        menuKeys = Object.keys(MenuItems).filter(key => key === 'home')
+      } else {
+        menuKeys = Object.keys(MenuItems)
+      }
+      const selectedKey = menuKeys[index]
+      store.commit('menuStore/setMenuActiveMenuName', selectedKey)
       router.push({
-        name: keys[index]
+        name: selectedKey
       })
     }
 
@@ -104,14 +124,14 @@ export default {
     }
 
     const clickRegister = () => {
-      // Register event handler
+      emit('openRegisterDialog')
     }
 
     const changeCollapse = () => {
       state.isCollapse = !state.isCollapse
     }
 
-    return { state, menuSelect, clickLogo, clickLogin, clickRegister, changeCollapse }
+    return { state, menuSelect, clickLogo, clickLogin, clickRegister, changeCollapse, isLoggedIn: state.isLoggedIn }
   }
 }
 </script>
