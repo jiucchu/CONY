@@ -13,8 +13,8 @@ const MainGiftCardContainer = styled.div`
   border-radius: 10px;
   display: flex;
   flex-direction: column;
-  width: 80%;
-  aspect-ratio: 1.4;
+  width: 300px;
+  aspect-ratio: 1.5;
   padding: 8%;
 
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
