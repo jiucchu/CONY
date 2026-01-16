@@ -10,6 +10,9 @@
           <i v-if="item.icon" :class="['ic', item.icon]"></i>
           <span>{{ item.title }}</span>
         </li>
+        <li v-if="state.isLoggedIn" @click="handleLogout" class="logout-item">
+          <span>로그아웃</span>
+        </li>
       </ul>
     </div>
   </div>
@@ -37,12 +40,24 @@ export default {
     const state = reactive({
       menuItems: computed(() => {
         const MenuItems = store.getters['menuStore/getMenus']
+        const isLoggedIn = store.getters['accountStore/isLoggedIn']
+        // 비로그인 상태에서는 홈만 표시
+        if (!isLoggedIn) {
+          return Object.keys(MenuItems)
+            .filter(key => key === 'home')
+            .map(key => ({
+              icon: MenuItems[key].icon,
+              title: MenuItems[key].name
+            }))
+        }
+        // 로그인 상태에서는 모든 메뉴 표시
         return Object.keys(MenuItems).map(key => ({
           icon: MenuItems[key].icon,
           title: MenuItems[key].name
         }))
       }),
-      activeIndex: computed(() => store.getters['menuStore/getActiveMenuIndex'])
+      activeIndex: computed(() => store.getters['menuStore/getActiveMenuIndex']),
+      isLoggedIn: computed(() => store.getters['accountStore/isLoggedIn'])
     })
 
     if (state.activeIndex === -1) {
@@ -51,13 +66,26 @@ export default {
     }
 
     const menuSelect = (index) => {
-      store.commit('menuStore/setMenuActive', index)
       const MenuItems = store.getters['menuStore/getMenus']
-      const keys = Object.keys(MenuItems)
-      router.push({ name: keys[index] })
+      const isLoggedIn = store.getters['accountStore/isLoggedIn']
+      // 필터링된 메뉴 키 가져오기
+      let menuKeys
+      if (!isLoggedIn) {
+        menuKeys = Object.keys(MenuItems).filter(key => key === 'home')
+      } else {
+        menuKeys = Object.keys(MenuItems)
+      }
+      const selectedKey = menuKeys[index]
+      store.commit('menuStore/setMenuActiveMenuName', selectedKey)
+      router.push({ name: selectedKey })
     }
 
-    return { state, menuSelect }
+    const handleLogout = () => {
+      store.dispatch('accountStore/logoutAction')
+      router.push({ name: 'home' })
+    }
+
+    return { state, menuSelect, handleLogout }
   }
 }
 </script>
@@ -94,5 +122,10 @@ export default {
 
 .menu-vertical li .ic {
   margin-right: 10px;
+}
+
+.menu-vertical li.logout-item {
+  margin-top: auto;
+  color: #f56c6c;
 }
 </style>
