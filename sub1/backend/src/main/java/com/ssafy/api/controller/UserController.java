@@ -42,7 +42,7 @@ public class UserController {
 	@PostMapping()
 	@ApiOperation(value = "회원 가입", notes = "<strong>아이디와 패스워드</strong>를 통해 회원가입 한다.") 
     @ApiResponses({
-        @ApiResponse(code = 200, message = "성공"),
+        @ApiResponse(code = 201, message = "성공"),
         @ApiResponse(code = 401, message = "인증 실패"),
         @ApiResponse(code = 404, message = "사용자 없음"),
         @ApiResponse(code = 500, message = "서버 오류")
@@ -53,7 +53,7 @@ public class UserController {
 		//임의로 리턴된 User 인스턴스. 현재 코드는 회원 가입 성공 여부만 판단하기 때문에 굳이 Insert 된 유저 정보를 응답하지 않음.
 		User user = userService.createUser(registerInfo);
 		
-		return ResponseEntity.status(200).body(BaseResponseBody.of(200, "Success"));
+		return ResponseEntity.status(201).body(BaseResponseBody.of(201, "Success"));
 	}
 	
 	@GetMapping("/me")
@@ -74,5 +74,61 @@ public class UserController {
 		User user = userService.getUserByUserId(userId);
 		
 		return ResponseEntity.status(200).body(UserRes.of(user));
+	}
+
+	@GetMapping("/{userId}")
+	@ApiOperation(value = "아이디 중복 확인", notes = "아이디 중복 여부를 확인한다.")
+	@ApiResponses({
+		@ApiResponse(code = 200, message = "사용 가능"),
+		@ApiResponse(code = 409, message = "이미 존재하는 사용자 ID"),
+		@ApiResponse(code = 500, message = "서버 오류")
+	})
+	public ResponseEntity<? extends BaseResponseBody> checkDuplicateId(@org.springframework.web.bind.annotation.PathVariable("userId") String userId) {
+		User user = userService.getUserByUserId(userId);
+		if (user != null) {
+			return ResponseEntity.status(409).body(BaseResponseBody.of(409, "이미 존재하는 사용자 ID 입니다."));
+		}
+		return ResponseEntity.status(200).body(BaseResponseBody.of(200, "Success"));
+	}
+
+	@org.springframework.web.bind.annotation.PatchMapping("/{userId}")
+	@ApiOperation(value = "회원 정보 수정", notes = "회원 정보를 수정한다.")
+	@ApiResponses({
+		@ApiResponse(code = 200, message = "성공"),
+		@ApiResponse(code = 401, message = "인증 실패"),
+		@ApiResponse(code = 500, message = "서버 오류")
+	})
+	public ResponseEntity<? extends BaseResponseBody> updateUser(
+			@org.springframework.web.bind.annotation.PathVariable("userId") String userId,
+			@RequestBody @ApiParam(value="회원 정보 수정", required = true) com.ssafy.api.request.UserUpdatePatchReq updateInfo,
+			@ApiIgnore Authentication authentication) {
+		
+		SsafyUserDetails userDetails = (SsafyUserDetails)authentication.getDetails();
+		if (!userId.equals(userDetails.getUsername())) {
+			return ResponseEntity.status(403).body(BaseResponseBody.of(403, "권한이 없습니다."));
+		}
+
+		userService.updateUser(userId, updateInfo);
+		return ResponseEntity.status(200).body(BaseResponseBody.of(200, "Success"));
+	}
+
+	@org.springframework.web.bind.annotation.DeleteMapping("/{userId}")
+	@ApiOperation(value = "회원 탈퇴", notes = "회원 정보를 삭제한다.")
+	@ApiResponses({
+		@ApiResponse(code = 200, message = "성공"),
+		@ApiResponse(code = 401, message = "인증 실패"),
+		@ApiResponse(code = 500, message = "서버 오류")
+	})
+	public ResponseEntity<? extends BaseResponseBody> deleteUser(
+			@org.springframework.web.bind.annotation.PathVariable("userId") String userId,
+			@ApiIgnore Authentication authentication) {
+		
+		SsafyUserDetails userDetails = (SsafyUserDetails)authentication.getDetails();
+		if (!userId.equals(userDetails.getUsername())) {
+			return ResponseEntity.status(403).body(BaseResponseBody.of(403, "권한이 없습니다."));
+		}
+
+		userService.deleteUser(userId);
+		return ResponseEntity.status(200).body(BaseResponseBody.of(200, "Success"));
 	}
 }

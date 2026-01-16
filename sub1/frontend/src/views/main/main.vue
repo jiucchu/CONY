@@ -2,7 +2,8 @@
   <div class="main-wrapper">
     <main-header
       :height="'70px'"
-      @openLoginDialog="onOpenLoginDialog"/>
+      @openLoginDialog="onOpenLoginDialog"
+      @openSignupDialog="onOpenSignupDialog"/>
     <div class="main-container">
       <aside class="sidebar hide-on-small" style="width: 240px;">
         <main-sidebar :width="'240px'"/>
@@ -15,6 +16,9 @@
     <login-dialog
       :open="loginDialogOpen"
       @closeLoginDialog="onCloseLoginDialog"/>
+    <signup-dialog
+      :open="signupDialogOpen"
+      @closeSignupDialog="onCloseSignupDialog"/>
   </div>
 </template>
 
@@ -56,6 +60,7 @@
 
 <script>
 import LoginDialog from './components/login-dialog'
+import SignupDialog from './components/signup-dialog'
 import MainHeader from './components/main-header'
 import MainSidebar from './components/main-sidebar'
 import MainFooter from './components/main-footer'
@@ -66,11 +71,13 @@ export default {
     MainHeader,
     MainSidebar,
     MainFooter,
-    LoginDialog
+    LoginDialog,
+    SignupDialog
   },
   data() {
     return {
-      loginDialogOpen: false
+      loginDialogOpen: false,
+      signupDialogOpen: false
     }
   },
   methods: {
@@ -79,6 +86,12 @@ export default {
     },
     onCloseLoginDialog() {
       this.loginDialogOpen = false
+    },
+    onOpenSignupDialog() {
+      this.signupDialogOpen = true
+    },
+    onCloseSignupDialog() {
+      this.signupDialogOpen = false
     }
   }
 }

@@ -12,8 +12,13 @@
           <i class="icon-search"></i>
         </div>
         <div class="button-wrapper">
-          <button @click="clickRegister">회원가입</button>
-          <button @click="clickLogin">로그인</button>
+          <template v-if="!state.isLoggedIn">
+            <button @click="clickRegister">회원가입</button>
+            <button @click="clickLogin">로그인</button>
+          </template>
+          <template v-else>
+            <button @click="clickLogout">로그아웃</button>
+          </template>
         </div>
       </div>
     </div>
@@ -24,8 +29,13 @@
         <div class="mobile-sidebar">
           <div class="mobile-sidebar-tool-wrapper">
             <div class="logo-wrapper"><div class="ic ic-logo"></div></div>
-            <button class="mobile-sidebar-btn login-btn" @click="clickLogin">로그인</button>
-            <button class="mobile-sidebar-btn register-btn" @click="clickRegister">회원가입</button>
+            <template v-if="!state.isLoggedIn">
+              <button class="mobile-sidebar-btn login-btn" @click="clickLogin">로그인</button>
+              <button class="mobile-sidebar-btn register-btn" @click="clickRegister">회원가입</button>
+            </template>
+            <template v-else>
+              <button class="mobile-sidebar-btn login-btn" @click="clickLogout">로그아웃</button>
+            </template>
           </div>
           <ul class="menu">
             <li
@@ -66,12 +76,19 @@ export default {
     const state = reactive({
       searchValue: null,
       isCollapse: true,
+      isLoggedIn: computed(() => !!store.getters['accountStore/getToken']),
       menuItems: computed(() => {
         const MenuItems = store.getters['menuStore/getMenus']
-        return Object.keys(MenuItems).map(key => ({
-          icon: MenuItems[key].icon,
-          title: MenuItems[key].name
-        }))
+        const isLoggedIn = !!store.getters['accountStore/getToken']
+        return Object.keys(MenuItems)
+          .filter(key => {
+            if (key === 'history' && !isLoggedIn) return false
+            return true
+          })
+          .map(key => ({
+            icon: MenuItems[key].icon,
+            title: MenuItems[key].name
+          }))
       }),
       activeIndex: computed(() => store.getters['menuStore/getActiveMenuIndex'])
     })
@@ -84,7 +101,12 @@ export default {
     const menuSelect = function (index) {
       store.commit('menuStore/setMenuActive', index)
       const MenuItems = store.getters['menuStore/getMenus']
-      let keys = Object.keys(MenuItems)
+      // We need to re-filter keys to match index
+      const isLoggedIn = !!store.getters['accountStore/getToken']
+      let keys = Object.keys(MenuItems).filter(key => {
+          if (key === 'history' && !isLoggedIn) return false
+          return true
+      })
       router.push({
         name: keys[index]
       })
@@ -104,14 +126,19 @@ export default {
     }
 
     const clickRegister = () => {
-      // Register event handler
+      emit('openSignupDialog')
+    }
+    
+    const clickLogout = () => {
+      store.commit('accountStore/setToken', null)
+      window.location.reload()
     }
 
     const changeCollapse = () => {
       state.isCollapse = !state.isCollapse
     }
 
-    return { state, menuSelect, clickLogo, clickLogin, clickRegister, changeCollapse }
+    return { state, menuSelect, clickLogo, clickLogin, clickRegister, clickLogout, changeCollapse }
   }
 }
 </script>
@@ -149,6 +176,7 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
+  z-index: 2000;
 }
 .mobile-sidebar-wrapper .mobile-sidebar {
   width: 240px;
@@ -170,6 +198,14 @@ export default {
 }
 .mobile-sidebar-wrapper .mobile-sidebar .mobile-sidebar-btn.login-btn {
   color: white;
+  background-color: #409eff;
+  border: none;
+  border-radius: 4px;
+}
+.mobile-sidebar-wrapper .mobile-sidebar .mobile-sidebar-btn.register-btn {
+    border: 1px solid #ccc;
+    background-color: white;
+    border-radius: 4px;
 }
 .mobile-sidebar-wrapper .mobile-sidebar .logo-wrapper {
   display: block;
@@ -267,3 +303,4 @@ export default {
   color: white;
 }
 </style>
+
