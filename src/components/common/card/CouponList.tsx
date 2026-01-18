@@ -52,7 +52,7 @@ const MoreLink = styled.a`
 
 const CardsContainer = styled.div`
   display: flex;
-  gap: 12px;
+  gap: 25px;
   overflow-x: auto;
   overflow-y: hidden;
   padding-bottom: 8px;

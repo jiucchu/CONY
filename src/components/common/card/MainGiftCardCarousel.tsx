@@ -65,18 +65,18 @@ const MainGiftCardCarousel = ({ coupons }: MainGiftCardCarouselProps) => {
         slidesPerView={1.5}
         centeredSlides={true}
         loop={false}
-        spaceBetween={16}
+        spaceBetween={0}
         pagination={{
           clickable: true,
         }}
         breakpoints={{
           640: {
             slidesPerView: 1.3,
-            spaceBetween: 20,
+            spaceBetween: 12,
           },
           768: {
             slidesPerView: 1.5,
-            spaceBetween: 24,
+            spaceBetween: 16,
           },
         }}
       >
