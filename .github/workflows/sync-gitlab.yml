@@ -13,12 +13,6 @@ jobs:
         with:
           path: source-repo
 
-      - name: Checkout target (GitLab) repo
-        uses: actions/checkout@v3
-        with:
-          repository: ''
-          path: target-repo
-
       - name: Sync to GitLab
         env:
           GITLAB_USERNAME: ${{ secrets.GITLAB_USERNAME }} 
