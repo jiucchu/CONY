@@ -25,10 +25,10 @@ export default function RootLayout({
   return (
     <html lang="ko" className="h-full w-full">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased h-full w-full m-0 p-0`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased h-full w-full m-0 p-0 overflow-hidden`}
       >
-        <div className="min-h-screen w-full h-full bg-gray-200 m-0 p-0">
-          <main className="flex min-h-screen h-full w-full max-w-md mx-auto flex-col bg-gray-100 shadow-lg m-0 p-0">
+        <div className="h-screen w-full bg-gray-200 m-0 p-0 overflow-hidden">
+          <main className="flex h-full w-full max-w-md mx-auto flex-col bg-gray-100 shadow-lg m-0 p-0 overflow-hidden">
             {children}
           </main>
         </div>
