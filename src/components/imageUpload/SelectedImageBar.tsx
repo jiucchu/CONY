@@ -20,11 +20,16 @@ const SelectedImageBarContainer = styled.div`
   }
 `;
 
-const SelectedImageBar = ({ images }: { images: string[] }) => {
+interface SelectedImageBarProps {
+  images: string[];
+  onRemove: (imageUrl: string) => void;
+}
+
+const SelectedImageBar = ({ images, onRemove }: SelectedImageBarProps) => {
   return (
     <SelectedImageBarContainer>
       {images.map((image) => (
-        <SelectedImage key={image} imageUrl={image} onRemove={() => {}} />
+        <SelectedImage key={image} imageUrl={image} onRemove={() => onRemove(image)} />
       ))}
     </SelectedImageBarContainer>
   );
