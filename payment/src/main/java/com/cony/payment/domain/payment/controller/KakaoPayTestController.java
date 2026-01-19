@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
  * 카카오페이 테스트용 임시 컨트롤러
  */
 @RestController
-@RequestMapping("/api/test")
+@RequestMapping("/test")
 @RequiredArgsConstructor
 public class KakaoPayTestController {
 
