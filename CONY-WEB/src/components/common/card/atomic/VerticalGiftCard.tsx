@@ -1,6 +1,6 @@
 import { Coupon } from "@/types/coupon/coupon";
 import styled from "styled-components";
-import DdayView from "../DdayView";
+import DdayView from "./DdayView";
 import { COLORS } from "@/constants/colors";
 import { calculateDaysUntilExpiration } from "@/utils/DayUtils";
 import { SizeType } from "@/types/common";

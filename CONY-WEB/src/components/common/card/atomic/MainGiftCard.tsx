@@ -2,7 +2,7 @@ import { Coupon } from "@/types/coupon/coupon";
 import styled from "styled-components";
 import { COLORS } from "@/constants/colors";
 import { calculateDaysUntilExpiration } from "@/utils/DayUtils";
-import DdayView from "../DdayView";
+import DdayView from "./DdayView";
 import BarcodeButton from "./BarcodeButton";
 
 const MainGiftCardContainer = styled.div`
