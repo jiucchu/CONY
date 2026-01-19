@@ -35,10 +35,3 @@ out/
 
 ### VS Code ###
 .vscode/
-
-### Spring Boot Environment Configs ###
-# 로컬 개발용 설정
-application-local.properties
-
-# 운영 배포용 설정
-application-prod.properties
