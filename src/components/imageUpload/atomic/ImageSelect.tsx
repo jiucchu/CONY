@@ -6,7 +6,6 @@ import { useState } from "react";
 
 const ImageContainer = styled.div<{ isSelected: boolean }>`
   position: relative;
-  width: 30%;
   aspect-ratio: 1;
   background-color: ${COLORS.background.lightGray};
   border-radius: 10px;
