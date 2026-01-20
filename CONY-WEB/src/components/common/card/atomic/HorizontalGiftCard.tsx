@@ -6,15 +6,17 @@ import BarcodeButton from "./BarcodeButton";
 import { calculateDaysUntilExpiration } from "@/utils/DayUtils";
 
 const HorizontalGiftCardContainer = styled.div`
+  width: 90%;
   background-color: #FFFFFF;
   border-radius: 10px;
   display: flex;
   flex-direction: row;
   padding: 16px;
   position: relative;
-  width: 100%;
   max-width: 500px;
   gap: 16px;
+
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
 `;
 
 // 이미지 영역 확인을 위해 color 임시로 넣어두었습니다.
@@ -62,7 +64,7 @@ const HorizontalGiftCard = ({ coupon }: { coupon: Coupon }) => {
   return (
     <HorizontalGiftCardContainer>
       <div style={{ position: 'absolute', top: '15px', right: '15px' }}>
-              <DdayView dday={daysUntilExpiration} size="Small" />
+        <DdayView type="gift" dday={daysUntilExpiration} size="Small" />
       </div>
       <ImageContainer>
         <ProductImage src={coupon.image_url} alt={coupon.title} />
@@ -70,8 +72,8 @@ const HorizontalGiftCard = ({ coupon }: { coupon: Coupon }) => {
       <InfoContainer>
         <CouponText fontSize={14} fontWeight={400} color={COLORS.text.secondary}>{coupon.brand}</CouponText>
         <div style={{ display: 'flex', flexDirection: 'column'}}>
-          <CouponText fontSize={25} fontWeight={900} color={COLORS.text.primary}>{coupon.title}</CouponText>
-          <CouponText fontSize={19} fontWeight={700} color={COLORS.text.primary}>{formattedPrice}원</CouponText>
+          <CouponText fontSize={23} fontWeight={900} color={COLORS.text.primary}>{coupon.title}</CouponText>
+          <CouponText fontSize={16} fontWeight={700} color={COLORS.text.primary}>{formattedPrice}원</CouponText>
         </div>
       </InfoContainer>
       <div style={{ position: 'absolute', bottom: '15px', right: '15px' }}>
