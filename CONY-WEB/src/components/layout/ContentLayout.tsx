@@ -3,6 +3,7 @@
 import styled from 'styled-components';
 import { ReactNode } from 'react';
 import Header from '@/components/common/header/Header';
+import Footer from '@/components/common/footer/Footer';
 import { COLORS } from '@/constants/colors';
 
 const LayoutContainer = styled.div`
@@ -17,6 +18,13 @@ const HeaderSection = styled.div`
   position: sticky; 
   width: 100%;
   border-bottom: 1px solid ${COLORS.background.lightGray};
+`;
+
+const FooterSection = styled.div`
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  border-top: 1px solid ${COLORS.background.lightGray};
 `;
 
 const ContentSection = styled.div`
@@ -43,7 +51,9 @@ const ContentLayout = ({ children }: ContentLayoutProps) => {
         <Header />
       </HeaderSection>
       <ContentSection>{children}</ContentSection>
+      <FooterSection> <Footer /></FooterSection>
     </LayoutContainer>
+
   );
 };
 
