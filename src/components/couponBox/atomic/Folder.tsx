@@ -10,7 +10,6 @@ const FolderContainer = styled.div<{ type: 'selected' | 'unselected' }>`
   aspect-ratio: 1.4;
   cursor: pointer;
   transition: transform 0.2s;
-  margin-top: 100px;
 
   &:hover {
     transform: scale(1.05);
