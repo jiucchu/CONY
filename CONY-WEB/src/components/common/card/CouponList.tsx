@@ -66,6 +66,14 @@ const CardsContainer = styled.div`
   > * {
     flex-shrink: 0;
   }
+  
+  > *:first-child {
+    margin-left: 6%;
+  }
+  
+  > *:last-child {
+    margin-right: 6%;
+  }
 `;
 
 interface CouponListProps {
