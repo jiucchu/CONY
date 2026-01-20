@@ -11,3 +11,9 @@ export interface Coupon {
   is_deleted: boolean;
   is_active: boolean;
 }
+
+export interface FolderData {
+  id: string;
+  title: string;
+  type: 'selected' | 'unselected';
+}
