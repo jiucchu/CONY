@@ -2,13 +2,14 @@
 
 import styled from "styled-components";
 import Folder from "./atomic/Folder";
+import { FolderData } from "@/types/coupon/coupon";
 
 const FoldersContainer = styled.div`
   display: flex;
   gap: 20px;
+  padding: 40px 0;
   overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 8px;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   
@@ -29,11 +30,6 @@ const FoldersContainer = styled.div`
   }
 `;
 
-interface FolderData {
-  id: string;
-  title: string;
-  type: 'selected' | 'unselected';
-}
 
 interface FolderListProps {
   folders: FolderData[];
