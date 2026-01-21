@@ -69,7 +69,7 @@ const MainGiftCard = ({ coupon }: { coupon: Coupon }) => {
       </div>
       <ImageContainer>
         <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10 }}>
-                <DdayView dday={daysUntilExpiration} size="Large" />
+            <DdayView type="gift" dday={daysUntilExpiration} size="Large" />
         </div>
         <ProductImage src={coupon.image_url} alt={coupon.title} />
         </ImageContainer>
