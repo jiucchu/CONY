@@ -1,5 +1,5 @@
 # 1. Node 이미지 사용
-FROM node:16-alpine
+FROM node:20-alpine
 
 # 2. 작업 폴더 설정
 WORKDIR /app
