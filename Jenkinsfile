@@ -1,15 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        // Jenkins Credentials Binding Plugin을 사용하여 비밀 정보 주입
-        // Jenkins 관리 -> Credentials에서 'cony-db-props'라는 ID로 Secret File 또는 Username/Password 등을 등록해야 함
-        // 여기서는 예시로 환경 변수를 직접 매핑하거나 파일 생성 방식을 제안합니다.
-        
-        // 예시: Jenkins Credentials에 등록된 Username/Password 사용 시
-        // DB_CREDS = credentials('cony-db-creds-id') 
-    }
-
     stages {
         stage('Checkout') {
             steps {
@@ -17,20 +8,17 @@ pipeline {
             }
         }
 
-        stage('Prepare Env') {
+        stage('Check Env') {
             steps {
                 script {
-                    // Jenkins Credentials를 사용하여 .env 파일 생성
-                    // 실제 운영 시에는 withCredentials 블록을 사용하는 것이 좋습니다.
-                    // 예:
-                    // withCredentials([usernamePassword(credentialsId: 'db-creds', usernameVariable: 'DB_USER', passwordVariable: 'DB_PASS')]) {
-                    //     sh "echo DB_URL=jdbc:mysql://cony-mysql:3306/cony?serverTimezone=Asia/Seoul > .env"
-                    //     sh "echo DB_USERNAME=\$DB_USER >> .env"
-                    //     sh "echo DB_PASSWORD=\$DB_PASS >> .env"
-                    // }
-                    
-                    // 로컬 테스트용 단순 echo (실제 Jenkins 설정에 맞춰 수정 필요)
-                    echo "Checking for .env file or creating one from credentials..."
+                    // 서버의 워크스페이스에 사용자가 직접 생성한 .env 파일이 있는지 확인
+                    def exists = sh(script: "test -f .env", returnStatus: true) == 0
+                    if (exists) {
+                        echo "Found .env file managed by user."
+                    } else {
+                        echo "Warning: .env file not found in workspace."
+                        // 필요하다면 여기서 error "..." 로 빌드를 중단시킬 수 있습니다.
+                    }
                 }
             }
         }
@@ -38,7 +26,7 @@ pipeline {
         stage('Build & Deploy') {
             steps {
                 script {
-                    // .env 파일이 존재해야 docker-compose가 변수를 로드합니다.
+                    // .env 파일이 있으면 docker-compose가 자동으로 읽어서 사용합니다.
                     sh 'docker-compose up --build -d'
                 }
             }
