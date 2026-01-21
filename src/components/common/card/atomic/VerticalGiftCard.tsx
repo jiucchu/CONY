@@ -65,7 +65,7 @@ const VerticalGiftCard = ({ coupon }: { coupon: Coupon }) => {
   return (
     <VerticalGiftCardContainer>
       <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10 }}>
-              <DdayView dday={daysUntilExpiration} size="Small" />
+              <DdayView type="gift" dday={daysUntilExpiration} size="Small" />
       </div>
       <ImageContainer>
         <ProductImage src={coupon.image_url} alt={coupon.title} />
