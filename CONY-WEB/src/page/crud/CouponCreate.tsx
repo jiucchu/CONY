@@ -1,6 +1,5 @@
 'use client';
 
-import ContentLayout from "@/components/layout/ContentLayout";
 import styled from "styled-components";
 import InfoModifyCard from "@/components/InfoModify/InfoModifyCard";
 import { Coupon } from "@/types/coupon/coupon";
@@ -70,47 +69,45 @@ interface CouponCreateProps {
 
 const CouponCreate = ({ couponList }: CouponCreateProps) => {
   return (
-    <ContentLayout>
-      <CouponCreateContainer>
-        <StyledSwiper
-          modules={[Pagination]}
-          slidesPerView={1.1}
-          centeredSlides={true}
-          loop={false}
-          spaceBetween={30}
-          pagination={{
-            clickable: true,
-          }}
-          breakpoints={{
-            640: {
-              slidesPerView: 1.0,
-              spaceBetween: 20,
-            },
-            768: {
-              slidesPerView: 1.1,
-              spaceBetween: 30,
-            },
-          }}
-        >
-          {couponList.map((coupon) => (
-            <SwiperSlide key={coupon.coupon_id}>
-                <div style={{ marginTop: '20px', width: '100%' }}>   
-                    <InfoModifyCard
-                        imageUrl={coupon.image_url}
-                        giftCardName={coupon.title}
-                        store={coupon.brand}
-                        price={coupon.price}
-                        expirationDate={coupon.expiration_date}
-                    />
-                </div>
-            </SwiperSlide>
-          ))}
-        </StyledSwiper>
-        <div style={{ width: '60%', margin: '20px auto' }}>
-            <DefaultButton children="쿠폰 등록" onClick={() => {}} />    
-        </div>
-      </CouponCreateContainer>
-    </ContentLayout>
+    <CouponCreateContainer>
+      <StyledSwiper
+        modules={[Pagination]}
+        slidesPerView={1.1}
+        centeredSlides={true}
+        loop={false}
+        spaceBetween={30}
+        pagination={{
+          clickable: true,
+        }}
+        breakpoints={{
+          640: {
+            slidesPerView: 1.0,
+            spaceBetween: 20,
+          },
+          768: {
+            slidesPerView: 1.1,
+            spaceBetween: 30,
+          },
+        }}
+      >
+        {couponList.map((coupon) => (
+          <SwiperSlide key={coupon.coupon_id}>
+            <div style={{ marginTop: '20px', width: '100%' }}>   
+              <InfoModifyCard
+                imageUrl={coupon.image_url}
+                giftCardName={coupon.title}
+                store={coupon.brand}
+                price={coupon.price}
+                expirationDate={coupon.expiration_date}
+              />
+            </div>
+          </SwiperSlide>
+        ))}
+      </StyledSwiper>
+      <div style={{ width: '60%', margin: '20px auto' }}>
+        <DefaultButton children="쿠폰 등록" onClick={() => {}} />    
+      </div>
+    </CouponCreateContainer>
   );
 };
 
