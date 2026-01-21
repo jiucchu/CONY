@@ -44,13 +44,15 @@ interface MemoInputProps {
   onChange?: (value: string) => void;
   placeholder?: string;
   avatarUrl?: string;
+  onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 const MemoInput = ({ 
   value, 
   onChange, 
   placeholder = "메모를 작성해주세요" ,
-  avatarUrl
+  avatarUrl,
+  onKeyPress
 }: MemoInputProps) => {
   const [internalValue, setInternalValue] = useState(value || '');
 
@@ -69,6 +71,7 @@ const MemoInput = ({
           type="text"
           value={value !== undefined ? value : internalValue}
           onChange={handleChange}
+          onKeyPress={onKeyPress}
           placeholder={placeholder}
         />
       </InputWrapper>
