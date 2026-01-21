@@ -29,7 +29,6 @@ const FooterSection = styled.div`
 `;
 
 const ContentSection = styled.div`
-
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
@@ -43,18 +42,37 @@ const ContentSection = styled.div`
 
 interface ContentLayoutProps {
   children: ReactNode;
+  headerType?: 'default' | 'back';
+  headerTitle?: ReactNode;
+  onBack?: () => void;
+  onNotificationClick?: () => void;
+  onProfileClick?: () => void;
 }
 
-const ContentLayout = ({ children }: ContentLayoutProps) => {
+const ContentLayout = ({ 
+  children,
+  headerType = 'default',
+  headerTitle,
+  onBack,
+  onNotificationClick,
+  onProfileClick
+}: ContentLayoutProps) => {
   return (
     <LayoutContainer>
       <HeaderSection>
-        <Header />
+        <Header 
+          type={headerType}
+          title={headerTitle}
+          onBack={onBack}
+          onNotificationClick={onNotificationClick}
+          onProfileClick={onProfileClick}
+        />
       </HeaderSection>
       <ContentSection>{children}</ContentSection>
-      <FooterSection> <Footer /></FooterSection>
+      <FooterSection>
+        <Footer />
+      </FooterSection>
     </LayoutContainer>
-
   );
 };
 

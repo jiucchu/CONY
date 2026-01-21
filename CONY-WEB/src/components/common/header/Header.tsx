@@ -3,13 +3,15 @@
 import styled from "styled-components";
 import { COLORS } from "@/constants/colors";
 import { StyledText } from "@/utils/StyledText";
+import { ReactNode } from "react";
 
-const HeaderContainer = styled.div`
+const HeaderContainer = styled.div<{ type: 'default' | 'back' }>`
   width: 100%;
   padding: 13px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: ${props => props.type === 'back' ? 'relative' : 'static'};
 `;
 
 const IconContainer = styled.div`
@@ -27,6 +29,7 @@ const IconButton = styled.button`
   align-items: center;
   justify-content: center;
   transition: opacity 0.2s;
+  z-index: 1;
 
   &:hover {
     opacity: 0.7;
@@ -43,6 +46,15 @@ const IconButton = styled.button`
   }
 `;
 
+const TitleContainer = styled.div`
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 const BellIcon = () => (
   <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -57,19 +69,74 @@ const UserIcon = () => (
   </svg>
 );
 
-const Header = () => {
+const BackIcon = () => (
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M19 12H5" />
+    <path d="M12 19l-7-7 7-7" />
+  </svg>
+);
+
+interface HeaderProps {
+  type?: 'default' | 'back';
+  title?: ReactNode;
+  onBack?: () => void;
+  onNotificationClick?: () => void;
+  onProfileClick?: () => void;
+}
+
+const Header = ({ 
+  type = 'default',
+  title,
+  onBack,
+  onNotificationClick,
+  onProfileClick
+}: HeaderProps) => {
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      if (typeof window !== 'undefined') {
+        window.history.back();
+      }
+    }
+  };
+
   const handleNotificationClick = () => {
-    // 알림 클릭 핸들러
-    console.log('Notification clicked');
+    if (onNotificationClick) {
+      onNotificationClick();
+    } else {
+      console.log('Notification clicked');
+    }
   };
 
   const handleProfileClick = () => {
-    // 프로필 클릭 핸들러
-    console.log('Profile clicked');
+    if (onProfileClick) {
+      onProfileClick();
+    } else {
+      console.log('Profile clicked');
+    }
   };
 
+  if (type === 'back') {
+    return (
+      <HeaderContainer type={type}>
+        <IconButton onClick={handleBack} aria-label="뒤로가기">
+          <BackIcon />
+        </IconButton>
+        {title && (
+          <TitleContainer>
+            <StyledText fontSize={18} fontWeight={600} color={COLORS.text.primary}>
+              {title}
+            </StyledText>
+          </TitleContainer>
+        )}
+        <div style={{ width: '24px' }} />
+      </HeaderContainer>
+    );
+  }
+
   return (
-    <HeaderContainer>
+    <HeaderContainer type={type}>
       <StyledText fontSize={20} fontWeight={900} color={COLORS.text.primary}>CONY</StyledText>
       <IconContainer>
         <IconButton onClick={handleNotificationClick} aria-label="알림">
