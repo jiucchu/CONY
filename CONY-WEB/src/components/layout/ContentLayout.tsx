@@ -21,6 +21,7 @@ const HeaderSection = styled.div`
 `;
 
 const FooterSection = styled.div`
+  z-index: 1000;
   position: sticky;
   bottom: 0;
   width: 100%;

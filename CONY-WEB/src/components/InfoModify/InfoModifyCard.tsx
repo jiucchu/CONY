@@ -8,7 +8,9 @@ import editIcon from "@/assets/icons/edit.svg";
 import { StyledText } from "@/utils/StyledText";
 
 const CardContainer = styled.div`
+  margin: 20px auto;
   width: 80%;
+  max-width: 500px;
   background-color: ${COLORS.white};
   border-radius: 10px;
   padding: 20px;
