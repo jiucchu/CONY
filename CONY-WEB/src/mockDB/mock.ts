@@ -1,4 +1,5 @@
 import { Coupon } from "@/types/coupon/coupon";
+import { UserInfo } from "@/types/user/user";
 
 const mockCoupons: Coupon[] = [
   {
@@ -51,6 +52,18 @@ const mockCoupons: Coupon[] = [
   },
 ];
 
+const mockUserInfo: UserInfo = {
+  user_id: 1,
+  name: "김코니",
+  email: "conykim@gmail.com",
+  balance: 3600,
+  avatar_url: undefined,
+};
+
 export const getCoupons = () => {
   return mockCoupons;
+};
+
+export const getUserInfo = () => {
+  return mockUserInfo;
 };

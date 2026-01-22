@@ -85,7 +85,7 @@ const ContentLayout = ({
   }, [onScroll, scrollRef]);
 
   return (
-    <MainLayout isAtTop={isAtTop}>
+    <>
       {!isAtTop && (
         <HeaderSection isAtTop={isAtTop}>
           <Header 
@@ -99,22 +99,12 @@ const ContentLayout = ({
         </HeaderSection>
       )}
       <ContentSection ref={scrollRef}>
-        {isAtTop && (
-          <Header 
-            type={headerType}
-            title={headerTitle}
-            onBack={onBack}
-            onNotificationClick={onNotificationClick}
-            onProfileClick={onProfileClick}
-            isAtTop={isAtTop}
-          />
-        )}
         {children}
       </ContentSection>
       <FooterSection>
         <Footer />
       </FooterSection>
-    </MainLayout>
+    </>
   );
 };
 
