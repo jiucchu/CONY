@@ -2,7 +2,7 @@
 
 import styled from "styled-components";
 import { COLORS } from "@/constants/colors";
-import VerticalGiftCard from "./atomic/VerticalGiftCard";
+import CommonCouponCard from "./CommonCouponCard";
 import { Coupon } from "@/types/coupon/coupon";
 
 const SectionContainer = styled.div`
@@ -96,7 +96,7 @@ const CouponList = ({ coupons, title, onMoreClick }: CouponListProps) => {
       </SectionHeader>
       <CardsContainer>
         {displayCoupons.map((coupon) => (
-          <VerticalGiftCard key={coupon.coupon_id} coupon={coupon} />
+          <CommonCouponCard key={coupon.coupon_id} coupon={coupon} />
         ))}
       </CardsContainer>
     </SectionContainer>
