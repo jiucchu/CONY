@@ -5,7 +5,6 @@ import { ReactNode, useRef, useEffect } from 'react';
 import Header from '@/components/common/header/Header';
 import Footer from '@/components/common/footer/Footer';
 import { COLORS } from '@/constants/colors';
-import MainLayout from './MainLayout';
 
 const LayoutContainer = styled.div`
   width: 100%;
@@ -42,6 +41,14 @@ const ContentSection = styled.div`
   }
 `;
 
+const StickyHeaderWrapper = styled.div<{ isAtTop: boolean }>`
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: ${props => props.isAtTop ? COLORS.primary : 'transparent'};
+  transition: background 0.3s ease;
+`;
+
 interface ContentLayoutProps {
   children: ReactNode;
   headerType?: 'default' | 'back';
@@ -54,7 +61,7 @@ interface ContentLayoutProps {
   isAtTop?: boolean;
 }
 
-const ContentLayout = ({ 
+const MainLayout = ({ 
   children,
   headerType = 'default',
   headerTitle,
@@ -77,15 +84,17 @@ const ContentLayout = ({
 
     const contentElement = scrollRef.current;
     if (contentElement) {
+      handleScroll();
+      
       contentElement.addEventListener('scroll', handleScroll);
       return () => {
         contentElement.removeEventListener('scroll', handleScroll);
       };
     }
   }, [onScroll, scrollRef]);
-
+  
   return (
-    <MainLayout isAtTop={isAtTop}>
+    <LayoutContainer>
       {!isAtTop && (
         <HeaderSection isAtTop={isAtTop}>
           <Header 
@@ -100,22 +109,24 @@ const ContentLayout = ({
       )}
       <ContentSection ref={scrollRef}>
         {isAtTop && (
-          <Header 
-            type={headerType}
-            title={headerTitle}
-            onBack={onBack}
-            onNotificationClick={onNotificationClick}
-            onProfileClick={onProfileClick}
-            isAtTop={isAtTop}
-          />
+          <StickyHeaderWrapper isAtTop={isAtTop}>
+            <Header 
+              type={headerType}
+              title={headerTitle}
+              onBack={onBack}
+              onNotificationClick={onNotificationClick}
+              onProfileClick={onProfileClick}
+              isAtTop={isAtTop}
+            />
+          </StickyHeaderWrapper>
         )}
         {children}
       </ContentSection>
       <FooterSection>
         <Footer />
       </FooterSection>
-    </MainLayout>
+    </LayoutContainer>
   );
 };
 
-export default ContentLayout;
+export default MainLayout;
