@@ -45,7 +45,7 @@ const MainPage = () => {
           <StyledText fontSize={23} fontWeight={600} >님</StyledText>
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}> 
-          <StyledText fontSize={30} fontWeight={900} color={COLORS.primary} >지금 쓰기 좋은 쿠폰</StyledText>
+          <StyledText fontSize={30} fontWeight={900} color={COLORS.primary}>지금 쓰기 좋은 쿠폰</StyledText>
           <StyledText fontSize={30} fontWeight={900} >이에요</StyledText>
         </div>
       </TitleContainer>
