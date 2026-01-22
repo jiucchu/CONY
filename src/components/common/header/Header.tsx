@@ -5,13 +5,15 @@ import { COLORS } from "@/constants/colors";
 import { StyledText } from "@/utils/StyledText";
 import { ReactNode } from "react";
 
-const HeaderContainer = styled.div<{ type: 'default' | 'back' }>`
+const HeaderContainer = styled.div<{ type: 'default' | 'back'; isAtTop: boolean }>`
+  background: transparent;
   width: 100%;
   padding: 13px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: ${props => props.type === 'back' ? 'relative' : 'static'};
+  transition: background 0.3s ease;
 `;
 
 const IconContainer = styled.div`
@@ -20,8 +22,7 @@ const IconContainer = styled.div`
   gap: 16px;
 `;
 
-const IconButton = styled.button`
-  background: none;
+const IconButton = styled.button<{ isAtTop: boolean }>`
   border: none;
   cursor: pointer;
   padding: 4px;
@@ -30,6 +31,7 @@ const IconButton = styled.button`
   justify-content: center;
   transition: opacity 0.2s;
   z-index: 1;
+  background: transparent;
 
   &:hover {
     opacity: 0.7;
@@ -38,11 +40,12 @@ const IconButton = styled.button`
   svg {
     width: 24px;
     height: 24px;
-    stroke: ${COLORS.text.primary};
+    stroke: ${props => props.isAtTop ? COLORS.white : COLORS.text.primary};
     fill: none;
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
+    transition: stroke 0.3s ease;
   }
 `;
 
@@ -82,6 +85,7 @@ interface HeaderProps {
   onBack?: () => void;
   onNotificationClick?: () => void;
   onProfileClick?: () => void;
+  isAtTop?: boolean;
 }
 
 const Header = ({ 
@@ -89,7 +93,8 @@ const Header = ({
   title,
   onBack,
   onNotificationClick,
-  onProfileClick
+  onProfileClick,
+  isAtTop = false
 }: HeaderProps) => {
   const handleBack = () => {
     if (onBack) {
@@ -119,13 +124,13 @@ const Header = ({
 
   if (type === 'back') {
     return (
-      <HeaderContainer type={type}>
-        <IconButton onClick={handleBack} aria-label="뒤로가기">
+      <HeaderContainer type={type} isAtTop={isAtTop}>
+        <IconButton isAtTop={isAtTop} onClick={handleBack} aria-label="뒤로가기">
           <BackIcon />
         </IconButton>
         {title && (
           <TitleContainer>
-            <StyledText fontSize={18} fontWeight={600} color={COLORS.text.primary}>
+            <StyledText fontSize={18} fontWeight={600} color={isAtTop ? COLORS.white : COLORS.text.primary}>
               {title}
             </StyledText>
           </TitleContainer>
@@ -136,13 +141,13 @@ const Header = ({
   }
 
   return (
-    <HeaderContainer type={type}>
-      <StyledText fontSize={20} fontWeight={900} color={COLORS.text.primary}>CONY</StyledText>
+    <HeaderContainer type={type} isAtTop={isAtTop}>
+      <StyledText fontSize={20} fontWeight={900} color={isAtTop ? COLORS.white : COLORS.text.primary}>CONY</StyledText>
       <IconContainer>
-        <IconButton onClick={handleNotificationClick} aria-label="알림">
+        <IconButton isAtTop={isAtTop} onClick={handleNotificationClick} aria-label="알림">
           <BellIcon />
         </IconButton>
-        <IconButton onClick={handleProfileClick} aria-label="프로필">
+        <IconButton isAtTop={isAtTop} onClick={handleProfileClick} aria-label="프로필">
           <UserIcon />
         </IconButton>
       </IconContainer>
