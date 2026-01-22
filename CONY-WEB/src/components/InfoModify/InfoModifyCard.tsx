@@ -104,22 +104,22 @@ const ButtonGroup = styled.div`
   gap: 8px;
 `;
 
-const TypeButton = styled.button<{ isSelected: boolean }>`
+const TypeButton = styled.button<{ $isSelected: boolean }>`
   flex: 1;
   padding: 12px 16px;
-  border: 1px solid ${props => props.isSelected ? COLORS.primary : COLORS.background.lightGray};
+  border: 1px solid ${props => props.$isSelected ? COLORS.primary : COLORS.background.lightGray};
   border-radius: 8px;
   font-family: 'Pretendard', sans-serif;
   font-size: 14px;
   font-weight: 600;
-  color: ${props => props.isSelected ? COLORS.white : COLORS.text.primary};
-  background-color: ${props => props.isSelected ? COLORS.primary : COLORS.white};
+  color: ${props => props.$isSelected ? COLORS.white : COLORS.text.primary};
+  background-color: ${props => props.$isSelected ? COLORS.primary : COLORS.white};
   cursor: pointer;
   transition: all 0.2s;
 
   &:hover {
     border-color: ${COLORS.primary};
-    ${props => !props.isSelected && `
+    ${props => !props.$isSelected && `
       color: ${COLORS.primary};
     `}
   }
@@ -251,13 +251,13 @@ const InfoModifyCard = ({
           <StyledText fontSize={14} fontWeight={600} color={COLORS.text.primary}>권종</StyledText>
           <ButtonGroup>
             <TypeButton
-              isSelected={localType === 'product'}
+              $isSelected={localType === 'product'}
               onClick={() => handleTypeChange('product')}
             >
               <StyledText fontSize={14} fontWeight={600} >물품 교환형</StyledText>
             </TypeButton>
             <TypeButton
-              isSelected={localType === 'amount'}
+              $isSelected={localType === 'amount'}
               onClick={() => handleTypeChange('amount')}
             >
               <StyledText fontSize={14} fontWeight={600} >금액형</StyledText>
