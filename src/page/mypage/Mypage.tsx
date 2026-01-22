@@ -1,6 +1,7 @@
 import MyInfoCard from '@/components/mypage/MyInfoCard';
 import styled from 'styled-components'; 
 import ContentLayout from '@/components/layout/ContentLayout';
+import ConnectAccount from '@/components/mypage/ConnectAccount';
 
 const MypageContainer = styled.div`
   padding: 5% 0;
@@ -16,6 +17,7 @@ const Mypage = () => {
     <ContentLayout>
       <MypageContainer>
         <MyInfoCard />
+        <ConnectAccount />
       </MypageContainer>
     </ContentLayout>
   );
