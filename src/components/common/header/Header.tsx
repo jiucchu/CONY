@@ -5,14 +5,14 @@ import { COLORS } from "@/constants/colors";
 import { StyledText } from "@/utils/StyledText";
 import { ReactNode } from "react";
 
-const HeaderContainer = styled.div<{ type: 'default' | 'back'; isAtTop: boolean }>`
+const HeaderContainer = styled.div<{ $type: 'default' | 'back'; $isAtTop: boolean }>`
   background: transparent;
   width: 100%;
   padding: 13px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: ${props => props.type === 'back' ? 'relative' : 'static'};
+  position: ${props => props.$type === 'back' ? 'relative' : 'static'};
   transition: background 0.3s ease;
 `;
 
@@ -22,7 +22,7 @@ const IconContainer = styled.div`
   gap: 16px;
 `;
 
-const IconButton = styled.button<{ isAtTop: boolean }>`
+const IconButton = styled.button<{ $isAtTop: boolean }>`
   border: none;
   cursor: pointer;
   padding: 4px;
@@ -40,7 +40,7 @@ const IconButton = styled.button<{ isAtTop: boolean }>`
   svg {
     width: 24px;
     height: 24px;
-    stroke: ${props => props.isAtTop ? COLORS.white : COLORS.text.primary};
+    stroke: ${props => props.$isAtTop ? COLORS.white : COLORS.text.primary};
     fill: none;
     stroke-width: 2;
     stroke-linecap: round;
@@ -124,8 +124,8 @@ const Header = ({
 
   if (type === 'back') {
     return (
-      <HeaderContainer type={type} isAtTop={isAtTop}>
-        <IconButton isAtTop={isAtTop} onClick={handleBack} aria-label="뒤로가기">
+      <HeaderContainer $type={type} $isAtTop={isAtTop}>
+        <IconButton $isAtTop={isAtTop} onClick={handleBack} aria-label="뒤로가기">
           <BackIcon />
         </IconButton>
         {title && (
@@ -141,13 +141,13 @@ const Header = ({
   }
 
   return (
-    <HeaderContainer type={type} isAtTop={isAtTop}>
+    <HeaderContainer $type={type} $isAtTop={isAtTop}>
       <StyledText fontSize={20} fontWeight={900} color={isAtTop ? COLORS.white : COLORS.text.primary}>CONY</StyledText>
       <IconContainer>
-        <IconButton isAtTop={isAtTop} onClick={handleNotificationClick} aria-label="알림">
+        <IconButton $isAtTop={isAtTop} onClick={handleNotificationClick} aria-label="알림">
           <BellIcon />
         </IconButton>
-        <IconButton isAtTop={isAtTop} onClick={handleProfileClick} aria-label="프로필">
+        <IconButton $isAtTop={isAtTop} onClick={handleProfileClick} aria-label="프로필">
           <UserIcon />
         </IconButton>
       </IconContainer>
