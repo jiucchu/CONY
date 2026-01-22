@@ -15,13 +15,12 @@ const SectionHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
-  padding: 0 4px;
+  padding: 0 5%; 
 `;
 
 const TitleContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
 `;
 
 const FairyIcon = styled.div`
@@ -92,7 +91,7 @@ const CouponList = ({ coupons, title, onMoreClick }: CouponListProps) => {
           <FairyIcon></FairyIcon>
           <FontText fontSize={22} fontWeight={900} color={COLORS.primary}>🧚{title}</FontText>
         </TitleContainer>
-        <MoreLink onClick={onMoreClick}>더보기&gt;</MoreLink>
+        <MoreLink onClick={onMoreClick}>더보기 &gt;</MoreLink>
       </SectionHeader>
       <CardsContainer>
         {displayCoupons.map((coupon) => (
