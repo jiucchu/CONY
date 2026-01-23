@@ -1,5 +1,6 @@
 package com.cony.payment.infrastructure.kakaopay.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -35,18 +36,21 @@ public class KakaoPayApproveResponse {
     /**
      * 가맹점 주문번호
      */
-    private String partner_order_id;
+    @JsonProperty("partner_order_id")
+    private String partnerOrderId;
 
     /**
      * 가맹점 회원 ID
      */
-    private String partner_user_id;
+    @JsonProperty("partner_user_id")
+    private String partnerUserId;
 
     /**
      * 결제 수단
      * - CARD, MONEY 등
      */
-    private String payment_method_type;
+    @JsonProperty("payment_method_type")
+    private String paymentMethodType;
 
     /**
      * 결제 금액 정보
@@ -56,17 +60,20 @@ public class KakaoPayApproveResponse {
     /**
      * 결제 카드 정보
      */
-    private CardInfo card_info;
+    @JsonProperty("card_info")
+    private CardInfo cardInfo;
 
     /**
      * 상품명
      */
-    private String item_name;
+    @JsonProperty("item_name")
+    private String itemName;
 
     /**
      * 상품 코드
      */
-    private String item_code;
+    @JsonProperty("item_code")
+    private String itemCode;
 
     /**
      * 상품 수량
@@ -76,12 +83,14 @@ public class KakaoPayApproveResponse {
     /**
      * 결제 준비 요청 시각
      */
-    private LocalDateTime created_at;
+    @JsonProperty("created_at")
+    private LocalDateTime createdAt;
 
     /**
      * 결제 승인 시각
      */
-    private LocalDateTime approved_at;
+    @JsonProperty("approved_at")
+    private LocalDateTime approvedAt;
 
     /**
      * 결제 승인 요청에 대한 응답
@@ -102,7 +111,8 @@ public class KakaoPayApproveResponse {
         /**
          * 비과세 금액
          */
-        private Integer tax_free;
+        @JsonProperty("tax_free")
+        private Integer taxFree;
 
         /**
          * 부가세 금액
@@ -122,7 +132,8 @@ public class KakaoPayApproveResponse {
         /**
          * 컵 보증금
          */
-        private Integer green_deposit;
+        @JsonProperty("green_deposit")
+        private Integer greenDeposit;
     }
 
     /**
@@ -134,22 +145,26 @@ public class KakaoPayApproveResponse {
         /**
          * 카드사 한글명
          */
-        private String kakaopay_purchase_corp;
+        @JsonProperty("kakaopay_purchase_corp")
+        private String kakaopayPurchaseCorp;
 
         /**
          * 카드사 코드
          */
-        private String kakaopay_purchase_corp_code;
+        @JsonProperty("kakaopay_purchase_corp_code")
+        private String kakaopayPurchaseCorpCode;
 
         /**
          * 카드 발급사 한글명
          */
-        private String kakaopay_issuer_corp;
+        @JsonProperty("kakaopay_issuer_corp")
+        private String kakaopayIssuerCorp;
 
         /**
          * 카드 발급사 코드
          */
-        private String kakaopay_issuer_corp_code;
+        @JsonProperty("kakaopay_issuer_corp_code")
+        private String kakaopayIssuerCorpCode;
 
         /**
          * 카드 BIN
@@ -159,31 +174,37 @@ public class KakaoPayApproveResponse {
         /**
          * 카드 타입
          */
-        private String card_type;
+        @JsonProperty("card_type")
+        private String cardType;
 
         /**
          * 할부 개월 수
          */
-        private String install_month;
+        @JsonProperty("install_month")
+        private String installMonth;
 
         /**
          * 카드사 승인번호
          */
-        private String approved_id;
+        @JsonProperty("approved_id")
+        private String approvedId;
 
         /**
          * 카드사 가맹점 번호
          */
-        private String card_mid;
+        @JsonProperty("card_mid")
+        private String cardMid;
 
         /**
          * 무이자할부 여부
          */
-        private String interest_free_install;
+        @JsonProperty("interest_free_install")
+        private String interestFreeInstall;
 
         /**
          * 카드사 포인트 사용 금액
          */
-        private Integer card_item_code;
+        @JsonProperty("card_item_code")
+        private Integer cardItemCode;
     }
 }

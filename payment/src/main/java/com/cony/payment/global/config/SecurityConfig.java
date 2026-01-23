@@ -30,9 +30,10 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/health-check").permitAll()
-                        .requestMatchers("/api/v1/test/**").permitAll()  // 테스트용 (추후 삭제)
-                        .requestMatchers("/api/v1/payments/approve", "/api/payments/cancel", "/api/payments/fail").permitAll()  // 카카오페이 리다이렉트
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger 허용
+                        .requestMatchers("/payments/**").permitAll()  // 카카오페이 결제 관련 API 허용
                         .anyRequest().authenticated())
+
                 .build();
     }
 

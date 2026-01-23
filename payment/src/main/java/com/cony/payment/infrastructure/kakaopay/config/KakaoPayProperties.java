@@ -1,5 +1,6 @@
 package com.cony.payment.infrastructure.kakaopay.config;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
  * - application.properties의 kakao.pay.* 값을 읽어옴
  */
 @Getter
+@Setter
 @Component
 @ConfigurationProperties(prefix = "kakao.pay")
 public class KakaoPayProperties {

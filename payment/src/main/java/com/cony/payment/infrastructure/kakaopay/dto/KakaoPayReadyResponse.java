@@ -1,5 +1,6 @@
 package com.cony.payment.infrastructure.kakaopay.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -19,30 +20,36 @@ public class KakaoPayReadyResponse {
     /**
      * 결제 페이지 URL (PC)
      */
-    private String next_redirect_pc_url;
+    @JsonProperty("next_redirect_pc_url")
+    private String nextRedirectPcUrl;
 
     /**
      * 결제 페이지 URL (모바일)
      */
-    private String next_redirect_mobile_url;
+    @JsonProperty("next_redirect_mobile_url")
+    private String nextRedirectMobileUrl;
 
     /**
      * 결제 페이지 URL (앱)
      */
-    private String next_redirect_app_url;
+    @JsonProperty("next_redirect_app_url")
+    private String nextRedirectAppUrl;
 
     /**
      * Android 앱 스킴
      */
-    private String android_app_scheme;
+    @JsonProperty("android_app_scheme")
+    private String androidAppScheme;
 
     /**
      * iOS 앱 스킴
      */
-    private String ios_app_scheme;
+    @JsonProperty("ios_app_scheme")
+    private String iosAppScheme;
 
     /**
      * 생성 시간
      */
-    private String created_at;
+    @JsonProperty("created_at")
+    private String createdAt;
 }
