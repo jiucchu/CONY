@@ -14,10 +14,10 @@ const LayoutContainer = styled.div`
   overflow: hidden;
 `;
 
-const HeaderSection = styled.div<{ isAtTop: boolean }>`
+const HeaderSection = styled.div<{ $isAtTop: boolean }>`
   position: sticky; 
   width: 100%;
-  border-bottom: ${props => props.isAtTop ? 'none' : `1px solid ${COLORS.background.lightGray}`};
+  border-bottom: ${props => props.$isAtTop ? 'none' : `1px solid ${COLORS.background.lightGray}`};
   transition: border-bottom 0.3s ease;
 `;
 
@@ -41,11 +41,11 @@ const ContentSection = styled.div`
   }
 `;
 
-const StickyHeaderWrapper = styled.div<{ isAtTop: boolean }>`
+const StickyHeaderWrapper = styled.div<{ $isAtTop: boolean }>`
   position: sticky;
   top: 0;
   z-index: 100;
-  background: ${props => props.isAtTop ? COLORS.primary : 'transparent'};
+  background: ${props => props.$isAtTop ? COLORS.primary : 'transparent'};
   transition: background 0.3s ease;
 `;
 
@@ -96,7 +96,7 @@ const MainLayout = ({
   return (
     <LayoutContainer>
       {!isAtTop && (
-        <HeaderSection isAtTop={isAtTop}>
+        <HeaderSection $isAtTop={isAtTop}>
           <Header 
             type={headerType}
             title={headerTitle}
@@ -109,7 +109,7 @@ const MainLayout = ({
       )}
       <ContentSection ref={scrollRef}>
         {isAtTop && (
-          <StickyHeaderWrapper isAtTop={isAtTop}>
+          <StickyHeaderWrapper $isAtTop={isAtTop}>
             <Header 
               type={headerType}
               title={headerTitle}

@@ -31,10 +31,10 @@ const TitleContainer = styled.div`
 
 
 
-const LandingView = styled.div<{ isAtTop: boolean }>`
+const LandingView = styled.div<{ $isAtTop: boolean }>`
 
   z-index: 10;
-  background: ${props => props.isAtTop 
+  background: ${props => props.$isAtTop 
     ? `linear-gradient(to bottom, ${COLORS.primary} 0%, #f5f5f5 75%, rgba(224, 224, 224, 0) 100%)`
     : 'transparent'
   };
@@ -86,7 +86,7 @@ const MainPage = () => {
 
   return (
       <MainLayout onScroll={handleScroll} isAtTop={isAtTop}>
-        <LandingView isAtTop={isAtTop}>
+        <LandingView $isAtTop={isAtTop}>
           <MainTitleContainer>
             {mainTitle('CONY')}
           </MainTitleContainer>
