@@ -15,10 +15,10 @@ const LayoutContainer = styled.div`
   overflow: hidden;
 `;
 
-const HeaderSection = styled.div<{ isAtTop: boolean }>`
+const HeaderSection = styled.div<{ $isAtTop: boolean }>`
   position: sticky; 
   width: 100%;
-  border-bottom: ${props => props.isAtTop ? 'none' : `1px solid ${COLORS.background.lightGray}`};
+  border-bottom: ${props => props.$isAtTop ? 'none' : `1px solid ${COLORS.background.lightGray}`};
   transition: border-bottom 0.3s ease;
 `;
 
@@ -87,7 +87,7 @@ const ContentLayout = ({
   return (
     <>
       {!isAtTop && (
-        <HeaderSection isAtTop={isAtTop}>
+        <HeaderSection $isAtTop={isAtTop}>
           <Header 
             type={headerType}
             title={headerTitle}

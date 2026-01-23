@@ -65,7 +65,7 @@ const MemoInput = ({
 
   return (
     <InputContainer>
-        <AvatarCircle imageUrl={avatarUrl || ''} />
+        <AvatarCircle imageUrl={avatarUrl || undefined} />
         <InputWrapper>
         <StyledInput
           type="text"

@@ -4,6 +4,7 @@ import DdayView from "./atomic/DdayView";
 import { COLORS } from "@/constants/colors";
 import { calculateDaysUntilExpiration } from "@/utils/DayUtils";
 import { StyledText } from "@/utils/StyledText";
+import { useRouter } from "next/navigation";
 
 const CardContainer = styled.div`
   background-color: #FFFFFF;
@@ -13,6 +14,17 @@ const CardContainer = styled.div`
   width: 45%;
   overflow: hidden;
   position: relative;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 `;
 
 const ImageContainer = styled.div`
@@ -100,6 +112,7 @@ const CommonCouponCard = ({
   discountRate, 
   originalPrice 
 }: CommonCouponCardProps) => {
+  const router = useRouter();
   const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiration_date);
   const formattedPrice = coupon.price.toLocaleString('ko-KR');
   const formattedOriginalPrice = originalPrice ? originalPrice.toLocaleString('ko-KR') : '';
@@ -107,8 +120,12 @@ const CommonCouponCard = ({
   const displayDiscountRate = discountRate || 0;
   const displayOriginalPrice = originalPrice || coupon.price;
 
+  const handleCardClick = () => {
+    router.push(`/coupon/detail?id=${coupon.coupon_id}`);
+  };
+
   return (
-    <CardContainer>
+    <CardContainer onClick={handleCardClick}>
       <ImageContainer>
           <DdayWrapper>
             <DdayView type="common" dday={daysUntilExpiration} size="Medium" />
@@ -120,9 +137,15 @@ const CommonCouponCard = ({
         <StyledText fontSize={16} fontWeight={600} color={COLORS.text.secondary}>{coupon.brand}</StyledText>
         <StyledText fontSize={20} fontWeight={800} color={COLORS.text.primary}>{coupon.title}</StyledText>
         <PriceContainer>
-            <DiscountBadge>{displayDiscountRate}%</DiscountBadge>
-          <DiscountPrice>{formattedPrice}</DiscountPrice>
+          {displayDiscountRate > 0 && (
+            <>
+              <DiscountBadge>{displayDiscountRate}%</DiscountBadge>
+              <DiscountPrice>{formattedPrice}</DiscountPrice>
+            </>
+          )}
+          {displayOriginalPrice > 0 && (
             <OriginalPrice>{formattedOriginalPrice}</OriginalPrice>
+          )}
         </PriceContainer>
       </InfoContainer>
     </CardContainer>

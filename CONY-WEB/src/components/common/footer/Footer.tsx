@@ -6,6 +6,7 @@ import { StyledText } from "@/utils/StyledText";
 import { useState, useRef, useEffect } from "react";
 import ImageUploadModal from "@/components/imageUpload/ImageUploadModal";
 import { isMobileDevice } from "@/utils/device";
+import { useRouter } from "next/navigation";
 
 const FooterContainer = styled.div`
   display: flex;
@@ -62,7 +63,7 @@ const NavIcon = styled.div`
   }
 `;
 
-const CentralButton = styled.button`
+const CentralButton = styled.button<{ $isOpen: boolean }>`
   position: absolute;
   top: -30px;
   left: 50%;
@@ -97,6 +98,8 @@ const CentralButton = styled.button`
     stroke-width: 3;
     stroke-linecap: round;
     stroke-linejoin: round;
+    transition: transform 0.3s ease;
+    transform: ${props => props.$isOpen ? 'rotate(45deg)' : 'rotate(0deg)'};
   }
 `;
 
@@ -134,11 +137,80 @@ const HiddenFileInput = styled.input`
   border-width: 0;
 `;
 
+const OptionsOverlay = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 1499;
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  pointer-events: ${props => props.$isOpen ? 'auto' : 'none'};
+  transition: opacity 0.3s ease;
+`;
+
+const OptionsContainer = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  bottom: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  pointer-events: ${props => props.$isOpen ? 'auto' : 'none'};
+`;
+
+const OptionButton = styled.button<{ $isVisible: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background-color: ${COLORS.white};
+  border: none;
+  border-radius: 30px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  opacity: ${props => props.$isVisible ? 1 : 0};
+  transform: ${props => props.$isVisible ? 'translateY(0)' : 'translateY(20px)'};
+  pointer-events: ${props => props.$isVisible ? 'auto' : 'none'};
+  white-space: nowrap;
+
+  &:hover {
+    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.2);
+    transform: translateY(-4px);
+  }
+
+  &:active {
+    transform: translateY(-2px);
+  }
+`;
+
+const EditIcon = () => (
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+  </svg>
+);
+
+const ImageIcon = () => (
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    <circle cx="8.5" cy="8.5" r="1.5" />
+    <polyline points="21 15 16 10 5 21" />
+  </svg>
+);
+
 const Footer = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [isMobile, setIsMobile] = useState(false);
+  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     setIsMobile(isMobileDevice());
@@ -149,6 +221,20 @@ const Footer = () => {
   };
 
   const handleAddClick = () => {
+    setIsOptionsOpen(prev => !prev);
+  };
+
+  const handleOptionsOverlayClick = () => {
+    setIsOptionsOpen(false);
+  };
+
+  const handleDirectInput = () => {
+    setIsOptionsOpen(false);
+    router.push('/coupon/create');
+  };
+
+  const handleImageUpload = () => {
+    setIsOptionsOpen(false);
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
@@ -234,7 +320,7 @@ const Footer = () => {
             </StyledText>
           </NavItem>
 
-          <CentralButton onClick={handleAddClick} aria-label="추가">
+          <CentralButton onClick={handleAddClick} $isOpen={isOptionsOpen} aria-label="추가">
             <PlusIcon />
           </CentralButton>
 
@@ -248,6 +334,30 @@ const Footer = () => {
           </NavItem>
         </FooterContent>
       </FooterContainer>
+      <OptionsOverlay $isOpen={isOptionsOpen} onClick={handleOptionsOverlayClick} />
+      <OptionsContainer $isOpen={isOptionsOpen}>
+        <OptionButton 
+          $isVisible={isOptionsOpen} 
+          onClick={handleImageUpload}
+          style={{ transitionDelay: isOptionsOpen ? '0.1s' : '0s' }}
+        >
+          <ImageIcon />
+          <StyledText fontSize={14} fontWeight={600} color={COLORS.text.primary}>
+            이미지로 자동 등록하기
+          </StyledText>
+        </OptionButton>
+        
+        <OptionButton 
+          $isVisible={isOptionsOpen} 
+          onClick={handleDirectInput}
+          style={{ transitionDelay: isOptionsOpen ? '0s' : '0.1s' }}
+        >
+          <EditIcon />
+          <StyledText fontSize={14} fontWeight={600} color={COLORS.text.primary}>
+            직접 입력하기
+          </StyledText>
+        </OptionButton>
+      </OptionsContainer>
       {isModalOpen && (
         <ImageUploadModal
           images={galleryImages}
