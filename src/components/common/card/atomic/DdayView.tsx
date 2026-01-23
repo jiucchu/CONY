@@ -2,8 +2,8 @@ import styled from "styled-components";
 import { COLORS } from "@/constants/colors";
 import { SizeType } from "@/types/common";
 
-const DdayContainer = styled.div<{ size: number; isExpired: boolean }>`
-  background-color: ${props => props.isExpired ? COLORS.text.secondary : COLORS.primary};
+const DdayContainer = styled.div<{ size: number; $isExpired: boolean }>`
+  background-color: ${props => props.$isExpired ? COLORS.text.secondary : COLORS.primary};
   border-radius: ${props => {
     const height = props.size * 0.45;
     return `0 0 0 ${height / 2}px`;
@@ -44,7 +44,7 @@ const DdayView = ({ type, dday, size }: { type: 'common' | 'gift', dday: number,
 
   return (
     <> {type === 'common' ? (
-      <DdayContainer size={containerSize} isExpired={isExpired}>
+      <DdayContainer size={containerSize} $isExpired={isExpired}>
         <DdayText size={fontSize}>{displayText}</DdayText>
       </DdayContainer>
     ) : (

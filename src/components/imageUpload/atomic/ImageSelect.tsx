@@ -4,8 +4,9 @@ import styled from "styled-components";
 import { COLORS } from "@/constants/colors";
 import { useState } from "react";
 
-const ImageContainer = styled.div<{ isSelected: boolean }>`
+const ImageContainer = styled.div<{ $isSelected: boolean }>`
   position: relative;
+  width: 100%;
   aspect-ratio: 1;
   background-color: ${COLORS.background.lightGray};
   border-radius: 10px;
@@ -22,16 +23,17 @@ const Image = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 `;
 
-const CheckBadge = styled.div<{ isSelected: boolean }>`
+const CheckBadge = styled.div<{ $isSelected: boolean }>`
   position: absolute;
   top: 8px;
   right: 8px;
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background-color: ${props => props.isSelected ? COLORS.primary : 'lightgray'};
+  background-color: ${props => props.$isSelected ? COLORS.primary : 'lightgray'};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -39,7 +41,7 @@ const CheckBadge = styled.div<{ isSelected: boolean }>`
   z-index: 10;
 `;
 
-const CheckIcon = styled.svg<{ isSelected: boolean }>`
+const CheckIcon = styled.svg<{ $isSelected: boolean }>`
   width: 14px;
   height: 14px;
   opacity: 1;
@@ -71,11 +73,11 @@ const ImageSelect = ({
   };
 
   return (
-    <ImageContainer isSelected={isSelected} onClick={handleClick}>
+    <ImageContainer $isSelected={isSelected} onClick={handleClick}>
       <Image src={imageUrl} alt={imageAlt} />
-      <CheckBadge isSelected={isSelected}>
+      <CheckBadge $isSelected={isSelected}>
         <CheckIcon 
-          isSelected={isSelected} 
+          $isSelected={isSelected} 
           viewBox="0 0 24 24" 
           fill="none" 
           xmlns="http://www.w3.org/2000/svg"
