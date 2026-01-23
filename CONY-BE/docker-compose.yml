@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  payment:
+    build: ./payment
+    container_name: cony-payment
+    environment:
+      SPRING_DATASOURCE_URL: ${MYSQL_URL}
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "8081:8080"
+    networks:
+      - cony-net
+
+  manage:
+    build: ./manage
+    container_name: cony-manage
+    environment:
+      SPRING_DATASOURCE_URL: ${MYSQL_URL}
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "8082:8080"
+    networks:
+      - cony-net
+
+  ai:
+    build: ./ai
+    container_name: cony-ai
+    environment:
+      # AI 서비스가 DB를 사용하는 경우에만 필요
+      SPRING_DATASOURCE_URL: ${MYSQL_URL}
+    ports:
+      - "8000:8000"
+    networks:
+      - cony-net
+
+# 중요: 외부 네트워크 사용 선언
+networks:
+  cony-net:
+    external: true
