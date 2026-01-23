@@ -1,13 +1,12 @@
 package com.cony.manage.domain.gifticon.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
-@Getter
+@Getter @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class Category {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "category_id")
