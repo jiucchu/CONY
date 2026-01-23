@@ -3,6 +3,9 @@
 import styled from "styled-components";
 import { COLORS } from "@/constants/colors";
 import { StyledText } from "@/utils/StyledText";
+import { useState, useRef, useEffect } from "react";
+import ImageUploadModal from "@/components/imageUpload/ImageUploadModal";
+import { isMobileDevice } from "@/utils/device";
 
 const FooterContainer = styled.div`
   display: flex;
@@ -119,13 +122,88 @@ const BagIcon = () => (
   </svg>
 );
 
+const HiddenFileInput = styled.input`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+`;
+
 const Footer = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setIsMobile(isMobileDevice());
+  }, []);
+
   const handleCouponBoxClick = () => {
     console.log('내 쿠폰함 clicked');
   };
 
   const handleAddClick = () => {
-    console.log('추가 버튼 clicked');
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const imagePromises = Array.from(files).map((file) => {
+        return new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            if (e.target?.result) {
+              resolve(e.target.result as string);
+            } else {
+              reject(new Error('파일 읽기 실패'));
+            }
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      });
+
+      Promise.all(imagePromises)
+        .then((imageUrls) => {
+          setGalleryImages(imageUrls);
+          setIsModalOpen(true);
+        })
+        .catch((error) => {
+          console.error('이미지 로드 오류:', error);
+        });
+    }
+  };
+
+  const handleDirectUpload = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleImageComplete = (selectedImages: string[]) => {
+    console.log('선택된 이미지:', selectedImages);
+    setIsModalOpen(false);
+    setGalleryImages([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setGalleryImages([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleExchangeClick = () => {
@@ -133,31 +211,53 @@ const Footer = () => {
   };
 
   return (
-    <FooterContainer>
-      <FooterContent>
-        <NavItem onClick={handleCouponBoxClick}>
-          <NavIcon>
-            <CardIcon />
-          </NavIcon>
-          <StyledText fontSize={12} fontWeight={500} color={COLORS.text.primary}>
-            내 쿠폰함
-          </StyledText>
-        </NavItem>
+    <>
+      <HiddenFileInput
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileChange}
+        {...(isMobile && {
+          // 모바일에서 갤러리 접근을 위한 추가 속성
+          capture: undefined, // undefined로 설정하여 갤러리 선택 옵션 제공
+        })}
+      />
+      <FooterContainer>
+        <FooterContent>
+          <NavItem onClick={handleCouponBoxClick}>
+            <NavIcon>
+              <CardIcon />
+            </NavIcon>
+            <StyledText fontSize={12} fontWeight={500} color={COLORS.text.primary}>
+              내 쿠폰함
+            </StyledText>
+          </NavItem>
 
-        <CentralButton onClick={handleAddClick} aria-label="추가">
-          <PlusIcon />
-        </CentralButton>
+          <CentralButton onClick={handleAddClick} aria-label="추가">
+            <PlusIcon />
+          </CentralButton>
 
-        <NavItem onClick={handleExchangeClick}>
-          <NavIcon>
-            <BagIcon />
-          </NavIcon>
-          <StyledText fontSize={12} fontWeight={500} color={COLORS.text.primary}>
-            콘 거래소
-          </StyledText>
-        </NavItem>
-      </FooterContent>
-    </FooterContainer>
+          <NavItem onClick={handleExchangeClick}>
+            <NavIcon>
+              <BagIcon />
+            </NavIcon>
+            <StyledText fontSize={12} fontWeight={500} color={COLORS.text.primary}>
+              콘 거래소
+            </StyledText>
+          </NavItem>
+        </FooterContent>
+      </FooterContainer>
+      {isModalOpen && (
+        <ImageUploadModal
+          images={galleryImages}
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+          onComplete={handleImageComplete}
+          onDirectUpload={handleDirectUpload}
+        />
+      )}
+    </>
   );
 };
 
