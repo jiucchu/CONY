@@ -30,7 +30,7 @@ public class KakaoPayClient {
      */
     public KakaoPayReadyResponse ready(KakaoPayReadyRequest request) {
         log.info("카카오페이 결제 준비 요청: partner_order_id={}, amount={}",
-                request.getPartner_order_id(), request.getTotal_amount());
+                request.getPartnerOrderId(), request.getTotalAmount());
 
         try {
             HttpHeaders headers = createHeaders();
@@ -58,7 +58,7 @@ public class KakaoPayClient {
      */
     public KakaoPayApproveResponse approve(KakaoPayApproveRequest request) {
         log.info("카카오페이 결제 승인 요청: tid={}, partner_order_id={}",
-                request.getTid(), request.getPartner_order_id());
+                request.getTid(), request.getPartnerOrderId());
 
         try {
             HttpHeaders headers = createHeaders();
