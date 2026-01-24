@@ -11,12 +11,16 @@ import com.cony.manage.domain.user.repository.UserRepository;
 import com.cony.manage.global.error.CustomException;
 import com.cony.manage.global.error.ErrorCode;
 import com.cony.manage.infrastructure.image.FileUploader;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
@@ -39,6 +43,7 @@ public class GifticonServiceImpl implements GifticonService {
     private final GifticonUsageLogRepository gifticonUsageLogRepository;
 
     private final FileUploader fileUploader;
+    private final RestClient restClient;
 
     @Override
     public List<GifticonAnalysisResponseDto> analyzeGifticon(List<MultipartFile> images) {
@@ -47,16 +52,64 @@ public class GifticonServiceImpl implements GifticonService {
         for(MultipartFile image : images) {
             String tempImageUrl = fileUploader.uploadTemp(image);
 
-            // AI OCR 기능이 완성되면 RestCilent 등을 이용해 post 요청
-            /*
-               Map<String, Object> requestBody = Map.of(
-                   "image_url", imageUrl,
-                   "image_type", "ORIGINAL"
-               );
-               // response = restClient.post().uri("/ocr").body(requestBody)...
-            */
+            try {
+                OcrRequestDto ocrRequest = OcrRequestDto.builder()
+                        .imageUrl(tempImageUrl)
+                        .imageType("ORIGINAL")
+                        .build();
 
-            results.add(createMockAnalysisResult(tempImageUrl));
+                JsonNode rootNode = restClient.post()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(ocrRequest)
+                        .retrieve()
+                        .body(JsonNode.class);
+
+                if(rootNode != null) {
+                    JsonNode fields = rootNode.path("data").path("fields");
+
+                    GifticonAnalysisResponseDto.OcrFields ocrFields = GifticonAnalysisResponseDto.OcrFields.builder()
+                            .brandName(fields.path("brand_name").path("value").asText(null))
+                            .productName(fields.path("product_name").path("value").asText(null))
+                            .originalPrice(fields.path("original_price").path("value").asInt(0))
+                            .expiryDate(fields.path("expiry_date").path("value").asText(null))
+                            .gifticonType(fields.path("gifticon_type").path("value").asText(null))
+                            .barcodeNumber(fields.path("barcode_number").path("value").asText(null))
+                            .build();
+
+                    List<String> needsReview = new ArrayList<>();
+                    rootNode.path("data").path("needs_review").forEach(node -> needsReview.add(node.asText(null)));
+
+                    results.add(GifticonAnalysisResponseDto.builder()
+                            .imageUrl(tempImageUrl)
+                            .fields(ocrFields)
+                            .needsReview(needsReview)
+                            .build());
+                }
+            } catch (Exception e) {
+                log.error("OCR Analysis failed for image: {}, error: {}", tempImageUrl, e.getMessage());
+
+                // 1. 모든 필드를 '검토 필요(needsReview)' 항목으로 추가
+                // (프론트엔드에서 이 리스트를 보고 "아, 이 항목들을 입력받아야 하는구나"라고 판단하게 함)
+                List<String> allFieldsNeeded = List.of(
+                        "brandName",
+                        "productName",
+                        "originalPrice",
+                        "expiryDate",
+                        "gifticonType",
+                        "barcodeNumber"
+                );
+
+                // 2. 값은 모두 비어있는(null) 필드 객체 생성
+                GifticonAnalysisResponseDto.OcrFields emptyFields = GifticonAnalysisResponseDto.OcrFields.builder()
+                        .build();
+
+                // 3. 결과 리스트에 추가 (이미지 URL은 유지하여 사용자가 원본을 보고 입력할 수 있게 함)
+                results.add(GifticonAnalysisResponseDto.builder()
+                        .imageUrl(tempImageUrl)
+                        .fields(emptyFields)
+                        .needsReview(allFieldsNeeded)
+                        .build());
+            }
         }
 
         return results;
@@ -286,26 +339,5 @@ public class GifticonServiceImpl implements GifticonService {
 
         gifticon.updateUsageAmount(oldAmount, newAmount);
         useLog.updateAmount(newAmount, gifticon.getCurrentBalance());
-    }
-
-
-    // --- Mock Data Generator ---
-    private GifticonAnalysisResponseDto createMockAnalysisResult(String imageUrl) {
-        // AI가 분석 후 "확실하다"고 판단한 데이터만 넘어온다고 가정
-        GifticonAnalysisResponseDto.OcrFields fields = GifticonAnalysisResponseDto.OcrFields.builder()
-                .brandName("스타벅스")
-                .productName("아이스 아메리카노 T")
-                .originalPrice(4500)
-                .expiryDate("2025-12-31")
-                .barcodeNumber("1234-5678-9012")
-                .gifticonType("PRODUCT")
-                .build();
-
-        return GifticonAnalysisResponseDto.builder()
-                .imageUrl(imageUrl)
-                .fields(fields)
-                // 신뢰성 검사 후에도 "사람의 확인이 필요하다"고 판단된 필드가 있다면 여기에 추가
-                .needsReview(Collections.emptyList())
-                .build();
     }
 }
