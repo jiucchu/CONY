@@ -7,6 +7,8 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
 import { COLORS } from '@/constants/colors';
 import { DefaultButton } from "@/components/common/atomic/Button";
+import ContentLayout from "@/components/layout/ContentLayout";
+import { goBackWithAlert } from "@/utils/utils";
 
 import 'swiper/css';
 import 'swiper/css/pagination';
@@ -69,6 +71,7 @@ interface CouponCreateProps {
 
 const CouponCreate = ({ couponList }: CouponCreateProps) => {
   return (
+    <ContentLayout headerType="back" headerTitle="쿠폰 등록" onBack={goBackWithAlert}>
     <CouponCreateContainer>
       <StyledSwiper
         modules={[Pagination]}
@@ -108,6 +111,7 @@ const CouponCreate = ({ couponList }: CouponCreateProps) => {
         <DefaultButton children="쿠폰 등록" onClick={() => {}} />    
       </div>
     </CouponCreateContainer>
+    </ContentLayout>
   );
 };
 

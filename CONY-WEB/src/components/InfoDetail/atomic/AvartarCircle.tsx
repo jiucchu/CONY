@@ -9,10 +9,10 @@ const AvatarCircleContainer = styled.div`
   flex-shrink: 0;
 `;
 
-const AvatarCircle =({ imageUrl }: { imageUrl: string }) => {
+const AvatarCircle =({ imageUrl }: { imageUrl?: string }) => {
   return (
     <AvatarCircleContainer>
-        <img src={imageUrl} />
+        {imageUrl ? <img src={imageUrl} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : null}
     </AvatarCircleContainer>
   );
 };
