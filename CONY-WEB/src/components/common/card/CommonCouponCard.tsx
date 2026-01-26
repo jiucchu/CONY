@@ -12,6 +12,7 @@ const CardContainer = styled.div`
   display: flex;
   flex-direction: column;
   width: 45%;
+  min-width: 180px;
   overflow: hidden;
   position: relative;
   cursor: pointer;
@@ -105,12 +106,14 @@ interface CommonCouponCardProps {
   coupon: Coupon;
   discountRate?: number;
   originalPrice?: number;
+  handleCardClickProps?: () => void;
 }
 
 const CommonCouponCard = ({ 
   coupon, 
   discountRate, 
-  originalPrice 
+  originalPrice,
+  handleCardClickProps,
 }: CommonCouponCardProps) => {
   const router = useRouter();
   const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiration_date);
@@ -120,8 +123,13 @@ const CommonCouponCard = ({
   const displayDiscountRate = discountRate || 0;
   const displayOriginalPrice = originalPrice || coupon.price;
 
+  // 클릭 이벤트 함수
   const handleCardClick = () => {
-    router.push(`/coupon/detail?id=${coupon.coupon_id}`);
+    if (handleCardClickProps) { 
+    handleCardClickProps?.();
+    } else {
+        router.push(`/coupon/detail?id=${coupon.coupon_id}`);
+    }
   };
 
   return (
