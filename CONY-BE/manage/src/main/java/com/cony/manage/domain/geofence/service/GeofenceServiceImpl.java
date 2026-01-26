@@ -27,7 +27,7 @@ public class GeofenceServiceImpl implements GeofenceService {
 
     // --- Redis Keys ---
     private static final String GEO_KEY = "stores:geo";             // 좌표 데이터 (Sorted Set)
-    private static final String INFO_KEY_PREFIX = "store:info:";    // 상세 정보 (Hash)
+    private static final String INFO_KEY_PREFIX = "stores:info:";    // 상세 정보 (Hash)
 
     // --- Geofence Settings ---
     private static final int MACRO_REFRESH_RADIUS = 2000;     // 2km: 재요청 기준 반경 (Client용)
@@ -47,8 +47,8 @@ public class GeofenceServiceImpl implements GeofenceService {
         //    -> GEORADIUS 명령어를 사용하여 O(N+log(M)) 속도로 매우 빠르게 조회
         GeoResults<RedisGeoCommands.GeoLocation<Object>> radiusResults = redisUtilService.getGeoRadius(
                 GEO_KEY,
-                request.getUserLon(),
-                request.getUserLat(),
+                request.getLat(),
+                request.getLon(),
                 SEARCH_RADIUS_BUFFER
         );
 
@@ -81,7 +81,7 @@ public class GeofenceServiceImpl implements GeofenceService {
      */
     private List<InternalStoreData> fetchAndFilterStores(List<GeoResultData> geoDataList, List<Long> userBrandIds) {
         // 빠른 검색을 위해 List -> Set 변환
-        Set<Long> userBrandSet = new HashSet<>(userBrandIds);
+        Set<Long> userBrandSet = (userBrandIds == null) ? new HashSet<>() : new HashSet<>(userBrandIds);
         List<InternalStoreData> result = new ArrayList<>();
 
         // Pipeline 실행
@@ -108,7 +108,7 @@ public class GeofenceServiceImpl implements GeofenceService {
                 Long brandId = Long.parseLong(storeInfo.get("brandId"));
 
                 // [핵심 필터] 사용자가 보유한 기프티콘 브랜드인지 확인
-                if (userBrandSet.contains(brandId)) {
+                if (userBrandSet.contains(brandId) || userBrandSet.isEmpty()) {
                     GeoResultData geoData = geoDataList.get(i); // 순서가 보장되므로 인덱스로 매칭
 
                     result.add(InternalStoreData.builder()
@@ -141,6 +141,7 @@ public class GeofenceServiceImpl implements GeofenceService {
         List<MapPoint> finalPoints = new ArrayList<>();
         // 처리가 필요한 매장 리스트 (복사본 생성)
         List<InternalStoreData> pending = new ArrayList<>(stores);
+        pending.sort(Comparator.comparingDouble(InternalStoreData::getDistance));
 
         while (!pending.isEmpty()) {
             // Android 제한 개수에 도달하면 중단 (가장 먼 매장들은 버림)
@@ -199,25 +200,36 @@ public class GeofenceServiceImpl implements GeofenceService {
         double avgLat = clusterGroup.stream().mapToDouble(InternalStoreData::getLat).average().orElse(0.0);
         double avgLon = clusterGroup.stream().mapToDouble(InternalStoreData::getLon).average().orElse(0.0);
 
-        List<String> names = clusterGroup.stream().map(InternalStoreData::getStoreName).toList();
-        String title = names.get(0) + " 외 " + (names.size() - 1) + "곳";
+        String title = clusterGroup.get(0).getStoreName() + " 외 " + (clusterGroup.size() - 1) + "곳";
+        String representativeId = "C_" + clusterGroup.get(0).getStoreId();
+
+        // 내부 매장 리스트를 상세 객체(StoreSummary)로 변환
+        List<GeofenceDto.StoreSummary> summaryList = clusterGroup.stream()
+                .map(store -> GeofenceDto.StoreSummary.builder()
+                        .id(String.valueOf(store.getStoreId()))
+                        .name(store.getStoreName())
+                        .brandId(store.getBrandId()) // 프론트에서 브랜드 로고 찍어주려면 필요
+                        .lat(store.getLat())         // 개별 좌표 포함!
+                        .lon(store.getLon())         // 개별 좌표 포함!
+                        .build())
+                .toList();
 
         return MapPoint.builder()
                 .type("CLUSTER") // 클라이언트 처리: 반경 300m 등록, 진입 시 앱 깨워서 상세 로직 수행
-                .id("C_" + clusterGroup.get(0).getStoreId()) // 대표 ID 사용
+                .id(representativeId) // 대표 ID 사용
                 .name(title)
                 .lat(avgLat)
                 .lon(avgLon)
                 .triggerRadius(MICRO_CLUSTER_RADIUS) // 묶음이니까 반경을 좀 더 크게
-                .includedStoreNames(names)
+                .includedStores(summaryList)
                 .build();
     }
 
     private GeofenceDto.Response buildResponse(GeofenceDto.Request request, List<MapPoint> points) {
         return GeofenceDto.Response.builder()
                 .center(GeofenceDto.CenterPoint.builder()
-                        .lat(request.getUserLat())
-                        .lon(request.getUserLon())
+                        .lat(request.getLat())
+                        .lon(request.getLon())
                         .refreshRadius(MACRO_REFRESH_RADIUS)
                         .build())
                 .points(points)
