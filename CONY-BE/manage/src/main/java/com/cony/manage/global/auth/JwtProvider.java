@@ -1,5 +1,6 @@
 package com.cony.manage.global.auth;
 
+import org.springframework.beans.factory.annotation.Value;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -18,7 +19,9 @@ import java.util.List;
 @Component
 public class JwtProvider {
 
-    private final String secretKey = "your-secret-key-at-least-32-characters-long-cony-project";
+    @Value("${JWT_SECRET}")
+    private String secretKey;
+
     private Key key;
     private final long accessTokenExpiration = 3600000;
 
