@@ -293,7 +293,7 @@ const Footer = () => {
   };
 
   const handleExchangeClick = () => {
-    console.log('콘 거래소 clicked');
+    router.push('/payment/main');
   };
 
   return (

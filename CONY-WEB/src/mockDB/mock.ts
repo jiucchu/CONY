@@ -68,10 +68,21 @@ const mockUserInfo: UserInfo = {
   avatar_url: undefined,
 };
 
+const mockBrands = [
+  "브랜드 1",
+  "브랜드 2",
+  "브랜드 3",
+  "브랜드 4",
+];
+
 export const getCoupons = () => {
   return mockCoupons;
 };
 
 export const getUserInfo = () => {
   return mockUserInfo;
+};
+
+export const getBrands = () => {
+  return mockBrands;
 };

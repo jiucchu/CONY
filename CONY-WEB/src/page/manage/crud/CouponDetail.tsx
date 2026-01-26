@@ -3,10 +3,11 @@
 import styled from "styled-components";
 import InfoDetailCard from "@/components/InfoDetail/InfoDetailCard";
 import { getCoupons } from "@/mockDB/mock";
+import { Coupon } from "@/types/coupon/coupon";
 import MemoInput from "@/components/InfoDetail/MemoInput";
 import Memo from "@/components/InfoDetail/Memo";
 import { COLORS } from "@/constants/colors";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 import { StyledText } from "@/utils/StyledText";
 import { goBack } from "@/utils/utils";
@@ -68,6 +69,12 @@ const MemoSection = styled.div`
 const CouponDetail = ({ id }: { id: number }) => {
   const [memo, setMemo] = useState('');
   const [memos, setMemos] = useState<string[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+
+  // 클라이언트 사이드에서만 데이터 페칭
+  useEffect(() => {
+    setCoupons(getCoupons());
+  }, []);
 
   const handleMemoSubmit = () => {
     if (memo.trim()) {
@@ -84,9 +91,9 @@ const CouponDetail = ({ id }: { id: number }) => {
     console.log('판매하기 클릭');
   };
 
-  const coupons = getCoupons();
-  console.log(coupons, id);
-  const coupon = coupons.find(c => c.coupon_id === id);
+  const coupon = useMemo(() => {
+    return coupons.find(c => c.coupon_id === id);
+  }, [coupons, id]);
   
   if (!coupon) {
     return (
