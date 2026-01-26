@@ -27,7 +27,7 @@ html, body {
 }
 
 body {
-  background: #f0f0f0;
+  background: #f8f8f8;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
