@@ -1,4 +1,4 @@
-import os
+﻿import os
 import requests
 import chromadb
 
@@ -6,20 +6,21 @@ from schemas.embedding import Response
 
 GMS_API_URL = "https://gms.ssafy.io/gmsapi/api.openai.com/v1/embeddings"
 
+
 def _get_chroma_collection():
-    persist_dir = os.getenv("CHROMA_PERSIST_DIR")
-    collection_name = "sale_embeddings"
+    persist_dir = os.getenv("CHROMA_PERSIST_DIR", "./chroma_db")
+    collection_name = os.getenv("CHROMA_COLLECTION", "sale_embeddings")
 
     client = chromadb.PersistentClient(path=persist_dir)
     return client.get_or_create_collection(name=collection_name)
 
 
-# 임베딩 생성
+# 임베딩 생성 및 저장
 def run_embedding(sale_id: int, content_text: str) -> Response:
     # GMS API 키
     gms_api_key = os.getenv("GMS_API_KEY")
     if not gms_api_key:
-        raise RuntimeError("GMS_API_KEY 확인이 필요합니다.")
+        raise RuntimeError("GMS_API_KEY가 없습니다")
 
     # 임베딩 모델
     model = os.getenv("EMBEDDING_MODEL")
@@ -48,7 +49,7 @@ def run_embedding(sale_id: int, content_text: str) -> Response:
     try:
         collection = _get_chroma_collection()
         collection.upsert(
-            ids=[str(f"sale_{sale_id}")],
+            ids=[f"sale_{sale_id}"],
             embeddings=[embedding],
             documents=[content_text],
             metadatas=[{"sale_id": sale_id}],
@@ -58,5 +59,20 @@ def run_embedding(sale_id: int, content_text: str) -> Response:
 
     return Response(
         status="SUCCESS",
-        message="임베딩 생성 및 저장 성공"
+        message="임베딩 생성 및 저장 성공",
+    )
+
+
+# 임베딩 삭제
+def delete_embedding(sale_id: int) -> Response:
+    # ChromaDB에서 벡터 삭제
+    try:
+        collection = _get_chroma_collection()
+        collection.delete(ids=[f"sale_{sale_id}"])
+    except Exception as exc:
+        raise RuntimeError("ChromaDB 삭제 실패") from exc
+
+    return Response(
+        status="SUCCESS",
+        message="임베딩 삭제 성공",
     )
