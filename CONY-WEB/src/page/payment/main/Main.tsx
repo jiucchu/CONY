@@ -42,8 +42,9 @@ const Main = () => {
                 <SearchBar />
                 <CouponList coupons={coupons} title="추천 상품" />
                 <BarFilter />
-                <Filter />
                 <BrandFilterBar brands={brands} />
+
+                <Filter />
                 <CouponContainer>
                     {coupons.map((coupon) => (
                         <CouponWrapper key={coupon.coupon_id}>
