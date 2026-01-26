@@ -2,12 +2,19 @@
 
 import styled from "styled-components";
 import InfoDetailCard from "@/components/InfoDetail/InfoDetailCard";
-import { Coupon } from "@/types/coupon/coupon";
+import { getCoupons } from "@/mockDB/mock";
 import MemoInput from "@/components/InfoDetail/MemoInput";
 import Memo from "@/components/InfoDetail/Memo";
 import { COLORS } from "@/constants/colors";
 import { useState } from "react";
+
 import { StyledText } from "@/utils/StyledText";
+import { goBack } from "@/utils/utils";
+import { calculateDaysUntilExpiration } from "@/utils/DayUtils";
+
+import ContentLayout from "@/components/layout/ContentLayout";
+import AutoSellInfoCard from "@/components/InfoDetail/atomic/AutoSellInfoCard";
+
 
 const CouponDetailContainer = styled.div`
   display: flex;
@@ -56,12 +63,9 @@ const MemoSection = styled.div`
   max-width: 500px;
 `;
 
-interface CouponDetailProps {
-  coupon: Coupon;
-  barcodeNumber?: string;
-}
 
-const CouponDetail = ({ coupon, barcodeNumber }: CouponDetailProps) => {
+
+const CouponDetail = ({ id }: { id: number }) => {
   const [memo, setMemo] = useState('');
   const [memos, setMemos] = useState<string[]>([]);
 
@@ -80,9 +84,24 @@ const CouponDetail = ({ coupon, barcodeNumber }: CouponDetailProps) => {
     console.log('판매하기 클릭');
   };
 
+  const coupons = getCoupons();
+  console.log(coupons, id);
+  const coupon = coupons.find(c => c.coupon_id === id);
+  
+  if (!coupon) {
+    return (
+      <CouponDetailContainer>
+        <StyledText fontSize={18} fontWeight={600} color={COLORS.text.secondary}>
+          쿠폰을 찾을 수 없습니다.
+        </StyledText>
+      </CouponDetailContainer>
+    );
+  }
   return (
+    <ContentLayout headerType="back" headerTitle="쿠폰 상세" onBack={goBack}>
     <CouponDetailContainer>
-      <InfoDetailCard coupon={coupon} barcodeNumber={barcodeNumber} />
+      <AutoSellInfoCard daysLeft={calculateDaysUntilExpiration(coupon.auto_sell_date)} amount  ={coupon.auto_sell_amount} />
+      <InfoDetailCard coupon={coupon} />
       
       <ButtonGroup>
         <ActionButton variant="used" onClick={handleUsedClick}>
@@ -98,7 +117,6 @@ const CouponDetail = ({ coupon, barcodeNumber }: CouponDetailProps) => {
           value={memo}
           onChange={setMemo}
           placeholder="메모를 작성해주세요"
-          avatarUrl=""
           onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
             if (e.key === 'Enter') {
               handleMemoSubmit();
@@ -111,11 +129,11 @@ const CouponDetail = ({ coupon, barcodeNumber }: CouponDetailProps) => {
             key={index}
             type="mine"
             content={memoContent}
-            avatarUrl=""
           />
         ))}
       </MemoSection>
     </CouponDetailContainer>
+    </ContentLayout >
   );
 };
 

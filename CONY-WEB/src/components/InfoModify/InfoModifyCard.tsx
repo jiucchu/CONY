@@ -6,6 +6,7 @@ import { useState } from "react";
 import Image from "next/image";
 import editIcon from "@/assets/icons/edit.svg";
 import { StyledText } from "@/utils/StyledText";
+import AutoSellInfo from "./atomic/AutoSellInfo";
 
 const CardContainer = styled.div`
   margin: 20px auto;
@@ -284,6 +285,8 @@ const InfoModifyCard = ({
             placeholder="YYYY/MM/DD"
           />
         </FormField>
+
+        <AutoSellInfo />
       </FormSection>
     </CardContainer>
   );
