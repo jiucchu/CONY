@@ -68,7 +68,13 @@ def delete_embedding(sale_id: int) -> Response:
     # ChromaDB에서 벡터 삭제
     try:
         collection = _get_chroma_collection()
+        # 존재 여부 확인
+        existing = collection.get(ids=[f"sale_{sale_id}"])
+        if not existing.get("ids"):
+            raise RuntimeError("삭제할 임베딩이 없습니다")
         collection.delete(ids=[f"sale_{sale_id}"])
+    except RuntimeError:
+        raise
     except Exception as exc:
         raise RuntimeError("ChromaDB 삭제 실패") from exc
 
