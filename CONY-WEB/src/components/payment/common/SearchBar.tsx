@@ -67,6 +67,7 @@ interface SearchBarProps {
   onSearch?: (query: string) => void;
   value?: string;
   onChange?: (value: string) => void;
+  onFocusChange?: (isFocused: boolean) => void;
 }
 
 const SearchBar = ({
@@ -74,6 +75,7 @@ const SearchBar = ({
   onSearch,
   value: controlledValue,
   onChange,
+  onFocusChange,
 }: SearchBarProps) => {
   const [internalValue, setInternalValue] = useState('');
 
@@ -95,6 +97,14 @@ const SearchBar = ({
     }
   };
 
+  const handleFocus = () => {
+    onFocusChange?.(true);
+  };
+
+  const handleBlur = () => {
+    onFocusChange?.(false);
+  };
+
   return (
     <SearchBarContainer>
       <SearchInputWrapper>
@@ -104,6 +114,8 @@ const SearchBar = ({
           value={value}
           onChange={handleChange}
           onKeyPress={handleKeyPress}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
         />
         <SearchIcon>
           <MagnifyingGlassIcon />
