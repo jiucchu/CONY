@@ -1,6 +1,6 @@
 'use client';
 
-import CouponDetail from "@/page/crud/CouponDetail";
+import CouponDetail from "@/page/manage/crud/CouponDetail";
 import { useSearchParams } from "next/navigation";
 
 export default function CouponDetailPage() {

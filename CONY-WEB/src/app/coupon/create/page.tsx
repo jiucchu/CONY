@@ -1,4 +1,4 @@
-import CouponCreate from "@/page/crud/CouponCreate";
+import CouponCreate from "@/page/manage/crud/CouponCreate";
 import { getCoupons } from "@/mockDB/mock";
 
 export default function CouponCreatePage() {
