@@ -7,7 +7,7 @@ import com.cony.manage.domain.user.enums.OAuthProvider;
 import com.cony.manage.global.auth.JwtProvider;
 import com.cony.manage.global.auth.userinfo.OAuth2UserInfo;
 import com.cony.manage.global.auth.userinfo.GoogleUserInfo;
-//import com.cony.manage.global.auth.userinfo.KakaoUserInfo;
+import com.cony.manage.global.auth.userinfo.KakaoUserInfo;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -87,7 +87,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private OAuth2UserInfo getOAuth2UserInfo(String registrationId, Map<String, Object> attributes) {
         return switch (registrationId.toLowerCase()) {
             case "google" -> new GoogleUserInfo(attributes);
-//            case "kakao" -> new KakaoUserInfo(attributes);
+            case "kakao" -> new KakaoUserInfo(attributes);
             default -> throw new IllegalArgumentException("지원하지 않는 로그인 공급자입니다: " + registrationId);
         };
     }
