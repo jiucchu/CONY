@@ -1,6 +1,7 @@
 'use client';
 
 import styled from "styled-components"; 
+import { useState } from "react";
 import ContentLayout from "@/components/layout/ContentLayout";
 import BarFilter from "@/components/payment/common/BarFilter";
 import Filter from "@/components/payment/common/Filter";
@@ -9,6 +10,8 @@ import { getCoupons, getBrands } from "@/mockDB/mock";
 import SearchBar from "@/components/payment/common/SearchBar";
 import BrandFilterBar from "@/components/payment/common/BrandFilterBar";
 import CommonCouponCard from "@/components/common/card/CommonCouponCard";
+import RecentSearch from "@/components/common/RecentSearch";
+import { useRouter } from "next/navigation";
 
 const MainContainer = styled.div`
     padding: 5% 0;
@@ -33,13 +36,31 @@ const CouponWrapper = styled.div`
 `;
 
 const Main = () => {
+    const router = useRouter();
     const coupons = getCoupons();
     const brands = getBrands();
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const [recentSearches] = useState<string[]>([]); 
+
+    const handleScroll = () => {
+        if (isSearchFocused) {
+            setIsSearchFocused(false);
+        }
+    };
 
     return (
-        <ContentLayout>
+        <ContentLayout onScroll={handleScroll}>
             <MainContainer>
-                <SearchBar />
+                <SearchBar onFocusChange={setIsSearchFocused} />
+                {isSearchFocused && (
+                    <RecentSearch 
+                        searches={recentSearches}
+                        top={140}
+                        onSearchClick={(term) => {
+                            console.log('검색어 클릭:', term);
+                        }}
+                    />
+                )}
                 <CouponList coupons={coupons} title="추천 상품" />
                 <BarFilter />
                 <BrandFilterBar brands={brands} />
@@ -48,7 +69,7 @@ const Main = () => {
                 <CouponContainer>
                     {coupons.map((coupon) => (
                         <CouponWrapper key={coupon.coupon_id}>
-                            <CommonCouponCard key={coupon.coupon_id} coupon={coupon} />
+                            <CommonCouponCard key={coupon.coupon_id} coupon={coupon} handleCardClickProps={() => router.push(`/payment/detail?id=${coupon.coupon_id}`)} />
                         </CouponWrapper>
                     ))}
                 </CouponContainer>
