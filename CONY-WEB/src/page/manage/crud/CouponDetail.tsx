@@ -3,7 +3,7 @@
 import styled from "styled-components";
 import InfoDetailCard from "@/components/InfoDetail/InfoDetailCard";
 import { getCoupons } from "@/mockDB/mock";
-import { Coupon } from "@/types/coupon/coupon";
+import { GifticonDetailResponseDto } from "@/types/gifticon/gifticon";
 import MemoInput from "@/components/InfoDetail/MemoInput";
 import Memo from "@/components/InfoDetail/Memo";
 import { COLORS } from "@/constants/colors";
@@ -15,7 +15,7 @@ import { calculateDaysUntilExpiration } from "@/utils/DayUtils";
 
 import ContentLayout from "@/components/layout/ContentLayout";
 import AutoSellInfoCard from "@/components/InfoDetail/atomic/AutoSellInfoCard";
-
+import RemainMoneyCard from "@/components/InfoDetail/RemainMoneyCard";
 
 const CouponDetailContainer = styled.div`
   display: flex;
@@ -69,7 +69,7 @@ const MemoSection = styled.div`
 const CouponDetail = ({ id }: { id: number }) => {
   const [memo, setMemo] = useState('');
   const [memos, setMemos] = useState<string[]>([]);
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [coupons, setCoupons] = useState<GifticonDetailResponseDto[]>([]);
 
   // 클라이언트 사이드에서만 데이터 페칭
   useEffect(() => {
@@ -92,7 +92,7 @@ const CouponDetail = ({ id }: { id: number }) => {
   };
 
   const coupon = useMemo(() => {
-    return coupons.find(c => c.coupon_id === id);
+    return coupons.find(c => c.gifticonId === id);
   }, [coupons, id]);
   
   if (!coupon) {
@@ -107,7 +107,7 @@ const CouponDetail = ({ id }: { id: number }) => {
   return (
     <ContentLayout headerType="back" headerTitle="쿠폰 상세" onBack={goBack}>
     <CouponDetailContainer>
-      <AutoSellInfoCard daysLeft={calculateDaysUntilExpiration(coupon.auto_sell_date)} amount  ={coupon.auto_sell_amount} />
+      <AutoSellInfoCard daysLeft={calculateDaysUntilExpiration(coupon.autoSellDate || coupon.expiryDate)} amount={coupon.autoSellAmount || 0} />
       <InfoDetailCard coupon={coupon} />
       
       <ButtonGroup>
@@ -118,7 +118,7 @@ const CouponDetail = ({ id }: { id: number }) => {
           <StyledText fontSize={16} fontWeight={600} color={COLORS.white}>판매하기</StyledText>
         </ActionButton>
       </ButtonGroup>
-
+      {coupon.gifticonType === 'PREPAID' && <RemainMoneyCard coupon={coupon} />}
       <MemoSection>
         <MemoInput
           value={memo}

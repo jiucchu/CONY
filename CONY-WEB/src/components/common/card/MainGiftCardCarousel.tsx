@@ -5,7 +5,7 @@ import { Pagination } from 'swiper/modules';
 import styled from 'styled-components';
 import { COLORS } from '@/constants/colors';
 import MainGiftCard from './atomic/MainGiftCard';
-import { Coupon } from '@/types/coupon/coupon';
+import { GifticonDetailResponseDto } from '@/types/gifticon/gifticon';
 import 'swiper/css';
 import 'swiper/css/pagination';
 
@@ -54,7 +54,7 @@ const StyledSwiper = styled(Swiper)`
 `;
 
 interface MainGiftCardCarouselProps {
-  coupons: Coupon[];
+  coupons: GifticonDetailResponseDto[];
 }
 
 const MainGiftCardCarousel = ({ coupons }: MainGiftCardCarouselProps) => {
@@ -81,7 +81,7 @@ const MainGiftCardCarousel = ({ coupons }: MainGiftCardCarouselProps) => {
         }}
       >
         {coupons.map((coupon) => (
-          <SwiperSlide key={coupon.coupon_id}>
+          <SwiperSlide key={coupon.gifticonId}>
             <MainGiftCard coupon={coupon} />
           </SwiperSlide>
         ))}

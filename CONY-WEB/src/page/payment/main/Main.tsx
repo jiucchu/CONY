@@ -68,8 +68,8 @@ const Main = () => {
                 <Filter />
                 <CouponContainer>
                     {coupons.map((coupon) => (
-                        <CouponWrapper key={coupon.coupon_id}>
-                            <CommonCouponCard key={coupon.coupon_id} coupon={coupon} handleCardClickProps={() => router.push(`/payment/detail?id=${coupon.coupon_id}`)} />
+                        <CouponWrapper key={coupon.gifticonId}>
+                            <CommonCouponCard key={coupon.gifticonId} coupon={coupon} handleCardClickProps={() => router.push(`/payment/detail?id=${coupon.gifticonId}`)} />
                         </CouponWrapper>
                     ))}
                 </CouponContainer>

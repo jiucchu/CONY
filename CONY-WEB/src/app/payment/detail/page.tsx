@@ -5,17 +5,17 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { getCoupons } from "@/mockDB/mock";
 import { useEffect, useState } from "react";
-import { Coupon } from "@/types/coupon/coupon";
+import { GifticonDetailResponseDto } from "@/types/gifticon/gifticon";
 
 function PaymentDetailContent() {
   const searchParams = useSearchParams();
   const idParam = searchParams.get('id');
   const couponId = idParam ? parseInt(idParam, 10) : 0;
-  const [coupon, setCoupon] = useState<Coupon | null>(null);
+  const [coupon, setCoupon] = useState<GifticonDetailResponseDto | null>(null);
 
   useEffect(() => {
     const coupons = getCoupons();
-    const foundCoupon = coupons.find(c => c.coupon_id === couponId);
+    const foundCoupon = coupons.find(c => c.gifticonId === couponId);
     setCoupon(foundCoupon || null);
   }, [couponId]);
 

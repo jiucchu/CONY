@@ -1,4 +1,4 @@
-import { Coupon } from "@/types/coupon/coupon";
+import { GifticonDetailResponseDto } from "@/types/gifticon/gifticon";
 import styled from "styled-components";
 import DdayView from "./atomic/DdayView";
 import { COLORS } from "@/constants/colors";
@@ -103,7 +103,7 @@ const DdayWrapper = styled.div`
 `;
 
 interface CommonCouponCardProps {
-  coupon: Coupon;
+  coupon: GifticonDetailResponseDto;
   discountRate?: number;
   originalPrice?: number;
   handleCardClickProps?: () => void;
@@ -116,19 +116,19 @@ const CommonCouponCard = ({
   handleCardClickProps,
 }: CommonCouponCardProps) => {
   const router = useRouter();
-  const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiration_date);
-  const formattedPrice = coupon.price.toLocaleString('ko-KR');
+  const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiryDate);
+  const formattedPrice = coupon.originalPrice.toLocaleString('ko-KR');
   const formattedOriginalPrice = originalPrice ? originalPrice.toLocaleString('ko-KR') : '';
   
   const displayDiscountRate = discountRate || 0;
-  const displayOriginalPrice = originalPrice || coupon.price;
+  const displayOriginalPrice = originalPrice || coupon.originalPrice;
 
   // 클릭 이벤트 함수
   const handleCardClick = () => {
     if (handleCardClickProps) { 
     handleCardClickProps?.();
     } else {
-        router.push(`/coupon/detail?id=${coupon.coupon_id}`);
+        router.push(`/coupon/detail?id=${coupon.gifticonId}`);
     }
   };
 
@@ -139,11 +139,11 @@ const CommonCouponCard = ({
             <DdayView type="common" dday={daysUntilExpiration} size="Medium" />
           </DdayWrapper>
 
-        <ProductImage src={coupon.image_url} alt={coupon.title} />
+        <ProductImage src={coupon.imageUrl} alt={coupon.productName} />
       </ImageContainer>
       <InfoContainer>
-        <StyledText fontSize={16} fontWeight={600} color={COLORS.text.secondary}>{coupon.brand}</StyledText>
-        <StyledText fontSize={20} fontWeight={800} color={COLORS.text.primary}>{coupon.title}</StyledText>
+        <StyledText fontSize={16} fontWeight={600} color={COLORS.text.secondary}>{coupon.brandName}</StyledText>
+        <StyledText fontSize={20} fontWeight={800} color={COLORS.text.primary}>{coupon.productName}</StyledText>
         <PriceContainer>
           {displayDiscountRate > 0 && (
             <>

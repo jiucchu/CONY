@@ -1,4 +1,4 @@
-import { Coupon } from "@/types/coupon/coupon";
+import { GifticonDetailResponseDto } from "@/types/gifticon/gifticon";
 import styled from "styled-components";
 import { COLORS } from "@/constants/colors";
 import { calculateDaysUntilExpiration } from "@/utils/DayUtils";
@@ -56,10 +56,10 @@ const CouponText = styled.p<{ fontSize: number; fontWeight: number; color: strin
   font-weight: ${props => props.fontWeight};
 `;
 
-const MainGiftCard = ({ coupon }: { coupon: Coupon }) => {
+const MainGiftCard = ({ coupon }: { coupon: GifticonDetailResponseDto }) => {
 
-  const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiration_date);
-  const formattedPrice = coupon.price.toLocaleString('ko-KR');
+  const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiryDate);
+  const formattedPrice = coupon.originalPrice.toLocaleString('ko-KR');
   return (
     <MainGiftCardContainer>
       <div style={{ marginBottom: '16px' }}>
@@ -71,12 +71,12 @@ const MainGiftCard = ({ coupon }: { coupon: Coupon }) => {
         <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10 }}>
             <DdayView type="gift" dday={daysUntilExpiration} size="Large" />
         </div>
-        <ProductImage src={coupon.image_url} alt={coupon.title} />
+        <ProductImage src={coupon.imageUrl} alt={coupon.productName} />
         </ImageContainer>
 
         <InfoContainer> 
-          <CouponText fontSize={16} fontWeight={600} color={COLORS.text.secondary}>{coupon.brand}</CouponText>
-          <CouponText fontSize={25} fontWeight={800} color={COLORS.text.primary}>{coupon.title}</CouponText>
+          <CouponText fontSize={16} fontWeight={600} color={COLORS.text.secondary}>{coupon.brandName}</CouponText>
+          <CouponText fontSize={25} fontWeight={800} color={COLORS.text.primary}>{coupon.productName}</CouponText>
           <CouponText fontSize={20} fontWeight={700} color={COLORS.text.primary}>{formattedPrice}원</CouponText>
         </InfoContainer>
         <div style={{ position: 'absolute', bottom: '7%', right: '10%'}}>

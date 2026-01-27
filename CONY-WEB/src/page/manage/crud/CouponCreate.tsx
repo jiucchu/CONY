@@ -2,7 +2,7 @@
 
 import styled from "styled-components";
 import InfoModifyCard from "@/components/InfoModify/InfoModifyCard";
-import { Coupon } from "@/types/coupon/coupon";
+import { GifticonDetailResponseDto } from "@/types/gifticon/gifticon";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
 import { COLORS } from '@/constants/colors';
@@ -66,7 +66,7 @@ const StyledSwiper = styled(Swiper)`
 `;
 
 interface CouponCreateProps {
-  couponList: Coupon[];
+  couponList: GifticonDetailResponseDto[];
 }
 
 const CouponCreate = ({ couponList }: CouponCreateProps) => {
@@ -94,14 +94,14 @@ const CouponCreate = ({ couponList }: CouponCreateProps) => {
         }}
       >
         {couponList.map((coupon) => (
-          <SwiperSlide key={coupon.coupon_id}>
+          <SwiperSlide key={coupon.gifticonId}>
             <div style={{ marginTop: '20px', width: '100%' }}>   
               <InfoModifyCard
-                imageUrl={coupon.image_url}
-                giftCardName={coupon.title}
-                store={coupon.brand}
-                price={coupon.price}
-                expirationDate={coupon.expiration_date}
+                imageUrl={coupon.imageUrl}
+                giftCardName={coupon.productName}
+                store={coupon.brandName}
+                price={coupon.originalPrice}
+                expirationDate={coupon.expiryDate}
               />
             </div>
           </SwiperSlide>
