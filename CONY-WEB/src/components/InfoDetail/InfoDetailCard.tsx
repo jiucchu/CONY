@@ -1,6 +1,6 @@
 'use client';
 
-import { Coupon } from "@/types/coupon/coupon";
+import { GifticonDetailResponseDto } from "@/types/gifticon/gifticon";
 import styled from "styled-components";
 import DdayView from "@/components/common/card/atomic/DdayView";
 import { COLORS } from "@/constants/colors";
@@ -93,14 +93,14 @@ const formatBarcodeNumber = (barcode: string): string => {
 };
 
 interface InfoDetailCardProps {
-  coupon: Coupon;
+  coupon: GifticonDetailResponseDto;
   barcodeNumber?: string;
 }
 
 const InfoDetailCard = ({ coupon, barcodeNumber }: InfoDetailCardProps) => {
-  const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiration_date);
-  const formattedExpiration = formatExpirationDate(coupon.expiration_date);
-  const defaultBarcode = barcodeNumber || String(coupon.coupon_id).padStart(16, '0');
+  const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiryDate);
+  const formattedExpiration = formatExpirationDate(coupon.expiryDate);
+  const defaultBarcode = barcodeNumber || String(coupon.gifticonId).padStart(16, '0');
   const formattedBarcode = formatBarcodeNumber(defaultBarcode);
 
   return (
@@ -109,14 +109,14 @@ const InfoDetailCard = ({ coupon, barcodeNumber }: InfoDetailCardProps) => {
         <DdayWrapper>
           <DdayView type="gift" dday={daysUntilExpiration} size="Medium" />
           </DdayWrapper>
-          <ProductImage src={coupon.image_url} alt={coupon.title} />
+          <ProductImage src={coupon.imageUrl} alt={coupon.productName} />
 
         </ImageContainer>
       <InfoContainer>
         <div style={{ marginBottom: '5px' }}>
-            <StyledText fontSize={16} fontWeight={600} color={COLORS.text.secondary}>{coupon.brand}</StyledText>
+            <StyledText fontSize={16} fontWeight={600} color={COLORS.text.secondary}>{coupon.brandName}</StyledText>
         </div>
-        <StyledText fontSize={20} fontWeight={800} color={COLORS.text.primary}>{coupon.title}</StyledText>
+        <StyledText fontSize={20} fontWeight={800} color={COLORS.text.primary}>{coupon.productName}</StyledText>
         <StyledText fontSize={16} fontWeight={400} color={COLORS.text.primary}>{formattedExpiration}</StyledText>
       </InfoContainer>
       <BarcodeContainer>

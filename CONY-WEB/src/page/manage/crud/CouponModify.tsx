@@ -5,7 +5,7 @@ import ContentLayout from "@/components/layout/ContentLayout";
 import InfoModifyCard from "@/components/InfoModify/InfoModifyCard";
 import { DefaultButton } from "@/components/common/atomic/Button";
 import { useState } from "react";
-import { Coupon } from "@/types/coupon/coupon";
+import { GifticonDetailResponseDto } from "@/types/gifticon/gifticon";
 import { COLORS } from "@/constants/colors";
 
 const CouponModifyContainer = styled.div`
@@ -18,20 +18,20 @@ const CouponModifyContainer = styled.div`
 `;
 
 interface CouponModifyProps {
-  coupon: Coupon;
+  coupon: GifticonDetailResponseDto;
   onClose?: () => void;
-  onSubmit?: (updatedCoupon: Partial<Coupon>) => void;
+  onSubmit?: (updatedCoupon: Partial<GifticonDetailResponseDto>) => void;
 }
 
 const CouponModify = ({ coupon, onClose, onSubmit }: CouponModifyProps) => {
   const [formData, setFormData] = useState({
-    imageUrl: coupon.image_url || '',
-    giftCardName: coupon.title || '',
-    barcode: '',
-    store: coupon.brand || '',
+    imageUrl: coupon.imageUrl || '',
+    giftCardName: coupon.productName || '',
+    barcode: coupon.barcodeNumber || '',
+    store: coupon.brandName || '',
     type: 'amount' as 'product' | 'amount',
-    price: coupon.price || 0,
-    expirationDate: coupon.expiration_date || '',
+    price: coupon.originalPrice || 0,
+    expirationDate: coupon.expiryDate || '',
   });
 
   const handleImageEdit = () => {
@@ -40,12 +40,13 @@ const CouponModify = ({ coupon, onClose, onSubmit }: CouponModifyProps) => {
   };
 
   const handleSubmit = () => {
-    const updatedCoupon: Partial<Coupon> = {
-      title: formData.giftCardName,
-      brand: formData.store,
-      price: formData.price,
-      expiration_date: formData.expirationDate,
-      image_url: formData.imageUrl,
+    const updatedCoupon: Partial<GifticonDetailResponseDto> = {
+      productName: formData.giftCardName,
+      brandName: formData.store,
+      originalPrice: formData.price,
+      expiryDate: formData.expirationDate,
+      imageUrl: formData.imageUrl,
+      barcodeNumber: formData.barcode,
     };
     onSubmit?.(updatedCoupon);
   };

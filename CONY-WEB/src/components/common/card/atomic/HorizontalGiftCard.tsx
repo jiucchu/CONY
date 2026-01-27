@@ -1,4 +1,4 @@
-import { Coupon } from "@/types/coupon/coupon";
+import { GifticonDetailResponseDto } from "@/types/gifticon/gifticon";
 import styled from "styled-components";
 import DdayView from "./DdayView";
 import { COLORS } from "@/constants/colors";
@@ -57,9 +57,9 @@ const CouponText = styled.p<{ fontSize: number; fontWeight: number; color: strin
 `;
 
 
-const HorizontalGiftCard = ({ coupon }: { coupon: Coupon }) => {
-  const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiration_date);
-  const formattedPrice = coupon.price.toLocaleString('ko-KR');
+const HorizontalGiftCard = ({ coupon }: { coupon: GifticonDetailResponseDto }) => {
+  const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiryDate);
+  const formattedPrice = coupon.originalPrice.toLocaleString('ko-KR');
 
   return (
     <HorizontalGiftCardContainer>
@@ -67,12 +67,12 @@ const HorizontalGiftCard = ({ coupon }: { coupon: Coupon }) => {
         <DdayView type="gift" dday={daysUntilExpiration} size="Small" />
       </div>
       <ImageContainer>
-        <ProductImage src={coupon.image_url} alt={coupon.title} />
+        <ProductImage src={coupon.imageUrl} alt={coupon.productName} />
       </ImageContainer>
       <InfoContainer>
-        <CouponText fontSize={14} fontWeight={400} color={COLORS.text.secondary}>{coupon.brand}</CouponText>
+        <CouponText fontSize={14} fontWeight={400} color={COLORS.text.secondary}>{coupon.brandName}</CouponText>
         <div style={{ display: 'flex', flexDirection: 'column'}}>
-          <CouponText fontSize={23} fontWeight={900} color={COLORS.text.primary}>{coupon.title}</CouponText>
+          <CouponText fontSize={23} fontWeight={900} color={COLORS.text.primary}>{coupon.productName}</CouponText>
           <CouponText fontSize={16} fontWeight={700} color={COLORS.text.primary}>{formattedPrice}원</CouponText>
         </div>
       </InfoContainer>

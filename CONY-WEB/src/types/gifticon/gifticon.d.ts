@@ -1,0 +1,105 @@
+export interface ApiResponse<T> {
+  status: string;
+  message: string;
+  data: T;
+}
+
+export type GifticonType = 'PRODUCT' | 'PREPAID';
+export type GifticonStatus = 'NOT_USED' | 'IN_USE' | 'USED';
+
+export interface GifticonRegisterRequestDto {
+  brandName: string;
+  productName: string;
+  categoryName?: string;
+  barcodeNumber: string;
+  expiryDate: string;
+  originalPrice: number;
+  type: GifticonType;
+  imageUrl: string;
+}
+
+export interface GifticonUpdateRequestDto {
+  brandName: string;
+  productName: string;
+  expiryDate: string;
+  originalPrice?: number;
+}
+
+export interface GifticonUseRequestDto {
+  amount: number;
+}
+
+export interface GifticonLogUpdateRequestDto {
+  newAmount: number;
+}
+
+export interface GifticonListResponseDto {
+  gifticonId: number;
+  brandName: string;
+  productName: string;
+  barcodeNumber: string;
+  expiryDate: string;
+  status: GifticonStatus;
+  imageUrl: string;
+}
+
+export interface GifticonDetailResponseDto {
+  gifticonId: number;
+  brandName: string;
+  productName: string;
+  barcodeNumber: string;
+  expiryDate: string;
+  status: GifticonStatus;
+  imageUrl: string;
+  originalPrice: number;
+  currentBalance?: number; 
+  categoryName?: string;
+  gifticonType: GifticonType;
+  histories: GifticonUsageLogResponseDto[];
+  // 프론트엔드 전용 필드
+  autoSellDate?: string;
+  autoSellAmount?: number;
+  isUsed?: boolean;
+  isExpired?: boolean;
+  isDeleted?: boolean;
+  isActive?: boolean;
+}
+
+export interface GifticonUsageLogResponseDto {
+  logId: number;
+  usedAmount: number;
+  usedAt: string; 
+}
+
+export interface OcrFields {
+  brandName?: string;
+  productName?: string;
+  originalPrice?: number;
+  expiryDate?: string;
+  gifticonType?: GifticonType;
+  barcodeNumber?: string;
+}
+
+export interface GifticonAnalysisResponseDto {
+  fields: OcrFields;
+  needsReview: string[];
+  imageUrl: string;
+}
+
+export interface Pageable {
+  page?: number;
+  size?: number;
+  sort?: string[];
+}
+
+export interface PageGifticonListResponseDto {
+  content: GifticonListResponseDto[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
+  empty: boolean;
+}
