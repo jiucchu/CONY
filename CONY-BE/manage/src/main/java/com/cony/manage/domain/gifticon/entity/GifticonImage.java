@@ -15,7 +15,9 @@ public class GifticonImage {
     private Long id;
 
     private String imageUrl;
+    @Column(name = "s3_bucket")
     private String s3Bucket;
+    @Column(name = "s3_key")
     private String s3Key;
     private String originalFilename;
     private Long fileSize;
