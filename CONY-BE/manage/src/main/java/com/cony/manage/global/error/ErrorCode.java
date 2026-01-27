@@ -27,7 +27,10 @@ public enum ErrorCode {
     DUPLICATE_GIFTICON(HttpStatus.CONFLICT, "G002", "이미 등록된 기프티콘입니다."),
     ALREADY_USED_GIFTICON(HttpStatus.CONFLICT, "G003", "이미 사용된 기프티콘입니다."),
     USING_LOG_NOT_FOUND(HttpStatus.NOT_FOUND, "G004", "사용 이력을 찾지 못했습니다."),
-    ALREADY_CANCELED_LOG(HttpStatus.CONFLICT, "G005", "이미 취소된 이력입니다.");
+    ALREADY_CANCELED_LOG(HttpStatus.CONFLICT, "G005", "이미 취소된 이력입니다."),
+
+    // Geofence
+    INVALID_COORDINATES(HttpStatus.BAD_REQUEST, "F001", "위도, 경도 값이 잘못되었습니다.");
 
 
     // 개발중 필요한 에러가 있다면 이곳에 선언하시고 사용하면 됩니다.

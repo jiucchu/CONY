@@ -29,6 +29,8 @@ public class RedisConfig {
         // Key와 Value를 직렬화해서 저장
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setValueSerializer(new StringRedisSerializer());
+        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashValueSerializer(new StringRedisSerializer());
 
         return redisTemplate;
     }
