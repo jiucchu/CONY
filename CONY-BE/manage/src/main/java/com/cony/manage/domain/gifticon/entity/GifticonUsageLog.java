@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "GIFTICON_USAGE_LOG")
 public class GifticonUsageLog extends BaseTimeEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "gifticon_log_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
