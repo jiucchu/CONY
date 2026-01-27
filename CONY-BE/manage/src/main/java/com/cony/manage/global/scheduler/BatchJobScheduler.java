@@ -18,7 +18,7 @@ public class BatchJobScheduler {
     private final Job storeCacheJob;
 
     // 애플리케이션 시작이 완료되면 실행
-    @EventListener(ApplicationReadyEvent.class)
+//    @EventListener(ApplicationReadyEvent.class)
     public void runCacheWarmUp() {
         try {
             log.info(">>>> Start Store Cache Warm-up Job <<<<");
