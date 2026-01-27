@@ -1,7 +1,7 @@
 'use client';
 
 import styled from "styled-components";
-import { Coupon } from "@/types/coupon/coupon";
+import { GifticonDetailResponseDto } from "@/types/gifticon/gifticon";
 import { COLORS } from "@/constants/colors";
 import { StyledText } from "@/utils/StyledText";
 import { calculateDaysUntilExpiration } from "@/utils/DayUtils";
@@ -98,7 +98,7 @@ const formatExpirationDate = (dateString: string): string => {
 };
 
 interface DetailInfoCardProps {
-  coupon: Coupon;
+  coupon: GifticonDetailResponseDto;
   originalPrice?: number;
   discountRate?: number;
 }
@@ -108,9 +108,9 @@ const DetailInfoCard = ({
   originalPrice,
   discountRate 
 }: DetailInfoCardProps) => {
-  const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiration_date);
-  const formattedExpiration = formatExpirationDate(coupon.expiration_date);
-  const formattedPrice = coupon.price.toLocaleString('ko-KR');
+  const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiryDate);
+  const formattedExpiration = formatExpirationDate(coupon.expiryDate);
+  const formattedPrice = coupon.originalPrice.toLocaleString('ko-KR');
   const formattedOriginalPrice = originalPrice ? originalPrice.toLocaleString('ko-KR') : '';
   const displayDiscountRate = discountRate || 0;
 
@@ -120,17 +120,17 @@ const DetailInfoCard = ({
         <DdayWrapper>
           <DdayView type="gift" dday={daysUntilExpiration} size="Medium" />
         </DdayWrapper>
-        <ProductImage src={coupon.image_url} alt={coupon.title} />
+        <ProductImage src={coupon.imageUrl} alt={coupon.productName} />
       </ImageContainer>
       
       <InfoContainer>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
           <StyledText fontSize={18} fontWeight={400} color={COLORS.text.secondary}>
-            {coupon.brand}
+            {coupon.brandName}
           </StyledText>
         
           <StyledText fontSize={25} fontWeight={700} color={COLORS.text.primary}>
-            {coupon.title}
+            {coupon.productName}
           </StyledText>
         
           <StyledText fontSize={15} fontWeight={400} color={COLORS.text.primary}>

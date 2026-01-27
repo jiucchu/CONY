@@ -1,6 +1,6 @@
 import DetailInfoCard from "@/components/payment/common/detail/DetailInfoCard";
 import { DefaultButton } from "@/components/common/atomic/Button";
-import { Coupon } from "@/types/coupon/coupon";
+import { GifticonDetailResponseDto } from "@/types/gifticon/gifticon";
 import styled from "styled-components";
 import ContentLayout from "@/components/layout/ContentLayout";
 import { goBack } from "@/utils/utils";
@@ -24,7 +24,7 @@ const ButtonWrapper = styled.div`
     padding: 24px;
 `;
 
-const PaymentDetail = ({ coupon }: { coupon: Coupon }) => {
+const PaymentDetail = ({ coupon }: { coupon: GifticonDetailResponseDto }) => {
     return (
         <ContentLayout headerType="back" headerTitle="쿠폰 구매" onBack={goBack}>
             <PaymentDetailContainer>
