@@ -26,7 +26,9 @@ pipeline {
                             string(credentialsId: 'SPRING_DATASOURCE_USERNAME', variable: 'SPRING_DATASOURCE_USERNAME'),
                             string(credentialsId: 'SPRING_DATASOURCE_PASSWORD', variable: 'SPRING_DATASOURCE_PASSWORD'),
                             string(credentialsId: 'REDIS_HOST', variable: 'REDIS_HOST'),
-                            string(credentialsId: 'REDIS_PORT', variable: 'REDIS_PORT')
+                            string(credentialsId: 'REDIS_PORT', variable: 'REDIS_PORT'),
+                            string(credentialsId: 'AWS_ACCESS_KEY', variable: 'AWS_ACCESS_KEY'),
+                            string(credentialsId: 'AWS_SECRET_KEY', variable: 'AWS_SECRET_KEY')
                         ]) {
                             // 2. .env 파일 생성
                             sh """
@@ -35,6 +37,8 @@ pipeline {
                                 echo "SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}" >> .env
                                 echo "REDIS_HOST=${REDIS_HOST}" >> .env
                                 echo "REDIS_PORT=${REDIS_PORT}" >> .env
+                                echo "AWS_ACCESS_KEY=${AWS_ACCESS_KEY}" >> .env
+                                echo "AWS_SECRET_KEY=${AWS_SECRET_KEY}" >> .env
                             """
                         }
 
