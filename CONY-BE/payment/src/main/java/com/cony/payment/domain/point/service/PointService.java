@@ -56,41 +56,6 @@ public class PointService {
     }
 
     /**
-     * 포인트 차감
-     * @param userId 사용자 ID
-     * @param amount 차감 금액
-     * @return 차감 후 잔액
-     */
-    @Transactional
-    public Long deductPoint(Long userId, Long amount) {
-        log.info("포인트 차감 시작: userId={}, amount={}", userId, amount);
-
-        // 1. 사용자 조회
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        // 2. 금액 유효성 검사
-        if (amount == null || amount <= 0) {
-            throw new CustomException(ErrorCode.INVALID_POINT_AMOUNT);
-        }
-
-        // 3. 포인트 차감 (잔액 부족 시 예외 발생)
-        user.deductPoint(amount);
-        userRepository.save(user);
-
-        // 4. 거래 내역 저장
-        transactionService.createTransaction(
-                user,
-                TransactionType.PURCHASE,
-                -amount,  // 차감은 음수
-                "기프티콘 구매"
-        );
-
-        log.info("포인트 차감 완료: userId={}, 차감금액={}, 잔액={}", userId, amount, user.getPointBalance());
-        return user.getPointBalance();
-    }
-
-    /**
      * 포인트 잔액 조회
      * @param userId 사용자 ID
      * @return 포인트 잔액

@@ -1,6 +1,7 @@
 package com.cony.payment.domain.user.entity;
 
 import com.cony.payment.domain.user.enums.OAuthProvider;
+import com.cony.payment.domain.user.enums.UserStatus;
 import com.cony.payment.global.entity.BaseTimeEntity;
 import com.cony.payment.global.error.CustomException;
 import com.cony.payment.global.error.ErrorCode;
@@ -10,10 +11,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "user")
+@Table(name = "users")
 public class User extends BaseTimeEntity {
 
     @Id
@@ -35,6 +38,15 @@ public class User extends BaseTimeEntity {
 
     @Column(nullable = false)
     private Long pointBalance = 0L;  // 기본값 0
+
+    @Column(nullable = false)
+    private int reportCount = 0;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status = UserStatus.ACTIVE; // 계정 상태 (ACTIVE, SUSPENDED, BANNED)
+
+    private LocalDateTime suspensionEndAt; // 정지 해제일(영구정지 -> null)
 
     @Builder
     public User(String email, String name, OAuthProvider oauthProvider, String oauthId, String profileImageUrl) {
@@ -68,4 +80,45 @@ public class User extends BaseTimeEntity {
         }
         this.pointBalance -= amount;
     }
+
+    /**
+     * 신고 횟수
+     */
+    public void increaseReportCount() {
+        this.reportCount++;
+    }
+
+    /**
+     * 1차 정지 (기간 정지)
+     */
+    public void suspendAccount(int days) {
+        this.status = UserStatus.SUSPENDED;
+        this.suspensionEndAt = LocalDateTime.now().plusDays(days);
+    }
+
+    /**
+     * 2차 정지 (영구 정지)
+     */
+    public void banAccount() {
+        this.status = UserStatus.BANNED;
+        this.suspensionEndAt = null;
+    }
+
+    public void checkAndUnban() {
+        // 영구 정지(BANNED)는 절대 안 풀림 -> 바로 리턴
+        if (this.status == UserStatus.BANNED) {
+            return;
+        }
+
+        // 기간 정지(SUSPENDED) 상태이고 + 만료 시간이 지났다면?
+        if (this.status == UserStatus.SUSPENDED
+                && this.suspensionEndAt != null
+                && LocalDateTime.now().isAfter(this.suspensionEndAt)) {
+
+            this.status = UserStatus.ACTIVE;       // 상태 복구!
+            this.suspensionEndAt = null;           // 날짜 초기화
+            // (JPA Dirty Checking으로 인해 Transaction이 끝나면 DB에 자동 저장됨)
+        }
+    }
+
 }
