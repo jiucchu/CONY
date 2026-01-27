@@ -28,7 +28,8 @@ pipeline {
                             string(credentialsId: 'REDIS_HOST', variable: 'REDIS_HOST'),
                             string(credentialsId: 'REDIS_PORT', variable: 'REDIS_PORT'),
                             string(credentialsId: 'AWS_ACCESS_KEY', variable: 'AWS_ACCESS_KEY'),
-                            string(credentialsId: 'AWS_SECRET_KEY', variable: 'AWS_SECRET_KEY')
+                            string(credentialsId: 'AWS_SECRET_KEY', variable: 'AWS_SECRET_KEY'),
+                            string(credentialsId: 'S3_BUCKET_NAME', variable: 'S3_BUCKET_NAME')
                         ]) {
                             // 2. .env 파일 생성
                             sh """
@@ -39,6 +40,7 @@ pipeline {
                                 echo "REDIS_PORT=${REDIS_PORT}" >> .env
                                 echo "AWS_ACCESS_KEY=${AWS_ACCESS_KEY}" >> .env
                                 echo "AWS_SECRET_KEY=${AWS_SECRET_KEY}" >> .env
+                                echo "S3_BUCKET_NAME=${S3_BUCKET_NAME}" >> .env
                             """
                         }
 
