@@ -22,7 +22,7 @@ public interface GifticonRepository extends JpaRepository<Gifticon, Long> {
 
     Page<Gifticon> findByUserIdAndStatus(Long userId, GifticonStatus status, Pageable pageable);
 
-    @Query("SELECT DISTINCT g.brand.id as id, g.brand.name as name, g.brand.iconUrl as iconUrl FROM Gifticon g WHERE g.user.id = :userId AND g.status ")
-    List<BrandProjection> findDistinctBrandsByUserId(@Param("userId") Long userId);
+    @Query("SELECT DISTINCT g.brand.id as id, g.brand.name as name, g.brand.iconUrl as iconUrl FROM Gifticon g WHERE g.user.id = :userId AND g.status <> :excludeStatus")
+    List<BrandProjection> findDistinctBrandsByUserId(@Param("userId") Long userId, @Param("excludeStatus") GifticonStatus excludeStatus);
 
 }
