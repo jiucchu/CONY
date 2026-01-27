@@ -1,13 +1,12 @@
 package com.cony.manage;
 
-import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
 import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.TimeZone;
 
-@SpringBootApplication(exclude = { S3AutoConfiguration.class })
+@SpringBootApplication
 public class ManageApplication {
 
 	public static void main(String[] args) {
