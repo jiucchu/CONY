@@ -24,7 +24,9 @@ public class User extends BaseTimeEntity {
     private String name;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "oauth_provider")
     private OAuthProvider oAuthProvider;
+    @Column(name = "oauth_id")
     private String oAuthId;
 
     private String profileImageUrl;
