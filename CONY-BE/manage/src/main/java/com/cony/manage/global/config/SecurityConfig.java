@@ -34,6 +34,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/health-check").permitAll() // 로드밸런싱 생존 확인용
                         .requestMatchers("/api/v1/auth/**", "login/oauth2/**").permitAll() // 로그인/회원가입 인증 API 모두에게 접근 허용.
+                        .requestMatchers("/v1/gifticons/**", "/v1/geofence/**").permitAll() // api 연동을 위해 gifticons, geofence 모두에게 허용
                         .anyRequest().authenticated())
 //                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)) // jwt 필터 추가
                 .build();
