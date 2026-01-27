@@ -6,7 +6,6 @@ import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -98,4 +97,10 @@ public interface GifticonControllerDocs {
             @Parameter(description = "사용 이력 ID (Log ID)", required = true) @PathVariable Long logId,
             @RequestBody(description = "수정할 사용 내역 정보", required = true) @Valid GifticonLogUpdateRequestDto request
     );
+
+    @Operation(summary = "보유 기프티콘 브랜드 목록", description = "보유중인 기프티콘의 브랜드 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "브랜드 목록 반환")
+    })
+    public ApiResponse<List<BrandResponseDto>> getBrandList();
 }
