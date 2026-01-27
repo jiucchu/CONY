@@ -9,13 +9,11 @@ import com.cony.payment.infrastructure.kakaopay.dto.KakaoPayReadyRequest;
 import com.cony.payment.infrastructure.kakaopay.dto.KakaoPayReadyResponse;
 import com.cony.payment.global.error.CustomException;
 import com.cony.payment.global.error.ErrorCode;
+import com.cony.payment.global.util.RedisUtilService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -25,10 +23,11 @@ public class PaymentService {
     private final KakaoPayClient kakaoPayClient;
     private final KakaoPayProperties properties;
     private final PointService pointService;
+    private final RedisUtilService redisUtilService;
 
-    // 임시 TID 저장소 (DB나 Redis 대용)
-    private final Map<String, String> tidStorage = new ConcurrentHashMap<>();
-    private final Map<String, Long> orderUserStorage = new ConcurrentHashMap<>();
+    private static final String TID_KEY_PREFIX = "payment:tid:";
+    private static final String USER_KEY_PREFIX = "payment:user:";
+    private static final Long PAYMENT_TTL_MS = 15 * 60 * 1000L; // 15분
 
     /**
      * 결제 준비
@@ -37,7 +36,7 @@ public class PaymentService {
      * @return 결제 준비 응답 (결제 URL 포함)
      */
     @Transactional
-    public KakaoPayReadyResponse ready(Long userId, Integer amount) {
+    public KakaoPayReadyResponse ready(Long userId, Long amount) {
         String partnerOrderId = "ORDER_" + System.currentTimeMillis();
         String partnerUserId = String.valueOf(userId);
 
@@ -49,8 +48,8 @@ public class PaymentService {
                 .partnerUserId(partnerUserId)
                 .itemName("포인트 " + amount + "원 충전")
                 .quantity(1)
-                .totalAmount(amount)
-                .taxFreeAmount(amount)  // 포인트 충전은 전액 비과세
+                .totalAmount(amount.intValue())
+                .taxFreeAmount(amount.intValue())  // 포인트 충전은 전액 비과세
                 .approvalUrl(properties.getApprovalRedirect() + "?partner_order_id=" + partnerOrderId)
                 .cancelUrl(properties.getCancelRedirect())
                 .failUrl(properties.getFailRedirect())
@@ -58,9 +57,9 @@ public class PaymentService {
 
         KakaoPayReadyResponse response = kakaoPayClient.ready(request);
 
-        // TID 및 UserId 저장 (추후 승인 시 필요)
-        tidStorage.put(partnerOrderId, response.getTid());
-        orderUserStorage.put(partnerOrderId, userId);
+        // TID 및 UserId를 Redis에 저장 (TTL 15분)
+        redisUtilService.setData(TID_KEY_PREFIX + partnerOrderId, response.getTid(), PAYMENT_TTL_MS);
+        redisUtilService.setData(USER_KEY_PREFIX + partnerOrderId, String.valueOf(userId), PAYMENT_TTL_MS);
         log.info("카카오페이 결제 준비 성공: tid={}", response.getTid());
 
         return response;
@@ -76,17 +75,18 @@ public class PaymentService {
     public KakaoPayApproveResponse payApprove(String pgToken, String partnerOrderId) {
         log.info("카카오페이 결제 승인 요청: pgToken={}, orderId={}", pgToken, partnerOrderId);
 
-        // 1. TID 조회
-        String tid = tidStorage.get(partnerOrderId);
+        // 1. Redis에서 TID 조회
+        String tid = redisUtilService.getData(TID_KEY_PREFIX + partnerOrderId);
         if (tid == null) {
             throw new CustomException(ErrorCode.TID_NOT_FOUND);
         }
 
-        // 2. 사용자 ID 추출
-        Long userId = orderUserStorage.get(partnerOrderId);
-        if (userId == null) {
-            throw new CustomException(ErrorCode.TID_NOT_FOUND); // 주문 정보를 찾을 수 없음
+        // 2. Redis에서 사용자 ID 조회
+        String userIdStr = redisUtilService.getData(USER_KEY_PREFIX + partnerOrderId);
+        if (userIdStr == null) {
+            throw new CustomException(ErrorCode.TID_NOT_FOUND);
         }
+        Long userId = Long.valueOf(userIdStr);
 
         // 3. 카카오페이 승인 요청
         KakaoPayApproveRequest request = KakaoPayApproveRequest.builder()
@@ -104,9 +104,9 @@ public class PaymentService {
         Long chargedAmount = Long.valueOf(response.getAmount().getTotal());
         pointService.chargePoint(userId, chargedAmount);
 
-        // 5. 임시 저장 데이터 삭제
-        tidStorage.remove(partnerOrderId);
-        orderUserStorage.remove(partnerOrderId);
+        // 5. Redis 데이터 삭제
+        redisUtilService.deleteData(TID_KEY_PREFIX + partnerOrderId);
+        redisUtilService.deleteData(USER_KEY_PREFIX + partnerOrderId);
 
         return response;
     }
@@ -116,8 +116,8 @@ public class PaymentService {
      */
     public void cancel(String partnerOrderId) {
         log.info("결제 취소: orderId={}", partnerOrderId);
-        tidStorage.remove(partnerOrderId);
-        orderUserStorage.remove(partnerOrderId);
+        redisUtilService.deleteData(TID_KEY_PREFIX + partnerOrderId);
+        redisUtilService.deleteData(USER_KEY_PREFIX + partnerOrderId);
     }
 
     /**
@@ -125,14 +125,14 @@ public class PaymentService {
      */
     public void fail(String partnerOrderId) {
         log.info("결제 실패: orderId={}", partnerOrderId);
-        tidStorage.remove(partnerOrderId);
-        orderUserStorage.remove(partnerOrderId);
+        redisUtilService.deleteData(TID_KEY_PREFIX + partnerOrderId);
+        redisUtilService.deleteData(USER_KEY_PREFIX + partnerOrderId);
     }
 
     /**
      * TID 저장 (테스트용)
      */
     public void saveTid(String partnerOrderId, String tid) {
-        tidStorage.put(partnerOrderId, tid);
+        redisUtilService.setData(TID_KEY_PREFIX + partnerOrderId, tid, PAYMENT_TTL_MS);
     }
 }

@@ -78,31 +78,6 @@ public class TransactionController {
     }
 
     /**
-     * 사용자별 거래 내역 조회
-     * @param userId 사용자 ID
-     * @param page 페이지 번호
-     * @param size 페이지 크기
-     * @return 거래 내역 목록
-     */
-    @GetMapping("/user/{userId}")
-    public ApiResponse<Page<TransactionResponse>> getTransactionsByUser(
-            @PathVariable Long userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-
-        log.info("사용자별 거래 내역 조회: userId={}, page={}, size={}", userId, page, size);
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Transaction> transactions = transactionService.getTransactionsByUser(user, pageable);
-        Page<TransactionResponse> response = transactions.map(TransactionResponse::from);
-
-        return ApiResponse.success(response);
-    }
-
-    /**
      * 최근 거래 내역 조회 (최근 10개)
      * @param userId 사용자 ID
      * @return 최근 거래 내역

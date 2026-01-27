@@ -12,12 +12,12 @@ import lombok.NoArgsConstructor;
 
 /**
  * 거래 내역 Entity
- * - 포인트 충전, 기프티콘 구매/판매, 환불 등 모든 거래 기록
+ * - 포인트 충전, 기프티콘 구매/판매 기록
  */
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "transaction", indexes = {
+@Table(name = "transactions", indexes = {
         @Index(name = "idx_user_id", columnList = "user_id"),
         @Index(name = "idx_type", columnList = "type"),
         @Index(name = "idx_status", columnList = "status"),
