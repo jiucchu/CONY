@@ -14,6 +14,7 @@ import java.time.LocalDate;
 @Getter @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Table(name = "GIFTICON")
 public class Gifticon {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "gifticon_id")

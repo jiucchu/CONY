@@ -7,6 +7,7 @@ import lombok.*;
 @Getter @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Table(name = "BRAND")
 public class Brand {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "brand_id")
