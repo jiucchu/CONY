@@ -12,6 +12,7 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
+import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisCallback;
@@ -51,7 +52,7 @@ public class StoreCacheBatchConfig {
                 .tasklet((contribution, chunkContext) -> {
                     redisTemplate.delete(GEO_KEY);
                     log.info(">>>> [Batch] Existing GEO Key ({}) Deleted.", GEO_KEY);
-                    return null;
+                    return RepeatStatus.FINISHED;
                 }, transactionManager)
                 .build();
     }
