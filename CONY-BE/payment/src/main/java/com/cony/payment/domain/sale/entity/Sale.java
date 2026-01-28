@@ -31,7 +31,7 @@ public class Sale extends BaseTimeEntity {
     private Integer salePrice; // 판매 가격
 
     @Column(name = "discount_rate", nullable = false)
-    private Double discountRate; // 할인율
+    private Integer discountRate; // 할인율 (정수)
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -46,13 +46,13 @@ public class Sale extends BaseTimeEntity {
         this.discountRate = calculateDiscountRate(originalPrice, salePrice);
         this.status = SaleStatus.ON_SALE;
     }
-
     // 할인율 계산
-    private Double calculateDiscountRate(Integer originalPrice, Integer salePrice) {
+    private Integer calculateDiscountRate(Integer originalPrice, Integer salePrice) {
         if (originalPrice == null || originalPrice <= 0) {
-            return 0.0;
+            return 0;
         }
-        return Math.round((1 - (double) salePrice / originalPrice) * 100 * 10) / 10.0;
+
+        return (int) Math.round((1 - (double) salePrice / originalPrice) * 100);
     }
 
     // 판매 가격 수정
