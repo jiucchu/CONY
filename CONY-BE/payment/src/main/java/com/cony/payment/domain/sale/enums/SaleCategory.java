@@ -8,10 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum SaleCategory {
     ALL("전체"),
     CAFE("카페"),
-    CONVENIENCE("편의점"),
-    FOOD("외식"),
-    BEAUTY("뷰티"),
-    LIFESTYLE("생활");
+    CONVENIENCE("편의점");
 
     private final String description;
 }
