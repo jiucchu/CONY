@@ -33,10 +33,10 @@ public class SaleController {
      */
     @PostMapping
     public ApiResponse<Long> createSale(
-            @RequestParam Long userId,
             @RequestBody @Valid SaleRequestDto requestDto
     ) {
-        Long saleId = saleService.createSale(userId, requestDto);
+        Long testUserId = 1L;
+        Long saleId = saleService.createSale(testUserId, requestDto);
         return ApiResponse.success("판매글이 성공적으로 등록되었습니다.", saleId);
     }
 
@@ -94,11 +94,11 @@ public class SaleController {
      */
     @PutMapping("/{saleId}")
     public ApiResponse<Void> updateSale(
-            @RequestParam Long userId,
             @PathVariable Long saleId,
             @RequestBody @Valid SaleUpdateRequestDto requestDto
     ) {
-        saleService.updateSale(userId, saleId, requestDto.getSalePrice());
+        Long testUserId = 1L;
+        saleService.updateSale(testUserId, saleId, requestDto.getSalePrice());
         return ApiResponse.success("판매글이 수정되었습니다.");
     }
 
@@ -108,11 +108,11 @@ public class SaleController {
      */
     @GetMapping("/my")
     public ApiResponse<Page<SaleListResponseDto>> getMySales(
-            @RequestParam Long userId,
             @RequestParam(required = false) SaleStatus status,
             @PageableDefault(size = 10) Pageable pageable
     ) {
-        Page<SaleListResponseDto> sales = saleService.getMySalesWithGifticon(userId, status, pageable);
+        Long testUserId = 1L;
+        Page<SaleListResponseDto> sales = saleService.getMySalesWithGifticon(testUserId, status, pageable);
         return ApiResponse.success("내 판매글 목록을 조회했습니다.", sales);
     }
 
@@ -121,8 +121,9 @@ public class SaleController {
      * [GET] /sales/my/stats?userId=1
      */
     @GetMapping("/my/stats")
-    public ApiResponse<SaleStatsDto> getMySaleStats(@RequestParam Long userId) {
-        SaleStatsDto stats = saleService.getMySaleStats(userId);
+    public ApiResponse<SaleStatsDto> getMySaleStats() {
+        Long testUserId = 1L;
+        SaleStatsDto stats = saleService.getMySaleStats(testUserId);
         return ApiResponse.success("내 판매 통계를 조회했습니다.", stats);
     }
 
@@ -132,10 +133,10 @@ public class SaleController {
      */
     @GetMapping("/my/sold")
     public ApiResponse<Page<SaleListResponseDto>> getMySoldSales(
-            @RequestParam Long userId,
             @PageableDefault(size = 10) Pageable pageable
     ) {
-        Page<SaleListResponseDto> sales = saleService.getMySalesWithGifticon(userId, SaleStatus.SOLD_OUT, pageable);
+        Long testUserId = 1L;
+        Page<SaleListResponseDto> sales = saleService.getMySalesWithGifticon(testUserId, SaleStatus.SOLD_OUT, pageable);
         return ApiResponse.success("내 판매 완료 목록을 조회했습니다.", sales);
     }
 
@@ -145,10 +146,10 @@ public class SaleController {
      */
     @DeleteMapping("/{saleId}")
     public ApiResponse<Void> cancelSale(
-            @RequestParam Long userId,
             @PathVariable Long saleId
     ) {
-        saleService.cancelSale(userId, saleId);
+        Long testUserId = 1L;
+        saleService.cancelSale(testUserId, saleId);
         return ApiResponse.success("판매가 취소되었습니다.");
     }
 
@@ -158,10 +159,10 @@ public class SaleController {
      */
     @PostMapping("/{saleId}/start")
     public ApiResponse<Void> startSale(
-            @RequestParam Long userId,
             @PathVariable Long saleId
     ) {
-        saleService.startSale(userId, saleId);
+        Long testUserId = 1L;
+        saleService.startSale(testUserId, saleId);
         return ApiResponse.success("판매가 시작되었습니다.");
     }
 }

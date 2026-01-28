@@ -24,10 +24,10 @@ public class PurchaseController {
      */
     @PostMapping("/{saleId}")
     public ApiResponse<Void> purchaseGifticon(
-            @RequestParam Long userId,
             @PathVariable Long saleId
     ) {
-        purchaseService.purchaseGifticon(userId, saleId);
+        Long testUserId = 1L;
+        purchaseService.purchaseGifticon(testUserId, saleId);
         return ApiResponse.success("기프티콘 구매가 완료되었습니다.");
     }
 
@@ -37,10 +37,10 @@ public class PurchaseController {
      */
     @GetMapping("/my")
     public ApiResponse<Page<PurchaseResponseDto>> getMyPurchases(
-            @RequestParam Long userId,
             @PageableDefault(size = 10) Pageable pageable
     ) {
-        Page<PurchaseResponseDto> purchases = purchaseService.getMyPurchases(userId, pageable);
+        Long testUserId = 1L;
+        Page<PurchaseResponseDto> purchases = purchaseService.getMyPurchases(testUserId, pageable);
         return ApiResponse.success("내 구매 목록을 조회했습니다.", purchases);
     }
 }
