@@ -46,7 +46,7 @@ public class SecurityConfig {
 
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:3000",    // Next.js (프론트엔드 서버)
-                "https://cony-domain.com",  // 실제 도메인 [추후 수정]
+                "http://i14c106.p.ssafy.io",  // 실제 도메인
                 "http://localhost:8080"     // 백엔드 직접 호출 테스트
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
