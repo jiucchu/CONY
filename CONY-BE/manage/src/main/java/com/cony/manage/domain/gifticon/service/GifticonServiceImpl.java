@@ -12,6 +12,7 @@ import com.cony.manage.global.error.CustomException;
 import com.cony.manage.global.error.ErrorCode;
 import com.cony.manage.infrastructure.image.FileUploader;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,9 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -44,6 +46,7 @@ public class GifticonServiceImpl implements GifticonService {
 
     private final FileUploader fileUploader;
     private final RestClient restClient;
+    private final ObjectMapper objectMapper;
 
     @Override
     public List<GifticonAnalysisResponseDto> analyzeGifticon(List<MultipartFile> images) {
@@ -58,11 +61,24 @@ public class GifticonServiceImpl implements GifticonService {
                         .imageType("ORIGINAL")
                         .build();
 
-                JsonNode rootNode = restClient.post()
+                String responseBody = restClient.post()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(ocrRequest)
-                        .retrieve()
-                        .body(JsonNode.class);
+                        .exchange((request, response) -> {
+                            if(response.getStatusCode().is4xxClientError() || response.getStatusCode().is5xxServerError()) {
+                                throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+                            }
+
+                            InputStream is = response.getBody();
+                            byte[] bytes = is.readAllBytes();
+
+                            return new String(bytes, StandardCharsets.UTF_8);
+                        });
+
+                JsonNode rootNode = null;
+                if(responseBody != null && !responseBody.isEmpty()) {
+                    rootNode = objectMapper.readTree(responseBody);
+                }
 
                 if(rootNode != null) {
                     JsonNode fields = rootNode.path("data").path("fields");
