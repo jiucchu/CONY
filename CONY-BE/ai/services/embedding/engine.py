@@ -3,16 +3,9 @@ import requests
 import chromadb
 
 from schemas.embedding import Response
+from services.chroma import get_chroma_collection
 
 GMS_API_URL = "https://gms.ssafy.io/gmsapi/api.openai.com/v1/embeddings"
-
-
-def _get_chroma_collection():
-    persist_dir = os.getenv("CHROMA_PERSIST_DIR", "./chroma_db")
-    collection_name = os.getenv("CHROMA_COLLECTION", "sale_embeddings")
-
-    client = chromadb.PersistentClient(path=persist_dir)
-    return client.get_or_create_collection(name=collection_name)
 
 
 # 임베딩 생성 및 저장
@@ -47,7 +40,7 @@ def run_embedding(sale_id: int, content_text: str) -> Response:
 
     # ChromaDB에 저장
     try:
-        collection = _get_chroma_collection()
+        collection = get_chroma_collection()
         collection.upsert(
             ids=[f"sale_{sale_id}"],
             embeddings=[embedding],
@@ -67,7 +60,7 @@ def run_embedding(sale_id: int, content_text: str) -> Response:
 def delete_embedding(sale_id: int) -> Response:
     # ChromaDB에서 벡터 삭제
     try:
-        collection = _get_chroma_collection()
+        collection = get_chroma_collection()
         # 존재 여부 확인
         existing = collection.get(ids=[f"sale_{sale_id}"])
         if not existing.get("ids"):
