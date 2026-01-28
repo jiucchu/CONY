@@ -17,7 +17,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -197,6 +199,14 @@ public class GifticonServiceImpl implements GifticonService {
      */
     @Override
     public Page<GifticonListResponseDto> getMyGifticons(Long userId, GifticonSearchCondition condition, Pageable pageable) {
+
+        if(!Boolean.TRUE.equals(condition.getExcludeUsed())) {
+            Sort statusSort = Sort.by(Sort.Order.asc("statusOrder"));
+
+            Sort finalSort = statusSort.and(pageable.getSort());
+
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), finalSort);
+        }
 
         Specification<Gifticon> specification = GifticonSpecification.search(userId, condition);
 
