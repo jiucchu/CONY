@@ -57,8 +57,8 @@ class PurchaseServiceTest {
         buyer.chargePoint(10000L);
         userRepository.save(buyer);
 
-        // 판매글 등록 (기프티콘ID: 100, 가격: 3,000원)
-        SaleRequestDto saleRequest = new SaleRequestDto(100L, 3000L);
+        // 판매글 등록 (기프티콘ID: 100, 정가: 5,000원, 판매가: 3,000원)
+        SaleRequestDto saleRequest = new SaleRequestDto(100L, 5000L, 3000L);
         Long saleId = saleService.createSale(seller.getId(), saleRequest);
 
         // ============================================
