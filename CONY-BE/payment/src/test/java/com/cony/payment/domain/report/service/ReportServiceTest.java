@@ -127,7 +127,7 @@ class ReportServiceTest {
     }
 
     private Long createSale(User seller) {
-        SaleRequestDto request = new SaleRequestDto(123L, 5000L); // DTO 생성자 필요
+        SaleRequestDto request = new SaleRequestDto(123L, 5000L, 4500L); // DTO 생성자 필요
         return saleService.createSale(seller.getId(), request);
     }
 

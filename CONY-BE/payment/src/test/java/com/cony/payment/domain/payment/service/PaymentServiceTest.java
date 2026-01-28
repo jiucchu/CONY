@@ -46,7 +46,7 @@ class PaymentServiceTest {
     @DisplayName("결제 준비 - TID 발급 성공")
     void ready_Success() {
         // given
-        Integer amount = 10000;
+        Long amount = 10000L;
 
         // when
         KakaoPayReadyResponse response = paymentService.ready(testUser.getId(), amount);
