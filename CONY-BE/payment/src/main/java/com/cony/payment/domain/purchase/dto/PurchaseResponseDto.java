@@ -20,7 +20,7 @@ public class PurchaseResponseDto {
                 .purchaseId(purchase.getId())
                 .saleId(purchase.getSaleId())
                 .buyerId(purchase.getBuyerId())
-                .price(purchase.getPrice())
+                .price(purchase.getPurchasePrice())
                 .createdAt(purchase.getCreatedAt())
                 .build();
     }
