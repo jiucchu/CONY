@@ -25,7 +25,7 @@ public class SaleListResponseDto {
     // 가격 정보
     private Integer originalPrice;      // 정가
     private Integer salePrice;          // 판매가
-    private Double discountRate;     // 할인율
+    private Integer discountRate;     // 할인율
 
     // 기프티콘 정보 (Manage 서버에서 조회)
     private String brandName;
