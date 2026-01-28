@@ -31,7 +31,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/health-check").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger 허용
-                        .requestMatchers("/payments/**").permitAll()  // 카카오페이 결제 관련 API 허용
+                        .requestMatchers("/**").permitAll() // 모든 API 허용 (context-path 제외한 하위 경로)
                         .anyRequest().authenticated())
 
                 .build();

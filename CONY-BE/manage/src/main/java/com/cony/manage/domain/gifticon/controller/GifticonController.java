@@ -2,10 +2,10 @@ package com.cony.manage.domain.gifticon.controller;
 
 import com.cony.manage.domain.gifticon.controller.docs.GifticonControllerDocs;
 import com.cony.manage.domain.gifticon.dto.*;
+import com.cony.manage.domain.gifticon.service.BrandService;
 import com.cony.manage.domain.gifticon.service.GifticonService;
 import com.cony.manage.global.common.ApiResponse;
 import jakarta.validation.Valid;
-import jakarta.validation.executable.ValidateOnExecution;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GifticonController implements GifticonControllerDocs {
     private final GifticonService gifticonService;
+    private final BrandService brandService;
 
     @Override
     @PostMapping(value = "/analyze", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -86,5 +87,13 @@ public class GifticonController implements GifticonControllerDocs {
         gifticonService.updateUsageLog(logId, userId, request);
 
         return ApiResponse.success("사용 금액을 변경하였습니다.");
+    }
+
+    @Override
+    @GetMapping("/brands")
+    public ApiResponse<List<BrandResponseDto>> getBrandList() {
+        Long userId = 1L;
+
+        return ApiResponse.success(brandService.getList(userId));
     }
 }
