@@ -18,9 +18,9 @@ public class SaleRequestDto {
 
     @NotNull(message = "정가는 필수입니다.")
     @Min(value = 100, message = "정가는 최소 100원 이상이어야 합니다.")
-    private Long originalPrice;
+    private Integer originalPrice;
 
     @NotNull(message = "판매 가격은 필수입니다.")
     @Min(value = 100, message = "판매 가격은 최소 100원 이상이어야 합니다.")
-    private Long salePrice;
+    private Integer salePrice;
 }

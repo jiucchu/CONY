@@ -12,13 +12,12 @@ public class PurchaseResponseDto {
     private Long purchaseId;
     private Long saleId;
     private Long buyerId;
-    private Long price;
+    private Integer price;
     private LocalDateTime createdAt;
 
     public static PurchaseResponseDto from(Purchase purchase) {
         return PurchaseResponseDto.builder()
                 .purchaseId(purchase.getId())
-                .saleId(purchase.getSaleId())
                 .buyerId(purchase.getBuyerId())
                 .price(purchase.getPurchasePrice())
                 .createdAt(purchase.getCreatedAt())

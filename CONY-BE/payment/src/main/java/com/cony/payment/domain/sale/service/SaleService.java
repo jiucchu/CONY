@@ -334,7 +334,7 @@ public class SaleService {
      * 판매글 수정 (가격 변경)
      */
     @Transactional
-    public void updateSale(Long userId, Long saleId, Long newSalePrice) {
+    public void updateSale(Long userId, Long saleId, Integer newSalePrice) {
         Sale sale = saleRepository.findById(saleId)
                 .orElseThrow(() -> new CustomException(ErrorCode.SALE_NOT_FOUND));
 

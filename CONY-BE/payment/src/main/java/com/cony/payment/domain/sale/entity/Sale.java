@@ -25,10 +25,10 @@ public class Sale extends BaseTimeEntity {
     private Long gifticonId;
 
     @Column(name = "original_price", nullable = false)
-    private Long originalPrice; // 정가
+    private Integer originalPrice; // 정가
 
     @Column(name = "sale_price", nullable = false)
-    private Long salePrice; // 판매 가격
+    private Integer salePrice; // 판매 가격
 
     @Column(name = "discount_rate", nullable = false)
     private Double discountRate; // 할인율
@@ -38,7 +38,7 @@ public class Sale extends BaseTimeEntity {
     private SaleStatus status;
 
     @Builder
-    public Sale(Long sellerId, Long gifticonId, Long originalPrice, Long salePrice) {
+    public Sale(Long sellerId, Long gifticonId, Integer originalPrice, Integer salePrice) {
         this.sellerId = sellerId;
         this.gifticonId = gifticonId;
         this.originalPrice = originalPrice;
@@ -48,7 +48,7 @@ public class Sale extends BaseTimeEntity {
     }
 
     // 할인율 계산
-    private Double calculateDiscountRate(Long originalPrice, Long salePrice) {
+    private Double calculateDiscountRate(Integer originalPrice, Integer salePrice) {
         if (originalPrice == null || originalPrice <= 0) {
             return 0.0;
         }
@@ -56,7 +56,7 @@ public class Sale extends BaseTimeEntity {
     }
 
     // 판매 가격 수정
-    public void updatePrice(Long newSalePrice) {
+    public void updatePrice(Integer newSalePrice) {
         this.salePrice = newSalePrice;
         this.discountRate = calculateDiscountRate(this.originalPrice, newSalePrice);
     }
@@ -77,7 +77,7 @@ public class Sale extends BaseTimeEntity {
     }
 
     // 하위 호환성을 위한 price getter (salePrice 반환)
-    public Long getPrice() {
+    public Integer getPrice() {
         return this.salePrice;
     }
 }
