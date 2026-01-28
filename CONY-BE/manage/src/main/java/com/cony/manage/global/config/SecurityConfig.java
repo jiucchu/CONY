@@ -33,6 +33,7 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/health-check").permitAll() // 로드밸런싱 생존 확인용
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger 허용
                         .requestMatchers("/v1/auth/**", "/login/oauth2/**").permitAll() // 로그인/회원가입 인증 API 모두에게 접근 허용.
                         .requestMatchers("/v1/gifticons/**", "/v1/geofence/**").permitAll() // api 연동을 위해 gifticons, geofence 모두에게 허용
                         .anyRequest().authenticated())
@@ -45,7 +46,7 @@ public class SecurityConfig {
 
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:3000",    // Next.js (프론트엔드 서버)
-                "https://cony-domain.com",  // 실제 도메인 [추후 수정]
+                "http://i14c106.p.ssafy.io",  // 실제 도메인
                 "http://localhost:8080"     // 백엔드 직접 호출 테스트
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
