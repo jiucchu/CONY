@@ -5,7 +5,7 @@ WORKDIR /app
 # 1. [시스템 패키지] 가장 안 바뀌는 부분 (맨 위로)
 # 한 번 설치되면 계속 캐시됨
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
