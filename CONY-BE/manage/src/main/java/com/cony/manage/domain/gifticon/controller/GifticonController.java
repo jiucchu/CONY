@@ -41,10 +41,12 @@ public class GifticonController implements GifticonControllerDocs {
 
     @Override
     @GetMapping
-    public ApiResponse<Page<GifticonListResponseDto>> getMyGifticons(@PageableDefault(size = 20, sort = "expiryDate", direction = Sort.Direction.ASC) Pageable pageable) {
+    public ApiResponse<Page<GifticonListResponseDto>> getMyGifticons(
+            @PageableDefault(size = 20, sort = "expiryDate", direction = Sort.Direction.ASC) Pageable pageable,
+            @ModelAttribute GifticonSearchCondition condition) {
         Long userId = 1L; // 추후 SeurityContextHolder 에서 추출.
 
-        return ApiResponse.success(gifticonService.getMyGifticons(userId, pageable));
+        return ApiResponse.success(gifticonService.getMyGifticons(userId, condition, pageable));
     }
 
     @Override

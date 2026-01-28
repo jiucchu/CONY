@@ -9,8 +9,11 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,12 +44,13 @@ public interface GifticonControllerDocs {
             @Parameter(description = "기프티콘 이미지 파일 목록", required = false) MultipartFile image
     );
 
-    @Operation(summary = "내 기프티콘 목록 조회", description = "사용자의 기프티콘 목록을 페이징하여 조회합니다.")
+    @Operation(summary = "내 기프티콘 목록 조회", description = "조건에 따라 사용자의 기프티콘 목록을 페이징하여 조회합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
     ApiResponse<Page<GifticonListResponseDto>> getMyGifticons(
-            @Parameter(description = "페이지 정보 (page, size, sort)") Pageable pageable
+            @ParameterObject @PageableDefault(size = 20, sort = "expiryDate", direction = Sort.Direction.ASC) Pageable pageable,
+            @ParameterObject GifticonSearchCondition condition
     );
 
     @Operation(summary = "기프티콘 상세 조회", description = "특정 기프티콘의 상세 정보를 조회합니다.")

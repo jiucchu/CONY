@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -195,8 +196,11 @@ public class GifticonServiceImpl implements GifticonService {
      * - Pageable: page(0부터), size(개수), sort(정렬) 정보를 담음
      */
     @Override
-    public Page<GifticonListResponseDto> getMyGifticons(Long userId, Pageable pageable) {
-        Page<Gifticon> gifticonPage = gifticonRepository.findByUserId(userId, pageable);
+    public Page<GifticonListResponseDto> getMyGifticons(Long userId, GifticonSearchCondition condition, Pageable pageable) {
+
+        Specification<Gifticon> specification = GifticonSpecification.search(userId, condition);
+
+        Page<Gifticon> gifticonPage = gifticonRepository.findAll(specification, pageable);
         if(gifticonPage.isEmpty()) {
             return Page.empty(pageable);
         }
