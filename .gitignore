@@ -38,6 +38,7 @@ out/
 
 ### Application Properties (민감 정보) ###
 !application-local.properties
+!application-prod.properties
 **/application-*.properties
 !application.properties
 
