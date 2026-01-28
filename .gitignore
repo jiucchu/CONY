@@ -37,9 +37,9 @@ out/
 .vscode/
 
 ### Application Properties (민감 정보) ###
+**/application-*.properties
 !application-local.properties
 !application-prod.properties
-**/application-*.properties
 !application.properties
 
 ### Logs ###
