@@ -24,12 +24,12 @@ public class Purchase extends BaseTimeEntity {
     private Long buyerId;
 
     @Column(nullable = false)
-    private Long price;
+    private Long purchasePrice;
 
     @Builder
     public Purchase(Long saleId, Long buyerId, Long price) {
         this.saleId = saleId;
         this.buyerId = buyerId;
-        this.price = price;
+        this.purchasePrice = price;
     }
 }
