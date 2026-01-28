@@ -64,7 +64,7 @@ public class LocalFileUploader implements FileUploader {
                     .replace("+", "%20");
 
             // 5. 최종 URL 반환
-            return domainUrl + "/" + subPath + "/" + encodedFileName;
+            return subPath + "/" + encodedFileName;
 
         } catch(IOException e) {
             log.error("[Local] 직접 업로드 실패: ", e);
@@ -117,7 +117,7 @@ public class LocalFileUploader implements FileUploader {
             Files.copy(sourcePath, targetPath);
 
             // 4. 변경된(혹은 기존) 파일명이 포함된 새로운 영구 URL 반환
-            return domainUrl + "/" + userId + "/" + filename;
+            return userId + "/" + filename;
 
         } catch(IOException e) {
             log.error("파일 영구 이동 실패: {}", tempImageUrl, e);
@@ -151,7 +151,7 @@ public class LocalFileUploader implements FileUploader {
     }
 
     @Override
-    public String getPresigendUrl(String fileName) {
-        return "";
+    public String getPresignedUrl(String filePath) {
+        return domainUrl + "/" + filePath;
     }
 }

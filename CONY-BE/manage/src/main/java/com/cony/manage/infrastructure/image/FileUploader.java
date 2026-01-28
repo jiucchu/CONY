@@ -22,5 +22,12 @@ public interface FileUploader {
 
     void deleteOldTempFiles(int daysBefore);
 
-    String getPresigendUrl(String fileName);
+    /**
+     * 이미지 접근 URL 생성
+     * Local: 정적 리소스 URL 반환
+     * S3: Presigned URL 반환
+     * @param filePath 파일의 전체 경로 (예: "temp/uuid_file.jpg" 또는 "1/uuid_file.jpg")
+     * @return 접근 가능한 URL
+     */
+    String getPresignedUrl(String filePath);
 }

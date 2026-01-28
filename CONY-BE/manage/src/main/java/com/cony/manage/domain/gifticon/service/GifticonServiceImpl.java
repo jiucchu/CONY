@@ -48,16 +48,19 @@ public class GifticonServiceImpl implements GifticonService {
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
 
+    @Value("${spring.cloud.aws.s3.bucket}")
+    private String s3Bucket;
+
     @Override
     public List<GifticonAnalysisResponseDto> analyzeGifticon(List<MultipartFile> images) {
         List<GifticonAnalysisResponseDto> results = new ArrayList<>();
 
         for(MultipartFile image : images) {
-            String tempImageUrl = fileUploader.upload(image, null);
+            String s3Key = fileUploader.upload(image, null);
 
             try {
                 OcrRequestDto ocrRequest = OcrRequestDto.builder()
-                        .imageUrl(tempImageUrl)
+                        .imageUrl(fileUploader.getPresignedUrl(s3Key))
                         .imageType("ORIGINAL")
                         .build();
 
@@ -96,13 +99,13 @@ public class GifticonServiceImpl implements GifticonService {
                     rootNode.path("data").path("needs_review").forEach(node -> needsReview.add(node.asText(null)));
 
                     results.add(GifticonAnalysisResponseDto.builder()
-                            .imageUrl(tempImageUrl)
+                            .imageUrl(s3Key)
                             .fields(ocrFields)
                             .needsReview(needsReview)
                             .build());
                 }
             } catch (Exception e) {
-                log.error("OCR Analysis failed for image: {}, error: {}", tempImageUrl, e.getMessage());
+                log.error("OCR Analysis failed for image: {}, error: {}", s3Key, e.getMessage());
 
                 // 1. 모든 필드를 '검토 필요(needsReview)' 항목으로 추가
                 // (프론트엔드에서 이 리스트를 보고 "아, 이 항목들을 입력받아야 하는구나"라고 판단하게 함)
@@ -121,7 +124,7 @@ public class GifticonServiceImpl implements GifticonService {
 
                 // 3. 결과 리스트에 추가 (이미지 URL은 유지하여 사용자가 원본을 보고 입력할 수 있게 함)
                 results.add(GifticonAnalysisResponseDto.builder()
-                        .imageUrl(tempImageUrl)
+                        .imageUrl(s3Key)
                         .fields(emptyFields)
                         .needsReview(allFieldsNeeded)
                         .build());
@@ -146,11 +149,11 @@ public class GifticonServiceImpl implements GifticonService {
                 throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
             }
 
-            String permanentImageUrl = null;
+            String s3Key = null;
             if(request.getImageUrl() != null) {
-                permanentImageUrl = fileUploader.copyToPermanent(request.getImageUrl(), userId);
+                s3Key = fileUploader.copyToPermanent(request.getImageUrl(), userId);
             } else if(image != null && !image.isEmpty()) {
-                permanentImageUrl = fileUploader.upload(image, userId);
+                s3Key = fileUploader.upload(image, userId);
             }
 
             Brand brand = brandRepository.findByName(request.getBrandName())
@@ -172,10 +175,12 @@ public class GifticonServiceImpl implements GifticonService {
                     .build();
             Gifticon saved = gifticonRepository.save(gifticon);
 
-            if(permanentImageUrl != null) {
+            if(s3Key != null) {
                 GifticonImage gifticonImage = GifticonImage.builder()
                         .gifticon(saved)
-                        .imageUrl(permanentImageUrl)
+                        .imageUrl(s3Key)
+                        .s3Bucket(s3Bucket)
+                        .s3Key(s3Key)
                         .imageType(ImageType.ORIGINAL)
                         .build();
                 gifticonImageRepository.save(gifticonImage);
@@ -230,8 +235,8 @@ public class GifticonServiceImpl implements GifticonService {
             throw new CustomException(ErrorCode.FORBIDDEN_USER);
         }
 
-        String imageUrl = gifticonImageRepository.findByGifticonIdAndImageType(gifticonId, ImageType.ORIGINAL)
-                .map(GifticonImage::getImageUrl)
+        String s3Key = gifticonImageRepository.findByGifticonIdAndImageType(gifticonId, ImageType.ORIGINAL)
+                .map(GifticonImage::getS3Key)
                 .orElse(null);
 
         List<GifticonUsageLogResponseDto> useLogs = new ArrayList<>();
@@ -255,7 +260,7 @@ public class GifticonServiceImpl implements GifticonService {
                 .originalPrice(gifticon.getOriginalPrice())
                 .currentBalance(gifticon.getCurrentBalance())
                 .categoryName(gifticon.getCategory().getName())
-                .imageUrl(imageUrl)
+                .imageUrl(fileUploader.getPresignedUrl(s3Key))
                 .gifticonType(gifticon.getGifticonType())
                 .histories(useLogs)
                 .build();
