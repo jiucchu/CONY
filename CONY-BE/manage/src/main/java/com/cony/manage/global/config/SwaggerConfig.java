@@ -5,8 +5,11 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
@@ -32,8 +35,16 @@ public class SwaggerConfig {
                         .scheme("bearer")
                         .bearerFormat("JWT")); // 토큰 형식을 JWT로 지정
 
+        // 서버 설정 (Nginx Proxy 경로 지정)
+        // "Try it out" 버튼을 눌렀을 때 요청이 갈 주소를 정의합니다.
+        List<Server> servers = List.of(
+                new Server().url("/api/manage").description("Manage Server (Nginx)"), // 운영/개발 환경
+                new Server().url("http://localhost:8080").description("Local Testing") // 로컬 환경
+        );
+
         return new OpenAPI()
                 .info(info)
+                .servers(servers)
                 .addSecurityItem(securityRequirement) // 모든 API에 보안 규칙 적용
                 .components(components);
     }
