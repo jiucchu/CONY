@@ -80,4 +80,30 @@ public class ManageClient {
             throw e;
         }
     }
+
+    /**
+     * 기프티콘 다건 조회 (ID 목록으로)
+     * @param gifticonIds 기프티콘 ID 목록
+     * @return 기프티콘 정보 맵 (gifticonId -> GifticonResponse)
+     */
+    public java.util.Map<Long, GifticonResponse> getGifticons(java.util.List<Long> gifticonIds) {
+        if (gifticonIds == null || gifticonIds.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+
+        java.util.Map<Long, GifticonResponse> result = new java.util.HashMap<>();
+
+        // TODO: 배치 API가 생기면 한 번에 조회하도록 변경
+        for (Long gifticonId : gifticonIds) {
+            try {
+                GifticonResponse gifticon = getGifticon(gifticonId);
+                result.put(gifticonId, gifticon);
+            } catch (CustomException e) {
+                log.warn("기프티콘 조회 실패: gifticonId={}", gifticonId);
+                // 실패한 건은 스킵
+            }
+        }
+
+        return result;
+    }
 }

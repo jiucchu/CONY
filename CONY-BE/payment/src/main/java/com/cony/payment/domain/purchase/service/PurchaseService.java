@@ -46,25 +46,27 @@ public class PurchaseService {
 
         validatePurchase(buyer, sale);
 
+        Long purchasePrice = sale.getSalePrice();
+
         // 포인트 이동 (구매자 차감 / 판매자 지급)
-        buyer.deductPoint(sale.getPrice());
+        buyer.deductPoint(purchasePrice);
 
         User seller = userRepository.findById(sale.getSellerId())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        seller.chargePoint(sale.getPrice());
+        seller.chargePoint(purchasePrice);
 
         sale.soldOut();
 
         Purchase purchase = Purchase.builder()
                 .saleId(saleId)
                 .buyerId(buyerId)
-                .price(sale.getPrice())
+                .price(purchasePrice)
                 .build();
         purchaseRepository.save(purchase);
 
         // 거래 로그 기록
-        transactionService.createTransaction(buyer, TransactionType.PURCHASE, -sale.getPrice(), "기프티콘 구매");
-        transactionService.createTransaction(seller, TransactionType.SALE, sale.getPrice(), "기프티콘 판매 수익");
+        transactionService.createTransaction(buyer, TransactionType.PURCHASE, -purchasePrice, "기프티콘 구매");
+        transactionService.createTransaction(seller, TransactionType.SALE, purchasePrice, "기프티콘 판매 수익");
 
         log.info("구매 거래 완료: purchaseId={}", purchase.getId());
     }
@@ -88,7 +90,7 @@ public class PurchaseService {
             throw new CustomException(ErrorCode.CANNOT_BUY_OWN_PRODUCT);
         }
         // 포인트 잔액 부족 확인
-        if (buyer.getPointBalance() < sale.getPrice()) {
+        if (buyer.getPointBalance() < sale.getSalePrice()) {
             throw new CustomException(ErrorCode.INSUFFICIENT_POINTS);
         }
     }

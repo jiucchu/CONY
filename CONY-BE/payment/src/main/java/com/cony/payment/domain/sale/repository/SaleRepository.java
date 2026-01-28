@@ -35,4 +35,9 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
      * 판매자별 + 상태별 판매글 목록 조회 (최신순)
      */
     Page<Sale> findBySellerIdAndStatusOrderByCreatedAtDesc(Long sellerId, SaleStatus status, Pageable pageable);
+
+    /**
+     * 판매자별 + 상태별 판매글 개수 조회
+     */
+    long countBySellerIdAndStatus(Long sellerId, SaleStatus status);
 }

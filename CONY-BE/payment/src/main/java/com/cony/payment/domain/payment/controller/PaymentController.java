@@ -32,9 +32,11 @@ public class PaymentController {
      */
     @PostMapping("/ready")
     public ApiResponse<KakaoPayReadyResponse> ready(@Valid @RequestBody PaymentReadyRequest request) {
-        log.info("결제 준비 요청: userId={}, amount={}", request.getUserId(), request.getAmount());
+        // 테스트 편의를 위해 userId를 1L로 하드코딩
+        Long testUserId = 1L;
+        log.info("결제 준비 요청 (테스트): userId={}, amount={}", testUserId, request.getAmount());
 
-        KakaoPayReadyResponse response = paymentService.ready(request.getUserId(), request.getAmount());
+        KakaoPayReadyResponse response = paymentService.ready(testUserId, request.getAmount());
 
         return ApiResponse.success("결제 준비가 완료되었습니다.", response);
     }

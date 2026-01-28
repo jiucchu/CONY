@@ -38,14 +38,14 @@ public class TransactionController {
      */
     @GetMapping
     public ApiResponse<Page<TransactionResponse>> getTransactions(
-            @RequestParam Long userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) TransactionType type) {
 
-        log.info("거래 내역 조회: userId={}, page={}, size={}, type={}", userId, page, size, type);
+        Long testUserId = 1L;
+        log.info("거래 내역 조회 (테스트): userId={}, page={}, size={}, type={}", testUserId, page, size, type);
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(testUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         Pageable pageable = PageRequest.of(page, size);
@@ -82,11 +82,12 @@ public class TransactionController {
      * @param userId 사용자 ID
      * @return 최근 거래 내역
      */
-    @GetMapping("/recent/{userId}")
-    public ApiResponse<List<TransactionResponse>> getRecentTransactions(@PathVariable Long userId) {
-        log.info("최근 거래 내역 조회: userId={}", userId);
+    @GetMapping("/recent")
+    public ApiResponse<List<TransactionResponse>> getRecentTransactions() {
+        Long testUserId = 1L;
+        log.info("최근 거래 내역 조회 (테스트): userId={}", testUserId);
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(testUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         List<Transaction> transactions = transactionService.getRecentTransactions(user);

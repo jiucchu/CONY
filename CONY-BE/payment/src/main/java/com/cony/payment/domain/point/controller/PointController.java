@@ -22,14 +22,15 @@ public class PointController {
      * @param userId 사용자 ID
      * @return 포인트 잔액
      */
-    @GetMapping("/{userId}")
-    public ApiResponse<PointResponse> getPointBalance(@PathVariable Long userId) {
-        log.info("포인트 잔액 조회: userId={}", userId);
+    @GetMapping
+    public ApiResponse<PointResponse> getPointBalance() {
+        Long testUserId = 1L;
+        log.info("포인트 잔액 조회 (테스트): userId={}", testUserId);
 
-        Long balance = pointService.getPointBalance(userId);
+        Long balance = pointService.getPointBalance(testUserId);
 
         PointResponse response = PointResponse.builder()
-                .userId(userId)
+                .userId(testUserId)
                 .pointBalance(balance)
                 .build();
 
