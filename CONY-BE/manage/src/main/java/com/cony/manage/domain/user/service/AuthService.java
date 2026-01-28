@@ -16,6 +16,29 @@ public class AuthService {
     private final JwtProvider jwtProvider;
 
     @Transactional
+    public User saveOrUpdate(OAuth2UserInfo userInfo) {
+        OAuthProvider provider = userInfo.getProvider();
+        String oauthId = userInfo.getOauthId();
+
+        User user = userRepository.findByOauthIdAndOauthProvider(oauthId, provider)
+                .orElseGet(() -> userRepository.findByEmail(userInfo.getEmail()).orElse(null));
+
+        if (user != null) {
+            user.update(userInfo.getName(), userInfo.getProfileImageUrl(), oauthId, provider);
+            return user;
+        } else {
+            return userRepository.save(User.builder()
+                    .email(userInfo.getEmail())
+                    .name(userInfo.getName())
+                    .oauthId(oauthId)
+                    .oauthProvider(provider)
+                    .role(Role.USER)
+                    .profileImageUrl(userInfo.getProfileImageUrl())
+                    .build());
+        }
+    }
+
+    @Transactional
     public TokenResponseDto reissue(String refreshToken) {
         if (!jwtProvider.validateToken(refreshToken)) {
             throw new RuntimeException("유효하지 않거나 만료된 리프레시 토큰입니다.");

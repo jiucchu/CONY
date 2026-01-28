@@ -1,20 +1,19 @@
 package com.cony.manage.global.auth.handler;
 
 import com.cony.manage.domain.user.entity.User;
-import com.cony.manage.domain.user.repository.UserRepository;
-import com.cony.manage.domain.user.enums.Role;
-import com.cony.manage.domain.user.enums.OAuthProvider;
+import com.cony.manage.domain.user.service.AuthService;
 import com.cony.manage.global.auth.JwtProvider;
-import com.cony.manage.global.auth.userinfo.OAuth2UserInfo;
+import com.cony.manage.global.auth.dto.TokenResponseDto;
 import com.cony.manage.global.auth.userinfo.GoogleUserInfo;
 import com.cony.manage.global.auth.userinfo.KakaoUserInfo;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-
+import com.cony.manage.global.auth.userinfo.OAuth2UserInfo;
+import com.cony.manage.global.common.ApiResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -27,11 +26,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
-    private final UserRepository userRepository;
+    private final AuthService authService;
     private final JwtProvider jwtProvider;
-
-    @Value("${app.frontend-url}")
-    private String frontendUrl;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -47,65 +44,18 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                 oAuth2User.getAttributes()
         );
 
-        String oauthId = userInfo.getOauthId();
-        String email = userInfo.getEmail();
-        String name = userInfo.getName();
-        String profileImg = userInfo.getProfileImageUrl();
-        OAuthProvider provider = userInfo.getProvider();
+        User user = authService.saveOrUpdate(userInfo);
 
-        if (oauthId == null || "null".equals(oauthId)) {
-            throw new RuntimeException("OAuth2 인증 실패: 고유 식별자(ID)를 불러올 수 없습니다.");
-        }
-
-        if (email == null) {
-            email = provider.name().toLowerCase() + "_" + oauthId + "@noemail.com";
-        }
-
-        final String targetEmail = email;
-
-        User user = userRepository.findByOauthIdAndOauthProvider(oauthId, provider)
-                .orElseGet(() -> userRepository.findByEmail(targetEmail).orElse(null));
-
-        if (user != null) {
-            user.update(name, profileImg, oauthId, provider);
-        } else {
-            user = userRepository.save(User.builder()
-                    .email(email)
-                    .name(name)
-                    .oauthId(oauthId)
-                    .oauthProvider(provider)
-                    .role(Role.USER)
-                    .profileImageUrl(profileImg)
-                    .build());
-        }
-
+        // 토큰 생성
         String accessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().name());
         String refreshToken = jwtProvider.createRefreshToken(user.getEmail());
 
+        TokenResponseDto tokenDto = new TokenResponseDto(accessToken, refreshToken);
+        ApiResponse<TokenResponseDto> apiResponse = ApiResponse.success("로그인이 완료되었습니다.", tokenDto);
+
+        response.setContentType("application/json;charset=UTF-8");
         response.setStatus(HttpServletResponse.SC_OK);
-        response.setContentType("text/html; charset=utf-8");
-
-        String html = String.format("""
-        <!DOCTYPE html>
-        <html>
-        <body>
-        <script>
-            if (window.opener) {
-                window.opener.postMessage({
-                    type: 'oauth-success',
-                    accessToken: '%s',
-                    refreshToken: '%s'
-                }, '%s');
-                window.close();
-            } else {
-                window.location.href = '%s/?accessToken=%s&refreshToken=%s';
-            }
-        </script>
-        </body>
-        </html>
-        """, accessToken, refreshToken, frontendUrl, frontendUrl, accessToken, refreshToken);
-
-        response.getWriter().write(html);
+        response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
         response.getWriter().flush();
     }
 

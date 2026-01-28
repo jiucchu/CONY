@@ -26,7 +26,8 @@ import java.util.List;
 public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
-   private final JwtAuthenticationFilter jwtAuthenticationFilter; // jwt 사용시 추가
+    private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter; // jwt 사용시 추가
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -49,7 +50,8 @@ public class SecurityConfig {
                                 .baseUri("/oauth2/authorization"))
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService))
-                        .successHandler(oAuth2LoginSuccessHandler)
+                        .successHandler(oAuth2LoginSuccessHandler) // 성공 시
+                        .failureHandler(oAuth2LoginFailureHandler) // 실패 시
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class) // jwt 필터 추가
                 .build();
