@@ -46,6 +46,7 @@ public class GifticonServiceImpl implements GifticonService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final GifticonUsageLogRepository gifticonUsageLogRepository;
+    private final StoreGeoService storeGeoService;
 
     private final FileUploader fileUploader;
     private final RestClient restClient;
@@ -200,6 +201,14 @@ public class GifticonServiceImpl implements GifticonService {
     @Override
     public Page<GifticonListResponseDto> getMyGifticons(Long userId, GifticonSearchCondition condition, Pageable pageable) {
 
+        // [위치 기반 필터링]
+        if(condition.getLatitude() != null && condition.getLongitude() != null) {
+            int radius = (condition.getRadius() != null) ? condition.getRadius().intValue() : 1000;
+            List<Long> nearbyBrands = storeGeoService.getNearbyBrandIds(condition.getLatitude(), condition.getLongitude(), radius);
+            condition.setNearbyBrandIds(nearbyBrands);
+        }
+
+        // 사용완료 된 기프티콘을 보여준다면 => 미사용, 사용중 기프티콘이 먼저 나오도록 함.
         if(!Boolean.TRUE.equals(condition.getExcludeUsed())) {
             Sort statusSort = Sort.by(Sort.Order.asc("statusOrder"));
 

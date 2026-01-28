@@ -36,6 +36,17 @@ public class GifticonSpecification {
                 predicates.add(criteriaBuilder.equal(root.get("category").get("id"), condition.getCategoryId()));
             }
 
+            if(condition.getNearbyBrandIds() != null) {
+                if(condition.getNearbyBrandIds().isEmpty()) {
+                    // 근처에 매장이 하나도 없다면 결과가 0건이어야함.
+                    // => 항상 거짓인 조건 추가
+                    predicates.add(criteriaBuilder.disjunction());
+                } else {
+                    // AND brand_id IN (...)
+                    predicates.add(root.get("brand").get("id").in(condition.getNearbyBrandIds()));
+                }
+            }
+
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
