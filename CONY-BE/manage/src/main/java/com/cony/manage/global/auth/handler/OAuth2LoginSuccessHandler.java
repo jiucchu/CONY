@@ -8,6 +8,7 @@ import com.cony.manage.global.auth.JwtProvider;
 import com.cony.manage.global.auth.userinfo.OAuth2UserInfo;
 import com.cony.manage.global.auth.userinfo.GoogleUserInfo;
 import com.cony.manage.global.auth.userinfo.KakaoUserInfo;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,6 +29,9 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     @Override
     @Transactional
@@ -76,12 +80,33 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         }
 
         String accessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().name());
+        String refreshToken = jwtProvider.createRefreshToken(user.getEmail());
 
-        String cookieValue = String.format("accessToken=%s; Path=/; HttpOnly; Max-Age=3600; SameSite=Lax", accessToken);
-        response.addHeader("Set-Cookie", cookieValue);
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("text/html; charset=utf-8");
 
-        String targetUrl = "http://localhost:3000/";
-        response.sendRedirect(targetUrl);
+        String html = String.format("""
+        <!DOCTYPE html>
+        <html>
+        <body>
+        <script>
+            if (window.opener) {
+                window.opener.postMessage({
+                    type: 'oauth-success',
+                    accessToken: '%s',
+                    refreshToken: '%s'
+                }, '%s');
+                window.close();
+            } else {
+                window.location.href = '%s/?accessToken=%s&refreshToken=%s';
+            }
+        </script>
+        </body>
+        </html>
+        """, accessToken, refreshToken, frontendUrl, frontendUrl, accessToken, refreshToken);
+
+        response.getWriter().write(html);
+        response.getWriter().flush();
     }
 
     private OAuth2UserInfo getOAuth2UserInfo(String registrationId, Map<String, Object> attributes) {

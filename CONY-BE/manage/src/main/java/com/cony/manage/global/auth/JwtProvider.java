@@ -23,7 +23,10 @@ public class JwtProvider {
     private String secretKey;
 
     private Key key;
-    private final long accessTokenExpiration = 3600000;
+
+    // 유효 기간 설정 (밀리초 단위)
+    private static final long accessTokenExpiration = 3600000;
+    private static final long refreshTokenExpiration = 1209600000;
 
     @PostConstruct
     protected void init() {
@@ -31,19 +34,33 @@ public class JwtProvider {
     }
 
     public String createAccessToken(String email, String role) {
-        try {
-            Date now = new Date();
-            return Jwts.builder()
-                    .setSubject(email)
-                    .claim("role", role)
-                    .setIssuedAt(now)
-                    .setExpiration(new Date(now.getTime() + accessTokenExpiration))
-                    .signWith(key, SignatureAlgorithm.HS256)
-                    .compact();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        Date now = new Date();
+        return Jwts.builder()
+                .setSubject(email)
+                .claim("role", role)
+                .setIssuedAt(now)
+                .setExpiration(new Date(now.getTime() + accessTokenExpiration))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String createRefreshToken(String email) {
+        Date now = new Date();
+        return Jwts.builder()
+                .setSubject(email)
+                .setIssuedAt(now)
+                .setExpiration(new Date(now.getTime() + refreshTokenExpiration))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String getEmail(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
     }
 
     public boolean validateToken(String token) {
