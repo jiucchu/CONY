@@ -36,18 +36,24 @@ public class S3FileUploader implements FileUploader {
     private final String TEMP_DIR = "temp/";
 
     @Override
-    public String uploadTemp(MultipartFile file) {
+    public String upload(MultipartFile file, Long userId) {
+        if(file == null || file.isEmpty()) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
         String originalFilename = file.getOriginalFilename();
         String savedFileName = UUID.randomUUID() + "_" + originalFilename;
-        String key = TEMP_DIR + savedFileName;
+
+        // [분기 로직] userId가 null이면 temp/, 아니면 userId/
+        String pathPrefix = (userId == null) ? TEMP_DIR : userId + "/";
+        String key = pathPrefix + savedFileName;
 
         try (InputStream is = file.getInputStream()) {
             s3Template.upload(bucket, key, is);
-            // S3 URL 반환 (CloudFront 등을 쓴다면 그 도메인으로 교체 가능)
             return s3Template.download(bucket, key).getURL().toString();
         } catch (IOException e) {
-            log.error("[S3] 업로드 실패", e);
-            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+            log.error("[S3] 파일 업로드 실패", e);
+            throw new CustomException(ErrorCode.FAIL_FILE_UPLOAD);
         }
     }
 
@@ -99,5 +105,10 @@ public class S3FileUploader implements FileUploader {
                     s3Template.deleteObject(bucket, obj.key());
                     log.info("[S3] 오래된 임시 파일 삭제: {}", obj.key());
                 });
+    }
+
+    @Override
+    public String getPresigendUrl(String fileName) {
+        return "";
     }
 }

@@ -53,7 +53,7 @@ public class GifticonServiceImpl implements GifticonService {
         List<GifticonAnalysisResponseDto> results = new ArrayList<>();
 
         for(MultipartFile image : images) {
-            String tempImageUrl = fileUploader.uploadTemp(image);
+            String tempImageUrl = fileUploader.upload(image, null);
 
             try {
                 OcrRequestDto ocrRequest = OcrRequestDto.builder()
@@ -133,7 +133,7 @@ public class GifticonServiceImpl implements GifticonService {
 
     @Override
     @Transactional
-    public List<Long> registerGifticon(List<GifticonRegisterRequestDto> requests, Long userId) {
+    public List<Long> registerGifticon(List<GifticonRegisterRequestDto> requests, Long userId, MultipartFile image) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
@@ -146,7 +146,12 @@ public class GifticonServiceImpl implements GifticonService {
                 throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
             }
 
-            String permanentImageUrl = fileUploader.copyToPermanent(request.getImageUrl(), userId);
+            String permanentImageUrl = null;
+            if(request.getImageUrl() != null) {
+                permanentImageUrl = fileUploader.copyToPermanent(request.getImageUrl(), userId);
+            } else if(image != null && !image.isEmpty()) {
+                permanentImageUrl = fileUploader.upload(image, userId);
+            }
 
             Brand brand = brandRepository.findByName(request.getBrandName())
                     .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
@@ -167,12 +172,14 @@ public class GifticonServiceImpl implements GifticonService {
                     .build();
             Gifticon saved = gifticonRepository.save(gifticon);
 
-            GifticonImage gifticonImage = GifticonImage.builder()
-                    .gifticon(saved)
-                    .imageUrl(permanentImageUrl)
-                    .imageType(ImageType.ORIGINAL)
-                    .build();
-            gifticonImageRepository.save(gifticonImage);
+            if(permanentImageUrl != null) {
+                GifticonImage gifticonImage = GifticonImage.builder()
+                        .gifticon(saved)
+                        .imageUrl(permanentImageUrl)
+                        .imageType(ImageType.ORIGINAL)
+                        .build();
+                gifticonImageRepository.save(gifticonImage);
+            }
 
             return saved.getId();
         }).collect(Collectors.toList());

@@ -33,10 +33,10 @@ public class GifticonController implements GifticonControllerDocs {
 
     @Override
     @PostMapping
-    public ApiResponse<List<Long>> registerGifticon(@RequestBody List<GifticonRegisterRequestDto> requests) {
+    public ApiResponse<List<Long>> registerGifticon(@RequestPart List<GifticonRegisterRequestDto> requests, @RequestPart(value = "image", required = false) MultipartFile image) {
         Long userId = 1L; // 추후 SecurityContextHolder 에서 추출.
 
-        return ApiResponse.success("기프티콘 등록 성공.", gifticonService.registerGifticon(requests, userId));
+        return ApiResponse.success("기프티콘 등록 성공.", gifticonService.registerGifticon(requests, userId, image));
     }
 
     @Override
