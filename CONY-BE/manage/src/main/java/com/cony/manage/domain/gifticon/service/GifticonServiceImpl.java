@@ -220,6 +220,7 @@ public class GifticonServiceImpl implements GifticonService {
                 .expiryDate(g.getExpiryDate())
                 .status(g.getStatus())
                 .imageUrl(imageMap.get(g.getId()))
+                .originalPrice(g.getOriginalPrice())
                 .build());
     }
 
