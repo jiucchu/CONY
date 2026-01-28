@@ -30,6 +30,7 @@ services:
       S3_BUCKET_NAME: ${S3_BUCKET_NAME}
       AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
       AWS_SECRET_KEY: ${AWS_SECRET_KEY}
+      OCR_API_URL: ${OCR_API_URL}
     ports:
       - "8082:8080"
     networks:
