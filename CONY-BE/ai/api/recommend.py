@@ -62,7 +62,7 @@ def _fetch_recent_interactions(authorization: str) -> List[RecentInteraction]:
 # 개인화 추천 리스트 조회
 @router.get("/personal", response_model=Response)
 def recommend(
-    limit: int = Query(10, ge=1, le=50),
+    limit: int = Query(10, ge=1, le=20),
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     try:
