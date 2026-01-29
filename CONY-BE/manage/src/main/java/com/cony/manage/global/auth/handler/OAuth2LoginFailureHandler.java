@@ -26,14 +26,23 @@ public class OAuth2LoginFailureHandler implements AuthenticationFailureHandler {
 
         log.error("OAuth2 Login Failed: {}", exception.getMessage());
 
-        response.setContentType("application/json;charset=UTF-8");
-
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("text/html;charset=UTF-8");
+        response.setStatus(HttpServletResponse.SC_OK);
 
         ApiResponse<Void> apiResponse = ApiResponse.fail("소셜 로그인에 실패했습니다. 다시 시도해주세요.");
+        String json = objectMapper.writeValueAsString(apiResponse);
 
-        String jsonResult = objectMapper.writeValueAsString(apiResponse);
-        response.getWriter().write(jsonResult);
+        response.getWriter().write(
+                "<html><body><script>" +
+                        "  const res = " + json + ";" +
+                        "  const targetWindow = window.opener || window.parent;" +
+                        "  targetWindow.postMessage({ " +
+                        "    type: 'OAUTH_FAILURE', " +
+                        "    message: res.message " +
+                        "  }, '*');" +
+                        "  setTimeout(() => window.close(), 100);" +
+                        "</script></body></html>"
+        );
 
         response.getWriter().flush();
     }
