@@ -53,9 +53,23 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         TokenResponseDto tokenDto = new TokenResponseDto(accessToken, refreshToken);
         ApiResponse<TokenResponseDto> apiResponse = ApiResponse.success("로그인이 완료되었습니다.", tokenDto);
 
-        response.setContentType("application/json;charset=UTF-8");
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
+        response.setContentType("text/html;charset=UTF-8");
+        String json = objectMapper.writeValueAsString(apiResponse);
+
+        response.getWriter().write(
+                "<html><body><script>" +
+                        "  const res = " + json + ";" +
+                        "  if (res.data) {" +
+                        "    const targetWindow = window.opener || window.parent;" + // 팝업과 iframe 모두 대응하는 안전한 코드
+                        "    targetWindow.postMessage({ " +
+                        "      type: 'OAUTH_SUCCESS', " +
+                        "      accessToken: res.data.accessToken, " +
+                        "      refreshToken: res.data.refreshToken " +
+                        "    }, '*');" +
+                        "    setTimeout(() => window.close(), 100);" + // 메시지 전달 시간을 위해 아주 짧은 딜레이 후 닫기
+                        "  }" +
+                        "</script></body></html>"
+        );
         response.getWriter().flush();
     }
 
