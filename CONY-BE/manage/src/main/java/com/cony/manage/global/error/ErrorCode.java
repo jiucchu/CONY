@@ -28,6 +28,7 @@ public enum ErrorCode {
     ALREADY_USED_GIFTICON(HttpStatus.CONFLICT, "G003", "이미 사용된 기프티콘입니다."),
     USING_LOG_NOT_FOUND(HttpStatus.NOT_FOUND, "G004", "사용 이력을 찾지 못했습니다."),
     ALREADY_CANCELED_LOG(HttpStatus.CONFLICT, "G005", "이미 취소된 이력입니다."),
+    FAIL_FILE_UPLOAD(HttpStatus.CONFLICT, "G006", "파일 업로드에 실패하였습니다."),
 
     // Geofence
     INVALID_COORDINATES(HttpStatus.BAD_REQUEST, "F001", "위도, 경도 값이 잘못되었습니다.");

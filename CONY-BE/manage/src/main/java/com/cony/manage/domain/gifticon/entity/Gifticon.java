@@ -7,6 +7,7 @@ import com.cony.manage.global.error.CustomException;
 import com.cony.manage.global.error.ErrorCode;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Formula;
 
 import java.time.LocalDate;
 
@@ -45,6 +46,12 @@ public class Gifticon {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;
+
+    // 정렬을 위한 가상 컬럼 (DB에 생성되지 않음, 조회용)
+    // status가 'USED'면 1, 아니면 0을 반환
+    // 0(미사용,사용중) -> 1(사용완료) 순서로 정렬됨
+    @Formula("(CASE WHEN status = 'USED' THEN 1 ELSE 0 END)")
+    private int statusOrder;
 
 
     // === 비지니스 로직 === //
