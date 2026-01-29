@@ -19,7 +19,7 @@ import java.util.List;
 @Component
 public class JwtProvider {
 
-    @Value("${JWT_SECRET}")
+    @Value("${jwt.secret}")
     private String secretKey;
 
     private Key key;
