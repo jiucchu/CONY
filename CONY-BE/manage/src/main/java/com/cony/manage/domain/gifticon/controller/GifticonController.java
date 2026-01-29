@@ -33,18 +33,20 @@ public class GifticonController implements GifticonControllerDocs {
 
     @Override
     @PostMapping
-    public ApiResponse<List<Long>> registerGifticon(@RequestBody List<GifticonRegisterRequestDto> requests) {
+    public ApiResponse<List<Long>> registerGifticon(@RequestPart List<GifticonRegisterRequestDto> requests, @RequestPart(value = "image", required = false) MultipartFile image) {
         Long userId = 1L; // 추후 SecurityContextHolder 에서 추출.
 
-        return ApiResponse.success("기프티콘 등록 성공.", gifticonService.registerGifticon(requests, userId));
+        return ApiResponse.success("기프티콘 등록 성공.", gifticonService.registerGifticon(requests, userId, image));
     }
 
     @Override
     @GetMapping
-    public ApiResponse<Page<GifticonListResponseDto>> getMyGifticons(@PageableDefault(size = 20, sort = "expiryDate", direction = Sort.Direction.ASC) Pageable pageable) {
+    public ApiResponse<Page<GifticonListResponseDto>> getMyGifticons(
+            @PageableDefault(size = 20, sort = "expiryDate", direction = Sort.Direction.ASC) Pageable pageable,
+            @ModelAttribute GifticonSearchCondition condition) {
         Long userId = 1L; // 추후 SeurityContextHolder 에서 추출.
 
-        return ApiResponse.success(gifticonService.getMyGifticons(userId, pageable));
+        return ApiResponse.success(gifticonService.getMyGifticons(userId, condition, pageable));
     }
 
     @Override
@@ -72,10 +74,19 @@ public class GifticonController implements GifticonControllerDocs {
     }
 
     @Override
+    @PostMapping("/{gifticonId}/cancel")
+    public ApiResponse<Void> cancelUseGifticonProduct(@PathVariable Long gifticonId) {
+        Long userId = 1L;
+        gifticonService.cancelUseGifticon(gifticonId, userId, true);
+
+        return ApiResponse.success("사용 이력이 취소 되었습니다");
+    }
+
+    @Override
     @PostMapping("/log/{logId}/cancel")
     public ApiResponse<Void> cancelUseGifticon(@PathVariable Long logId) {
         Long userId = 1L;
-        gifticonService.cancelUseGifticon(logId, userId);
+        gifticonService.cancelUseGifticon(logId, userId, false);
 
         return ApiResponse.success("사용 이력이 취소 되었습니다.");
     }

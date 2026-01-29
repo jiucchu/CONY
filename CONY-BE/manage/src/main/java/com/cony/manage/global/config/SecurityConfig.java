@@ -1,6 +1,7 @@
 package com.cony.manage.global.config;
 
 import com.cony.manage.domain.user.service.CustomOAuth2UserService;
+import com.cony.manage.global.auth.handler.OAuth2LoginFailureHandler;
 import com.cony.manage.global.auth.handler.OAuth2LoginSuccessHandler;
 import com.cony.manage.global.auth.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;

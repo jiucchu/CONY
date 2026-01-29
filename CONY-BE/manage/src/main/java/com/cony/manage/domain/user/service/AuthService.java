@@ -1,9 +1,12 @@
 package com.cony.manage.domain.user.service;
 
 import com.cony.manage.domain.user.entity.User;
+import com.cony.manage.domain.user.enums.OAuthProvider;
+import com.cony.manage.domain.user.enums.Role;
 import com.cony.manage.domain.user.repository.UserRepository;
 import com.cony.manage.global.auth.JwtProvider;
 import com.cony.manage.global.auth.dto.TokenResponseDto;
+import com.cony.manage.global.auth.userinfo.OAuth2UserInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
