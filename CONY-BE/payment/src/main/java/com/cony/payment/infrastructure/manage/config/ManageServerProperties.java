@@ -16,4 +16,8 @@ public class ManageServerProperties {
     public String getGifticonUrl(Long gifticonId) {
         return url + "/v1/gifticons/" + gifticonId;
     }
+
+    public String getGifticonListUrl() {
+        return url + "/v1/gifticons";
+    }
 }

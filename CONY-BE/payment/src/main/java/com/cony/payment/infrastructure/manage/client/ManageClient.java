@@ -4,7 +4,9 @@ import com.cony.payment.global.common.ApiResponse;
 import com.cony.payment.global.error.CustomException;
 import com.cony.payment.global.error.ErrorCode;
 import com.cony.payment.infrastructure.manage.config.ManageServerProperties;
+import com.cony.payment.infrastructure.manage.dto.GifticonListItemResponse;
 import com.cony.payment.infrastructure.manage.dto.GifticonResponse;
+import com.cony.payment.infrastructure.manage.dto.PageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
@@ -13,6 +15,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Manage 서버 API 호출 클라이언트
@@ -105,5 +112,41 @@ public class ManageClient {
         }
 
         return result;
+    }
+
+    /**
+     * 나의 기프티콘 목록 조회
+     * 만료일이 가까운 순서로 정렬 및 조회
+     * @param size 조회할 목록의 개수 (추천 리스트의 limit)
+     * @return 기프티콘 요약 정보 목록
+     */
+    public List<GifticonListItemResponse> getMyGifticons(int size) {
+        // Todo: 거리순 정렬 추가
+        String url = manageServerProperties.getGifticonListUrl()
+                + "?page=0&size=" + size + "&sort=expiryDate,asc";
+        log.info("Manage 서버 기프티콘 목록 조회 요청: url={}", url);
+
+        try {
+            ResponseEntity<ApiResponse<PageResponse<GifticonListItemResponse>>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<ApiResponse<PageResponse<GifticonListItemResponse>>>() {}
+            );
+
+            if (response.getBody() != null && response.getBody().getData() != null) {
+                PageResponse<GifticonListItemResponse> data = response.getBody().getData();
+                if (data != null && data.getContent() != null) {
+                    log.info("Manage 서버 기프티콘 목록 조회 성공: size={}", data.getContent().size());
+                    return data.getContent();
+                }
+            }
+
+            throw new CustomException(ErrorCode.MANAGE_SERVER_ERROR);
+
+        } catch (Exception e) {
+            log.error("Manage 서버 목록 통신 오류", e);
+            throw new CustomException(ErrorCode.MANAGE_SERVER_ERROR);
+        }
     }
 }
