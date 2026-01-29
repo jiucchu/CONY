@@ -32,4 +32,7 @@ public class GifticonListResponseDto {
     
     @Schema(description = "기프티콘 썸네일 이미지 URL", example = "https://example.com/thumbnail.jpg")
     private String imageUrl;        // 썸네일 이미지
+
+    @Schema(description = "원가", example = "4500")
+    private Integer originalPrice;
 }
