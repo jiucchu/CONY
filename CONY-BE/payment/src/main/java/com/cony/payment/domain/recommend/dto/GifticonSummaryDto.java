@@ -3,7 +3,6 @@
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDate;
 
 // 추천 응답 공통 DTO (기프티콘 상세 정보)
 @Getter
@@ -12,10 +11,10 @@ public class GifticonSummaryDto {
     private Long gifticonId;
     private String brandName;
     private String productName;
-    private LocalDate expiryDate;
+    private Integer dDay;
     private Integer originalPrice;
-    private String barcodeNumber;
+    private Integer discountRate;  // market만
+    private Integer salePrice;     // market만
     private String imageUrl;
-    private String categoryName;
-    private String gifticonType;
 }
+
