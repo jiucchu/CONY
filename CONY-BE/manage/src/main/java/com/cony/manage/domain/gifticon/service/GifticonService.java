@@ -17,6 +17,6 @@ public interface GifticonService {
     Long updateGifticon(Long gifticonId, Long userId, GifticonUpdateRequestDto request);
 
     Long useGifticon(Long gifticonId, Long userId, GifticonUseRequestDto request);
-    void cancelUseGifticon(Long logId, Long userId);
+    void cancelUseGifticon(Long logId, Long userId, boolean isProduct);
     void updateUsageLog(Long logId, Long userId, GifticonLogUpdateRequestDto request);
 }

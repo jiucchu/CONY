@@ -83,7 +83,17 @@ public interface GifticonControllerDocs {
             @RequestBody(description = "사용 요청 정보 (금액)", required = true) GifticonUseRequestDto request
     );
 
-    @Operation(summary = "기프티콘 사용 취소", description = "기프티콘 사용 이력을 취소하고 잔액을 복구합니다.")
+    @Operation(summary = "기프티콘 사용 취소(Product)", description = "기프티콘 사용 이력을 취소하고 잔액을 복구합니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "취소 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "사용 이력을 찾을 수 없음", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 취소된 이력", content = @Content)
+    })
+    ApiResponse<Void> cancelUseGifticonProduct(
+            @Parameter(description = "기프티콘 ID (Gifticon ID)", required = true) @PathVariable Long gifticonId
+    );
+
+    @Operation(summary = "기프티콘 사용 취소(PREPAID)", description = "기프티콘 사용 이력을 취소하고 잔액을 복구합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "취소 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "사용 이력을 찾을 수 없음", content = @Content),
