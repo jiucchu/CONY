@@ -12,6 +12,7 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C001", "서버 내부 오류입니다."),
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "C002", "잘못된 입력입니다."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "C003", "지원하지 않는 HTTP 메서드입니다."),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "C004", "접근 권한이 없습니다."),
 
     // Auth
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "A001", "인증되지 않은 사용자입니다."),
@@ -33,10 +34,9 @@ public enum ErrorCode {
     // Geofence
     INVALID_COORDINATES(HttpStatus.BAD_REQUEST, "F001", "위도, 경도 값이 잘못되었습니다.");
 
-
     // 개발중 필요한 에러가 있다면 이곳에 선언하시고 사용하면 됩니다.
 
     private final HttpStatus status;
-    private final String code;          // 에러 분기용 코드
-    private final String message;       // 사용자에게 보여줄 메세지
+    private final String code; // 에러 분기용 코드
+    private final String message; // 사용자에게 보여줄 메세지
 }
