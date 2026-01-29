@@ -25,10 +25,12 @@ public class RecommendController {
     public ApiResponse<RecommendResponseDto> getRecommendations(
             @RequestParam String context,
             @RequestParam(required = false, defaultValue = "10") int limit,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lon,
             @RequestHeader(value = "Authorization", required = false) String authorization
     ) {
         Long testUserId = 1L;
-        RecommendResponseDto response = recommendService.getRecommendations(testUserId, context, limit, authorization);
+        RecommendResponseDto response = recommendService.getRecommendations(testUserId, context, limit, lat, lon, authorization);
         return ApiResponse.success("추천 리스트 조회 성공", response);
     }
 }
