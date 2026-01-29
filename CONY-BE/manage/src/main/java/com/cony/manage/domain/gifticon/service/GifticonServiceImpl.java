@@ -347,9 +347,18 @@ public class GifticonServiceImpl implements GifticonService {
      */
     @Override
     @Transactional
-    public void cancelUseGifticon(Long logId, Long userId) {
-        GifticonUsageLog useLog = gifticonUsageLogRepository.findById(logId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USING_LOG_NOT_FOUND));
+    public void cancelUseGifticon(Long logId, Long userId, boolean isProduct) {
+        GifticonUsageLog useLog = null;
+        if(isProduct) {
+            Long gifticonId = logId;
+
+            useLog = gifticonUsageLogRepository.findByGifticonIdAndIsCanceledFalse(gifticonId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.GIFTICON_NOT_FOUND));
+            logId = useLog.getId();
+        } else {
+            useLog = gifticonUsageLogRepository.findById(logId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.USING_LOG_NOT_FOUND));
+        }
 
         if(useLog.isCanceled()) {
             throw new CustomException(ErrorCode.ALREADY_CANCELED_LOG);

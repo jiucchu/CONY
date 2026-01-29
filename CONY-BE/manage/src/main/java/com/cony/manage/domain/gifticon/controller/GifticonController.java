@@ -74,10 +74,19 @@ public class GifticonController implements GifticonControllerDocs {
     }
 
     @Override
+    @PostMapping("/{gifticonId}/cancel")
+    public ApiResponse<Void> cancelUseGifticonProduct(@PathVariable Long gifticonId) {
+        Long userId = 1L;
+        gifticonService.cancelUseGifticon(gifticonId, userId, true);
+
+        return ApiResponse.success("사용 이력이 취소 되었습니다");
+    }
+
+    @Override
     @PostMapping("/log/{logId}/cancel")
     public ApiResponse<Void> cancelUseGifticon(@PathVariable Long logId) {
         Long userId = 1L;
-        gifticonService.cancelUseGifticon(logId, userId);
+        gifticonService.cancelUseGifticon(logId, userId, false);
 
         return ApiResponse.success("사용 이력이 취소 되었습니다.");
     }
