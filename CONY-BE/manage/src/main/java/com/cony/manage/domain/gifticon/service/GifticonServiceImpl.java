@@ -352,6 +352,13 @@ public class GifticonServiceImpl implements GifticonService {
         if(isProduct) {
             Long gifticonId = logId;
 
+            // 상품권 기프티콘이 아니라면 이력으로만 삭제해야함.
+            Gifticon gifticon = gifticonRepository.findById(gifticonId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.GIFTICON_NOT_FOUND));
+            if(gifticon.getGifticonType() != GifticonType.PRODUCT) {
+                throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+
             useLog = gifticonUsageLogRepository.findByGifticonIdAndIsCanceledFalse(gifticonId)
                     .orElseThrow(() -> new CustomException(ErrorCode.GIFTICON_NOT_FOUND));
             logId = useLog.getId();
