@@ -43,8 +43,10 @@ public class SwaggerConfig {
 
         // 3. 서버 설정 (Nginx Proxy 경로 지정)
         List<Server> servers = List.of(
+                new Server().url("http://i14c106.p.ssafy.io:8081/api/payment").description("Production Server"),
                 new Server().url("/api/payment").description("Payment Server (Nginx)"),
-                                        new Server().url("http://localhost:8081/api/payment").description("Local Testing")        );
+                new Server().url("http://localhost:8081/api/payment").description("Local Testing")
+        );
 
         return new OpenAPI()
                 .info(info)
