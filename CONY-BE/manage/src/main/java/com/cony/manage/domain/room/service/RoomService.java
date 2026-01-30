@@ -10,7 +10,6 @@ import com.cony.manage.domain.room.entity.Room;
 import com.cony.manage.domain.room.entity.RoomMember;
 import com.cony.manage.domain.room.enums.GifticonSearchStatus;
 import com.cony.manage.domain.room.enums.RoomRole;
-import com.cony.manage.domain.room.enums.RoomType;
 import com.cony.manage.domain.room.repository.RoomMemberRepository;
 import com.cony.manage.domain.room.repository.RoomRepository;
 import com.cony.manage.domain.user.entity.User;
@@ -65,9 +64,8 @@ public class RoomService {
 
         Room room = Room.builder()
                 .name(requestDto.getName())
-                // .type(RoomType.SHARED) // 삭제됨
                 .owner(user)
-                .roomCode(UUID.randomUUID().toString().substring(0, 8)) // inviteCode -> roomCode 변경
+                .roomCode(UUID.randomUUID().toString().substring(0, 8))
                 .maxMembers(10) // 기본값 10명 설정
                 .build();
 
