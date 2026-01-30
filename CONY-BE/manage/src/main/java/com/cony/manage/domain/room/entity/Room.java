@@ -16,21 +16,20 @@ public class Room extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "room_id")
+    @Column(name = "shared_room_id")
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "room_name", nullable = false)
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private RoomType type;
+    @Column(name = "room_code", unique = true)
+    private String roomCode;
 
-    @Column(unique = true)
-    private String inviteCode;
+    @Column(name = "max_members")
+    private Integer maxMembers;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false)
+    @JoinColumn(name = "creator_id", nullable = false)
     private User owner;
 
     // === 비즈니스 로직 === //
