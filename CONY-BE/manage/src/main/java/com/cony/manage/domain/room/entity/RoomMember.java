@@ -33,7 +33,7 @@ public class RoomMember extends BaseTimeEntity {
     @Column(nullable = false)
     private RoomRole role;
 
-    // === Business Logic === //
+    // === 비즈니스 로직 === //
     public void changeRole(RoomRole newRole) {
         this.role = newRole;
     }
