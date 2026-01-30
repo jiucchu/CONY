@@ -4,7 +4,6 @@ import requests
 from config import get_settings
 from services.chroma import get_chroma_collection
 from schemas.embedding import Response
-from services.chroma import get_chroma_collection
 
 GMS_API_URL = "https://gms.ssafy.io/gmsapi/api.openai.com/v1/embeddings"
 
