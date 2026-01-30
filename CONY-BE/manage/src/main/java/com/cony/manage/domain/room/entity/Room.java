@@ -1,10 +1,12 @@
 package com.cony.manage.domain.room.entity;
 
-import com.cony.manage.domain.room.enums.RoomType;
 import com.cony.manage.domain.user.entity.User;
-import com.cony.manage.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -12,7 +14,8 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @Table(name = "shared_room")
-public class Room extends BaseTimeEntity {
+@EntityListeners(AuditingEntityListener.class)
+public class Room {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,6 +30,10 @@ public class Room extends BaseTimeEntity {
 
     @Column(name = "max_members")
     private Integer maxMembers;
+
+    @CreatedDate
+    @Column(name = "created_at", updatable = false, nullable = false)
+    private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creator_id", nullable = false)
