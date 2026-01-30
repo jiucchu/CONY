@@ -18,13 +18,13 @@ const ButtonGroup = styled.div`
   flex: 1;
 `;
 
-const FilterButton = styled.button<{ isSelected: boolean }>`
+const FilterButton = styled.button<{ $isSelected: boolean }>`
   padding: 8px 16px;
   border-radius: 20px;
-  border: ${props => props.isSelected 
+  border: ${props => props.$isSelected 
     ? `1px solid ${COLORS.primary}` 
     : `1px solid ${COLORS.background.lightGray}`};
-  background-color: ${props => props.isSelected 
+  background-color: ${props => props.$isSelected 
     ? COLORS.white 
     : COLORS.background.lightGray};
   cursor: pointer;
@@ -66,7 +66,7 @@ const SearchInput = styled.input`
   border: 1px solid ${COLORS.background.lightGray};
   border-radius: 20px;
   font-family: 'Pretendard', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
   color: ${COLORS.text.primary};
   background-color: ${COLORS.background.lightGray};
@@ -75,6 +75,7 @@ const SearchInput = styled.input`
 
   &::placeholder {
     color: ${COLORS.text.secondary};
+    font-size: 16px;
   }
 
   &:focus {
@@ -165,7 +166,7 @@ const Filter = ({
         <>
           <ButtonGroup>
             <FilterButton
-              isSelected={selectedSort === 'registration'}
+              $isSelected={selectedSort === 'registration'}
               onClick={() => handleSortClick('registration')}
             >
               <StyledText 
@@ -177,7 +178,7 @@ const Filter = ({
               </StyledText>
             </FilterButton>
             <FilterButton
-              isSelected={selectedSort === 'distance'}
+              $isSelected={selectedSort === 'distance'}
               onClick={() => handleSortClick('distance')}
             >
               <StyledText 
@@ -189,7 +190,7 @@ const Filter = ({
               </StyledText>
             </FilterButton>
             <FilterButton
-              isSelected={selectedSort === 'period'}
+              $isSelected={selectedSort === 'period'}
               onClick={() => handleSortClick('period')}
             >
               <StyledText 

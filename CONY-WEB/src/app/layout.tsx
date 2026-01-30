@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,6 +15,20 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "CONY - 나만의 작은 쿠폰 요정",
   description: "나만의 작은 쿠폰 요정 CONY",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "CONY",
+  },
+  icons: {
+    icon: "/icon-192x192.png",
+    apple: "/icon-192x192.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#000000",
 };
 
 export default function RootLayout({
@@ -27,8 +41,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased h-full w-full m-0 p-0 overflow-hidden`}
       >
-        <div className="h-screen w-full bg-gray-200 m-0 p-0 overflow-hidden">
-          <main className="flex h-full w-full max-w-md mx-auto flex-col bg-gray-100 shadow-lg m-0 p-0 overflow-hidden">
+        <div className="h-screen w-full m-0 p-0 overflow-hidden">
+          <main className="flex h-full w-full max-w-md mx-auto flex-col shadow-lg m-0 p-0 overflow-hidden">
             {children}
           </main>
         </div>

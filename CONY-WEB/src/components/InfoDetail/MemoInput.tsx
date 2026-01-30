@@ -24,7 +24,7 @@ const StyledInput = styled.input`
   border-radius: 20px;
   background-color: ${COLORS.white};
   font-family: 'Pretendard', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
   color: ${COLORS.text.primary};
   outline: none;
@@ -32,6 +32,7 @@ const StyledInput = styled.input`
 
   &::placeholder {
     color: ${COLORS.text.secondary};
+    font-size: 16px;
   }
 
   &:focus {

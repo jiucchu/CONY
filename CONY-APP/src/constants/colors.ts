@@ -13,5 +13,6 @@ export const COLORS = {
     secondary: '#AEAEAE',
     white: '#ffffff',
     navy: '#1E6292',
+    error: '#FF0000',
   },
 } as const;

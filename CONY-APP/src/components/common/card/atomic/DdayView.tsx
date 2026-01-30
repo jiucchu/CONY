@@ -37,9 +37,11 @@ const DdayText = styled.Text<{ fontSize: number }>`
 `;
 
 const DdayView: React.FC<DdayViewProps> = ({ type, dday, size }) => {
-  const isExpired = dday <= 0;
-  const displayText = isExpired ? '기간 만료' : `D-${dday}`;
-  const fontSize = size === 'Small' ? 10 : size === 'Medium' ? 12 : 16;
+  // NaN 또는 유효하지 않은 값 처리
+  const validDday = isNaN(dday) || !isFinite(dday) ? 0 : dday;
+  const isExpired = validDday <= 0;
+  const displayText = isExpired ? '기간 만료' : `D-${validDday}`;
+  const fontSize = size === 'Small' ? 8 : size === 'Medium' ? 10 : 12;
   const containerSize = size === 'Small' ? 40 : size === 'Medium' ? 50 : 60;
   const height = containerSize * 0.45;
 

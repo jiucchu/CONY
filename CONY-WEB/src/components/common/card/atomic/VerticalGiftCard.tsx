@@ -1,4 +1,4 @@
-import { Coupon } from "@/types/coupon/coupon";
+import { GifticonDetailResponseDto, GifticonListResponseDto } from "@/types/gifticon/gifticon";
 import styled from "styled-components";
 import DdayView from "./DdayView";
 import { COLORS } from "@/constants/colors";
@@ -58,9 +58,10 @@ const CouponText = styled.p<{ fontSize: number; fontWeight: number; color: strin
 
 
 
-const VerticalGiftCard = ({ coupon }: { coupon: Coupon }) => {
-  const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiration_date);
-  const formattedPrice = coupon.price.toLocaleString('ko-KR');
+const VerticalGiftCard = ({ coupon }: { coupon: GifticonDetailResponseDto | GifticonListResponseDto }) => {
+  const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiryDate);
+  const originalPrice = 'originalPrice' in coupon ? coupon.originalPrice : 0;
+  const formattedPrice = originalPrice.toLocaleString('ko-KR');
 
   return (
     <VerticalGiftCardContainer>
@@ -68,11 +69,11 @@ const VerticalGiftCard = ({ coupon }: { coupon: Coupon }) => {
               <DdayView type="gift" dday={daysUntilExpiration} size="Small" />
       </div>
       <ImageContainer>
-        <ProductImage src={coupon.image_url} alt={coupon.title} />
+        <ProductImage src={coupon.imageUrl} alt={coupon.productName} />
       </ImageContainer>
       <InfoContainer>
-        <CouponText fontSize={13} fontWeight={600} color={COLORS.text.secondary}>{coupon.brand}</CouponText>
-        <CouponText fontSize={20} fontWeight={800} color={COLORS.text.primary}>{coupon.title}</CouponText>
+        <CouponText fontSize={13} fontWeight={600} color={COLORS.text.secondary}>{coupon.brandName}</CouponText>
+        <CouponText fontSize={20} fontWeight={800} color={COLORS.text.primary}>{coupon.productName}</CouponText>
         <CouponText fontSize={16} fontWeight={700} color={COLORS.text.primary}>{formattedPrice}</CouponText>
       </InfoContainer>
     </VerticalGiftCardContainer>

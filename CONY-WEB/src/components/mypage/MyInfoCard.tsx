@@ -3,7 +3,9 @@
 import styled from 'styled-components';
 import { COLORS } from '@/constants/colors';
 import { StyledText } from '@/utils/StyledText';
-import { getUserInfo } from '@/mockDB/mock';
+import { getUserInfo } from '@/api/user/userApi';
+import { useEffect, useState } from 'react';
+import { UserInfo } from '@/types/user/user';
 
 const CardContainer = styled.div`
   background-color: ${COLORS.white};
@@ -60,8 +62,61 @@ const EditButton = styled.button`
 `;
 
 const MyInfoCard = () => {
-  const userInfo = getUserInfo();
-  const formattedBalance = userInfo.balance.toLocaleString();
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        setLoading(true);
+        const data = await getUserInfo();
+        setUserInfo(data);
+      } catch (err: any) {
+        // 사용자 정보 조회 실패는 조용히 처리
+        // API가 아직 구현되지 않았을 수 있음
+        if (err?.message?.includes('404') || err?.message?.includes('Not Found')) {
+          // API가 없는 경우 기본값 사용
+          setUserInfo({
+            user_id: 0,
+            name: '사용자',
+            email: '',
+            balance: 0,
+          });
+        } else {
+          // 다른 에러는 조용히 처리하고 기본값 사용
+          setUserInfo({
+            user_id: 0,
+            name: '사용자',
+            email: '',
+            balance: 0,
+          });
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUserInfo();
+  }, []);
+
+  if (loading) {
+    return (
+      <CardContainer>
+        <StyledText fontSize={14} fontWeight={400} color={COLORS.text.secondary}>
+          로딩 중...
+        </StyledText>
+      </CardContainer>
+    );
+  }
+
+  // userInfo가 없으면 기본값 사용
+  const displayUserInfo = userInfo || {
+    user_id: 0,
+    name: '사용자',
+    email: '',
+    balance: 0,
+  };
+
+  const formattedBalance = displayUserInfo.balance.toLocaleString();
 
   return (
     <CardContainer>
@@ -69,11 +124,13 @@ const MyInfoCard = () => {
       <InfoSection>
         <NameEmailContainer>
           <StyledText fontSize={18} fontWeight={700} color={COLORS.text.primary}>
-            {userInfo.name}
+            {displayUserInfo.name}
           </StyledText>
-          <StyledText fontSize={14} fontWeight={400} color={COLORS.text.secondary}>
-            {userInfo.email}
-          </StyledText>
+          {displayUserInfo.email && (
+            <StyledText fontSize={14} fontWeight={400} color={COLORS.text.secondary}>
+              {displayUserInfo.email}
+            </StyledText>
+          )}
         </NameEmailContainer>
         <div style={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between', gap: '8px' }}>
             <BalanceContainer>

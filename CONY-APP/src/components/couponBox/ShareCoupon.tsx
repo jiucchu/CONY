@@ -1,17 +1,60 @@
 import React from 'react';
-import styled from 'styled-components/native';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { COLORS } from '../../constants/colors';
-import { StyledText } from '../../utils/StyledText';
-import Svg, { Path, Circle, Rect, Line } from 'react-native-svg';
+import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { COLORS } from '@/constants/colors';
+import { StyledText } from '@/utils/StyledText';
+import { Svg, Path, Rect } from 'react-native-svg';
+import * as Clipboard from '@react-native-clipboard/clipboard';
 
-interface ShareCouponProps {
-  invitationCode?: string;
-  invitedCount?: number;
-  onShareClick?: () => void;
-  onEditClick?: () => void;
-  onCopyClick?: () => void;
-}
+const styles = StyleSheet.create({
+  container: {
+    width: '90%',
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  section: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  profileIcon: (index: number) => ({
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'gray',
+    borderWidth: 2,
+    borderColor: COLORS.white,
+    marginLeft: index > 0 ? -8 : 0,
+    zIndex: 3 - index,
+  }),
+  iconButton: {
+    padding: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  codeText: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+});
 
 const EditIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={COLORS.text.primary} strokeWidth={2}>
@@ -27,76 +70,30 @@ const CopyIcon = () => (
   </Svg>
 );
 
-const CardContainer = styled.View`
-  width: 90%;
-  background-color: ${COLORS.white};
-  border-radius: 12px;
-  padding-vertical: 10px;
-  padding-horizontal: 20px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  shadow-color: #000;
-  shadow-offset: 0px 2px;
-  shadow-opacity: 0.08;
-  shadow-radius: 8px;
-  elevation: 2;
-`;
+interface ShareCouponProps {
+  invitationCode?: string;
+  invitedCount?: number;
+  onShareClick?: () => void;
+  onEditClick?: () => void;
+  onCopyClick?: () => void;
+}
 
-const Section = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-`;
-
-const IconGroup = styled.View`
-  flex-direction: row;
-  align-items: center;
-  position: relative;
-`;
-
-const ProfileIcon = styled.View<{ index: number }>`
-  width: 24px;
-  height: 24px;
-  border-radius: 12px;
-  background-color: gray;
-  border-width: 2px;
-  border-color: ${COLORS.white};
-  position: relative;
-  margin-left: ${props => props.index > 0 ? '-8px' : '0px'};
-  z-index: ${props => 3 - props.index};
-  overflow: hidden;
-`;
-
-const ProfileImage = styled.Image`
-  width: 100%;
-  height: 100%;
-`;
-
-const IconButton = styled.TouchableOpacity`
-  padding: 4px;
-  justify-content: center;
-  align-items: center;
-`;
-
-const CodeText = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-`;
-
-const ShareCoupon: React.FC<ShareCouponProps> = ({
+const ShareCoupon = ({
   invitationCode = 'AD21F8',
   invitedCount = 0,
   onShareClick,
   onEditClick,
   onCopyClick,
-}) => {
-  const handleCopy = async () => {
+}: ShareCouponProps) => {
+  const handleCopy = () => {
     if (invitationCode) {
-      await Clipboard.setString(invitationCode);
+      try {
+        Clipboard.setString(invitationCode);
+        onCopyClick?.();
+      } catch (error) {
+        console.error('클립보드 복사 실패:', error);
+      }
     }
-    onCopyClick?.();
   };
 
   const displayCount = Math.min(invitedCount, 3);
@@ -107,49 +104,49 @@ const ShareCoupon: React.FC<ShareCouponProps> = ({
   ];
 
   return (
-    <CardContainer>
-      <Section onPress={onShareClick} activeOpacity={0.7}>
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.section} onPress={onShareClick}>
         <StyledText fontSize={16} fontWeight={600} color={COLORS.primary}>
           공유
         </StyledText>
-        <IconGroup>
+        <View style={styles.iconGroup}>
           {profileIcons.slice(0, displayCount).map((profile, index) => (
-            <ProfileIcon key={index} index={index}>
-              <ProfileImage source={{ uri: profile }} />
-            </ProfileIcon>
+            <View key={index} style={styles.profileIcon(index)}>
+              <Image source={{ uri: profile }} style={{ width: '100%', height: '100%', borderRadius: 12 }} />
+            </View>
           ))}
-        </IconGroup>
-        <IconButton
+        </View>
+        <TouchableOpacity
+          style={styles.iconButton}
           onPress={(e) => {
             e.stopPropagation();
             onEditClick?.();
           }}
-          activeOpacity={0.7}
         >
           <EditIcon />
-        </IconButton>
-      </Section>
+        </TouchableOpacity>
+      </TouchableOpacity>
 
-      <Section onPress={handleCopy} activeOpacity={0.7}>
+      <TouchableOpacity style={styles.section} onPress={handleCopy}>
         <StyledText fontSize={14} fontWeight={400} color={COLORS.text.secondary}>
           초대 코드
         </StyledText>
-        <CodeText>
+        <View style={styles.codeText}>
           <StyledText fontSize={16} fontWeight={700} color={COLORS.text.primary}>
             {invitationCode}
           </StyledText>
-        </CodeText>
-        <IconButton
+        </View>
+        <TouchableOpacity
+          style={styles.iconButton}
           onPress={(e) => {
             e.stopPropagation();
             handleCopy();
           }}
-          activeOpacity={0.7}
         >
           <CopyIcon />
-        </IconButton>
-      </Section>
-    </CardContainer>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </View>
   );
 };
 

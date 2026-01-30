@@ -3,7 +3,7 @@ import { Text, TextProps, StyleSheet } from 'react-native';
 
 interface StyledTextProps extends TextProps {
   fontSize: number;
-  fontWeight: number;
+  fontWeight?: number;
   color?: string;
 }
 
@@ -20,7 +20,7 @@ export const StyledText: React.FC<StyledTextProps> = ({
       style={[
         {
           fontSize,
-          fontWeight: fontWeight.toString() as any,
+          ...(fontWeight !== undefined && { fontWeight: fontWeight.toString() as any }),
           color: color || '#000000',
         },
         style,

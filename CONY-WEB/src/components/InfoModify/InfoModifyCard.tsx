@@ -2,11 +2,13 @@
 
 import styled from "styled-components";
 import { COLORS } from "@/constants/colors";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import editIcon from "@/assets/icons/edit.svg";
 import { StyledText } from "@/utils/StyledText";
 import AutoSellInfo from "./atomic/AutoSellInfo";
+import FolderSelector from "./FolderSelector";
+import { FolderData } from "@/types/coupon/coupon";
 
 const CardContainer = styled.div`
   margin: 20px auto;
@@ -51,18 +53,26 @@ const EditButton = styled.button`
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 32px;
-  height: 32px;
-
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: ${COLORS.white};
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 10;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15);
 
   &:hover {
     background-color: ${COLORS.background.lightGray};
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active {
+    transform: scale(0.95);
   }
 `;
 
@@ -84,7 +94,7 @@ const Input = styled.input`
   border: 1px solid ${COLORS.background.lightGray};
   border-radius: 8px;
   font-family: 'Pretendard', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
   color: ${COLORS.text.primary};
   background-color: ${COLORS.white};
@@ -97,6 +107,7 @@ const Input = styled.input`
 
   &::placeholder {
     color: ${COLORS.text.secondary};
+    font-size: 16px;
   }
 `;
 
@@ -131,6 +142,7 @@ interface InfoModifyCardProps {
   giftCardName?: string;
   barcode?: string;
   store?: string;
+  categoryName?: string;
   type?: 'product' | 'amount';
   price?: number;
   expirationDate?: string;
@@ -138,6 +150,7 @@ interface InfoModifyCardProps {
   onGiftCardNameChange?: (value: string) => void;
   onBarcodeChange?: (value: string) => void;
   onStoreChange?: (value: string) => void;
+  onCategoryNameChange?: (value: string) => void;
   onTypeChange?: (type: 'product' | 'amount') => void;
   onPriceChange?: (value: number) => void;
   onExpirationDateChange?: (value: string) => void;
@@ -148,6 +161,7 @@ const InfoModifyCard = ({
   giftCardName = '',
   barcode = '',
   store = '',
+  categoryName = '',
   type = 'product',
   price = 0,
   expirationDate = '',
@@ -155,6 +169,7 @@ const InfoModifyCard = ({
   onGiftCardNameChange,
   onBarcodeChange,
   onStoreChange,
+  onCategoryNameChange,
   onTypeChange,
   onPriceChange,
   onExpirationDateChange,
@@ -162,9 +177,38 @@ const InfoModifyCard = ({
   const [localGiftCardName, setLocalGiftCardName] = useState(giftCardName);
   const [localBarcode, setLocalBarcode] = useState(barcode);
   const [localStore, setLocalStore] = useState(store);
+  const [localCategoryName, setLocalCategoryName] = useState(categoryName);
   const [localType, setLocalType] = useState<'product' | 'amount'>(type);
   const [localPrice, setLocalPrice] = useState(price.toString());
   const [localExpirationDate, setLocalExpirationDate] = useState(expirationDate);
+
+  useEffect(() => {
+    setLocalGiftCardName(giftCardName);
+  }, [giftCardName]);
+
+  useEffect(() => {
+    setLocalBarcode(barcode);
+  }, [barcode]);
+
+  useEffect(() => {
+    setLocalStore(store);
+  }, [store]);
+
+  useEffect(() => {
+    setLocalCategoryName(categoryName);
+  }, [categoryName]);
+
+  useEffect(() => {
+    setLocalType(type);
+  }, [type]);
+
+  useEffect(() => {
+    setLocalPrice(price.toString());
+  }, [price]);
+
+  useEffect(() => {
+    setLocalExpirationDate(expirationDate);
+  }, [expirationDate]);
 
   const handleGiftCardNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -184,6 +228,12 @@ const InfoModifyCard = ({
     onStoreChange?.(value);
   };
 
+  const handleCategoryNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLocalCategoryName(value);
+    onCategoryNameChange?.(value);
+  };
+
   const handleTypeChange = (newType: 'product' | 'amount') => {
     setLocalType(newType);
     onTypeChange?.(newType);
@@ -198,7 +248,18 @@ const InfoModifyCard = ({
   const handleExpirationDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setLocalExpirationDate(value);
+    // HTML date input은 YYYY-MM-DD 형식으로 반환하므로 그대로 전달
     onExpirationDateChange?.(value);
+  };
+
+  // 날짜 형식 변환 (YYYY-MM-DD <-> YYYY/MM/DD)
+  const formatDateForInput = (dateString: string): string => {
+    if (!dateString) return '';
+    // YYYY/MM/DD 형식을 YYYY-MM-DD로 변환
+    if (dateString.includes('/')) {
+      return dateString.replace(/\//g, '-');
+    }
+    return dateString;
   };
 
   const formatPrice = (value: string) => {
@@ -206,6 +267,23 @@ const InfoModifyCard = ({
     return numValue ? parseInt(numValue).toLocaleString('ko-KR') : '';
   };
 
+  const handleFolderSelect = (folderId: string) => {
+    console.log(folderId);
+  };
+  const folders = [
+    { id: '1', title: '폴더1' },
+    { id: '2', title: '폴더2' },
+    { id: '3', title: '폴더3' },
+  ];
+  const selectedFolderId = '1';
+
+  const folderData: FolderData[] = folders.map(folder => ({
+    id: folder.id,
+    title: folder.title,
+    type: 'selected',
+  }));
+
+ 
   return (
     <CardContainer>
       <ImageSection>
@@ -216,7 +294,7 @@ const InfoModifyCard = ({
           </EditButton>
         </ImageCard>
       </ImageSection>
-
+      <FolderSelector folders={folderData} selectedFolderId={selectedFolderId} onSelect={handleFolderSelect} />
       <FormSection>
         <FormField>
           <StyledText fontSize={14} fontWeight={600} color={COLORS.text.primary}>기프티콘 명</StyledText>
@@ -245,6 +323,16 @@ const InfoModifyCard = ({
             value={localStore}
             onChange={handleStoreChange}
             placeholder="사용처를 입력하세요"
+          />
+        </FormField>
+
+        <FormField>
+          <StyledText fontSize={14} fontWeight={600} color={COLORS.text.primary}>카테고리</StyledText>
+          <Input
+            type="text"
+            value={localCategoryName}
+            onChange={handleCategoryNameChange}
+            placeholder="카테고리를 입력하세요 (예: 카페, 음식점 등)"
           />
         </FormField>
 
@@ -279,10 +367,10 @@ const InfoModifyCard = ({
         <FormField>
           <StyledText fontSize={14} fontWeight={600} color={COLORS.text.primary}>유효기간</StyledText>
           <Input
-            type="text"
-            value={localExpirationDate}
+            type="date"
+            value={formatDateForInput(localExpirationDate)}
             onChange={handleExpirationDateChange}
-            placeholder="YYYY/MM/DD"
+            min={new Date().toISOString().split('T')[0]}
           />
         </FormField>
 

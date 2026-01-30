@@ -4,6 +4,8 @@ import styled from "styled-components";
 import { COLORS } from "@/constants/colors";
 import { StyledText } from "@/utils/StyledText";
 import { ReactNode } from "react";
+import { goToMain, goBack } from "@/utils/utils";
+import { useRouter } from "next/navigation";
 
 const HeaderContainer = styled.div<{ $type: 'default' | 'back'; $isAtTop: boolean }>`
   background: transparent;
@@ -96,21 +98,13 @@ const Header = ({
   onProfileClick,
   isAtTop = false
 }: HeaderProps) => {
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      if (typeof window !== 'undefined') {
-        window.history.back();
-      }
-    }
-  };
+  const router = useRouter();
 
   const handleNotificationClick = () => {
     if (onNotificationClick) {
       onNotificationClick();
     } else {
-      console.log('Notification clicked');
+      router.push('/mypage/alerts');
     }
   };
 
@@ -118,14 +112,14 @@ const Header = ({
     if (onProfileClick) {
       onProfileClick();
     } else {
-      console.log('Profile clicked');
+      router.push('/mypage');
     }
   };
 
   if (type === 'back') {
     return (
       <HeaderContainer $type={type} $isAtTop={isAtTop}>
-        <IconButton $isAtTop={isAtTop} onClick={handleBack} aria-label="뒤로가기">
+        <IconButton $isAtTop={isAtTop} onClick={() => goBack()} aria-label="뒤로가기">
           <BackIcon />
         </IconButton>
         {title && (
@@ -142,7 +136,9 @@ const Header = ({
 
   return (
     <HeaderContainer $type={type} $isAtTop={isAtTop}>
+      <div onClick={() => goToMain()}>
       <StyledText fontSize={20} fontWeight={900} color={isAtTop ? COLORS.white : COLORS.text.primary}>CONY</StyledText>
+      </div>
       <IconContainer>
         <IconButton $isAtTop={isAtTop} onClick={handleNotificationClick} aria-label="알림">
           <BellIcon />

@@ -1,8 +1,43 @@
 import React from 'react';
-import styled from 'styled-components/native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { COLORS } from '../../../constants/colors';
 import { StyledText } from '../../../utils/StyledText';
-import Svg, { Path, Circle } from 'react-native-svg';
+import { Svg, Path, Circle, Line } from 'react-native-svg';
+import { goToMain } from '../../../utils/utils';
+
+const styles = StyleSheet.create({
+  container: (type: 'default' | 'back') => ({
+    width: '100%',
+    paddingVertical: 13,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    position: type === 'back' ? 'relative' : 'static',
+  }),
+  iconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  iconButton: {
+    padding: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titleContainer: {
+    position: 'absolute',
+    left: '50%',
+    marginLeft: -50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 100,
+  },
+  spacer: {
+    width: 24,
+  },
+});
 
 const BellIcon = () => (
   <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={COLORS.text.primary} strokeWidth={2}>
@@ -18,58 +53,100 @@ const UserIcon = () => (
   </Svg>
 );
 
-const HeaderContainer = styled.View`
-  width: 100%;
-  padding-vertical: 13px;
-  padding-horizontal: 20px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom-width: 1px;
-  border-bottom-color: ${COLORS.background.lightGray};
-`;
+const BackIcon = () => (
+  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={COLORS.text.primary} strokeWidth={2}>
+    <Line x1="19" y1="12" x2="5" y2="12" />
+    <Path d="M12 19l-7-7 7-7" />
+  </Svg>
+);
 
-const IconContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 16px;
-`;
+interface HeaderProps {
+  type?: 'default' | 'back';
+  title?: React.ReactNode;
+  onBack?: () => void;
+  onNotificationClick?: () => void;
+  onProfileClick?: () => void;
+  isAtTop?: boolean;
+}
 
-const IconButton = styled.TouchableOpacity`
-  padding: 4px;
-  justify-content: center;
-  align-items: center;
-`;
+const Header = ({
+  type = 'default',
+  title,
+  onBack,
+  onNotificationClick,
+  onProfileClick,
+  isAtTop = false,
+}: HeaderProps) => {
+  const navigation = useNavigation();
 
-const Header: React.FC = () => {
   const handleNotificationClick = () => {
-    console.log('Notification clicked');
+    if (onNotificationClick) {
+      onNotificationClick();
+    } else {
+      console.log('Notification clicked');
+    }
   };
 
   const handleProfileClick = () => {
-    console.log('Profile clicked');
+    if (onProfileClick) {
+      onProfileClick();
+    } else {
+      (navigation as any).navigate('Mypage');
+    }
+  };
+
+  const handleBackPress = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      if ((navigation as any).canGoBack()) {
+        (navigation as any).goBack();
+      }
+    }
+  };
+
+  if (type === 'back') {
+    return (
+      <View style={styles.container(type)}>
+        <TouchableOpacity style={styles.iconButton} onPress={handleBackPress}>
+          <BackIcon />
+        </TouchableOpacity>
+        {title && (
+          <View style={styles.titleContainer}>
+            {typeof title === 'string' ? (
+              <StyledText fontSize={18} fontWeight={600} color={COLORS.text.primary}>
+                {title}
+              </StyledText>
+            ) : (
+              title
+            )}
+          </View>
+        )}
+        <View style={styles.spacer} />
+      </View>
+    );
+  }
+
+  const handleLogoPress = () => {
+    (navigation as any).navigate('MainPage');
   };
 
   return (
-    <HeaderContainer>
-      <StyledText fontSize={20} fontWeight={900} color={COLORS.text.primary}>
-        CONY
-      </StyledText>
-      <IconContainer>
-        <IconButton
-          onPress={handleNotificationClick}
-          activeOpacity={0.7}
-        >
+    <View style={styles.container(type)}>
+      <TouchableOpacity onPress={handleLogoPress}>
+        <StyledText fontSize={20} fontWeight={900} color={isAtTop ? COLORS.white : COLORS.text.primary}>
+          CONY
+        </StyledText>
+      </TouchableOpacity>
+      <View style={styles.iconContainer}>
+        <TouchableOpacity style={styles.iconButton} onPress={handleNotificationClick}>
           <BellIcon />
-        </IconButton>
-        <IconButton
-          onPress={handleProfileClick}
-          activeOpacity={0.7}
-        >
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconButton} onPress={handleProfileClick}>
           <UserIcon />
-        </IconButton>
-      </IconContainer>
-    </HeaderContainer>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 };
 

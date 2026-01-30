@@ -1,11 +1,12 @@
-import { Coupon } from "@/types/coupon/coupon";
+import { GifticonDetailResponseDto, GifticonListResponseDto } from "@/types/gifticon/gifticon";
 import styled from "styled-components";
 import DdayView from "./DdayView";
 import { COLORS } from "@/constants/colors";
 import BarcodeButton from "./BarcodeButton";
 import { calculateDaysUntilExpiration } from "@/utils/DayUtils";
+import { useRouter } from "next/navigation";
 
-const HorizontalGiftCardContainer = styled.div`
+const HorizontalGiftCardContainer = styled.div<{ $isUsed: boolean }>`
   width: 90%;
   background-color: #FFFFFF;
   border-radius: 10px;
@@ -15,8 +16,45 @@ const HorizontalGiftCardContainer = styled.div`
   position: relative;
   max-width: 500px;
   gap: 16px;
-
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+  opacity: ${props => props.$isUsed ? 0.6 : 1};
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const UsedOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+`;
+
+const UsedBadge = styled.div`
+  background-color: ${COLORS.text.secondary};
+  color: ${COLORS.white};
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 6;
 `;
 
 // 이미지 영역 확인을 위해 color 임시로 넣어두었습니다.
@@ -57,23 +95,35 @@ const CouponText = styled.p<{ fontSize: number; fontWeight: number; color: strin
 `;
 
 
-const HorizontalGiftCard = ({ coupon }: { coupon: Coupon }) => {
-  const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiration_date);
-  const formattedPrice = coupon.price.toLocaleString('ko-KR');
+const HorizontalGiftCard = ({ coupon }: { coupon: GifticonDetailResponseDto | GifticonListResponseDto }) => {
+  const router = useRouter();
+  const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiryDate);
+  const originalPrice = 'originalPrice' in coupon ? coupon.originalPrice : 0;
+  const formattedPrice = originalPrice.toLocaleString('ko-KR');
+  const isUsed = coupon.status === 'USED';
+
+  const handleCardClick = () => {
+    router.push(`/coupon/detail?id=${coupon.gifticonId}`);
+  };
 
   return (
-    <HorizontalGiftCardContainer>
+    <HorizontalGiftCardContainer $isUsed={isUsed} onClick={handleCardClick}>
+      {isUsed && (
+        <UsedOverlay>
+          <UsedBadge>사용 완료</UsedBadge>
+        </UsedOverlay>
+      )}
       <div style={{ position: 'absolute', top: '15px', right: '15px' }}>
         <DdayView type="gift" dday={daysUntilExpiration} size="Small" />
       </div>
       <ImageContainer>
-        <ProductImage src={coupon.image_url} alt={coupon.title} />
+        <ProductImage src={coupon.imageUrl} alt={coupon.productName} />
       </ImageContainer>
       <InfoContainer>
-        <CouponText fontSize={14} fontWeight={400} color={COLORS.text.secondary}>{coupon.brand}</CouponText>
+        <CouponText fontSize={12} fontWeight={400} color={COLORS.text.secondary}>{coupon.brandName}</CouponText>
         <div style={{ display: 'flex', flexDirection: 'column'}}>
-          <CouponText fontSize={23} fontWeight={900} color={COLORS.text.primary}>{coupon.title}</CouponText>
-          <CouponText fontSize={16} fontWeight={700} color={COLORS.text.primary}>{formattedPrice}원</CouponText>
+          <CouponText fontSize={18} fontWeight={900} color={COLORS.text.primary}>{coupon.productName}</CouponText>
+          <CouponText fontSize={14} fontWeight={700} color={COLORS.text.primary}>{formattedPrice}원</CouponText>
         </div>
       </InfoContainer>
       <div style={{ position: 'absolute', bottom: '15px', right: '15px' }}>
