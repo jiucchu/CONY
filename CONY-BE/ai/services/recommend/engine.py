@@ -6,7 +6,7 @@ from typing import List, Dict, Any, Set
 
 import numpy as np
 
-from schemas.recommend import RecentInteraction, EventType
+from schemas.recommend import RequestData, EventType
 from services.chroma import get_chroma_collection
 
 logger = logging.getLogger(__name__)
@@ -18,8 +18,8 @@ EVENT_WEIGHTS = {
 }
 
 # 중복 제거를 위해 추천 후보 넉넉하게 뽑아야 limit 개수를 채울 수 있음
-RECOMMEND_CANDIDATE_MULTIPLIER = int(os.getenv("RECOMMEND_CANDIDATE_MULTIPLIER", "20")) # limit에 곱할 후보 증폭 배수 (기본 20)
-RECOMMEND_MAX_CANDIDATES = int(os.getenv("RECOMMEND_MAX_CANDIDATES", "500"))            # 후보 검색 최대 상한선 (기본 500)
+RECOMMEND_CANDIDATE_MULTIPLIER = 20 # limit에 곱할 후보 증폭 배수 (기본 20)
+RECOMMEND_MAX_CANDIDATES = 500      # 후보 검색 최대 상한선 (기본 500)
 
 
 # 사용자 행동 로그에 포함된 sale_id의 embedding 값 가져오기 -> {sale_id: embedding_vector}
@@ -47,7 +47,7 @@ def _fetch_embeddings_by_sale_ids(sale_ids: List[int]) -> Dict[int, np.ndarray]:
 
 
 # 유저 벡터 생성 (벡터 평균 계산)
-def _weighted_user_vector(interactions: List[RecentInteraction]) -> np.ndarray:
+def _weighted_user_vector(interactions: List[RequestData]) -> np.ndarray:
     sale_ids = [it.sale_id for it in interactions]
     vectors_by_id = _fetch_embeddings_by_sale_ids(sale_ids)
     if not vectors_by_id:
@@ -104,7 +104,7 @@ def _query_similar_sales(user_vec: np.ndarray, n_results: int) -> List[int]:
 
 
 # 추천 리스트 조회
-def run_recommend(limit: int, recent_interactions: List[RecentInteraction]) -> Dict[str, Any]:
+def run_recommend(limit: int, recent_interactions: List[RequestData]) -> Dict[str, Any]:
     """
     라우터에서 그대로 return 가능한 Response(dict) 형태로 반환
     Response 스키마:

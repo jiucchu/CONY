@@ -6,9 +6,12 @@ class EventType(str, Enum):
     CLICK = "CLICK"
     PURCHASE = "PURCHASE"
 
-class RecentInteraction(BaseModel):
+class RequestData(BaseModel):
     sale_id: int = Field(..., ge=1)
     event_type: EventType
+
+class Request(BaseModel):
+    user_log: List[RequestData]
 
 class ResponseData(BaseModel):
     limit: int
