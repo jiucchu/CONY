@@ -11,18 +11,18 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-@Table(name = "ROOM_MEMBER", uniqueConstraints = {
+@Table(name = "SHARED_ROOM_MEMBER", uniqueConstraints = {
         @UniqueConstraint(name = "uk_room_member_room_id_user_id", columnNames = { "room_id", "user_id" })
 })
 public class RoomMember extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "room_member_id")
+    @Column(name = "member_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id", nullable = false)
+    @JoinColumn(name = "shared_room_id", nullable = false)
     private Room room;
 
     @ManyToOne(fetch = FetchType.LAZY)
