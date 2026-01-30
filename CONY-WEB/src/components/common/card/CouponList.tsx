@@ -3,7 +3,7 @@
 import styled from "styled-components";
 import { COLORS } from "@/constants/colors";
 import CommonCouponCard from "./CommonCouponCard";
-import { Coupon } from "@/types/coupon/coupon";
+import { GifticonDetailResponseDto, GifticonListResponseDto } from "@/types/gifticon/gifticon";
 
 const SectionContainer = styled.div`
   width: 100%;
@@ -76,7 +76,7 @@ const CardsContainer = styled.div`
 `;
 
 interface CouponListProps {
-  coupons: Coupon[];
+  coupons: (GifticonDetailResponseDto | GifticonListResponseDto)[];
   title: string;
   onMoreClick?: () => void;
 }
@@ -95,7 +95,7 @@ const CouponList = ({ coupons, title, onMoreClick }: CouponListProps) => {
       </SectionHeader>
       <CardsContainer>
         {displayCoupons.map((coupon) => (
-          <CommonCouponCard key={coupon.coupon_id} coupon={coupon} />
+          <CommonCouponCard key={coupon.gifticonId} coupon={coupon} />
         ))}
       </CardsContainer>
     </SectionContainer>

@@ -1,8 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components/native';
-import { COLORS } from '../../../constants/colors';
-import { StyledText } from '../../../utils/StyledText';
-import Svg, { Circle, Path } from 'react-native-svg';
+import { View, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { COLORS } from '@/constants/colors';
+import { StyledText } from '@/utils/StyledText';
+import { Svg, Circle, Path } from 'react-native-svg';
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+    gap: 8,
+    flex: 1,
+  },
+  filterButton: (isSelected: boolean) => ({
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: isSelected ? COLORS.primary : COLORS.background.lightGray,
+    backgroundColor: isSelected ? COLORS.white : COLORS.background.lightGray,
+  }),
+  searchButton: {
+    padding: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: COLORS.background.lightGray,
+    borderRadius: 20,
+    fontSize: 14,
+    fontWeight: '400',
+    color: COLORS.text.primary,
+    backgroundColor: COLORS.background.lightGray,
+  },
+  searchInputFocused: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.white,
+  },
+});
+
+const MagnifyingGlassIcon = () => (
+  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={COLORS.text.primary} strokeWidth={2}>
+    <Circle cx="11" cy="11" r="8" />
+    <Path d="m21 21-4.35-4.35" />
+  </Svg>
+);
 
 export type SortType = 'registration' | 'distance' | 'period';
 
@@ -12,73 +63,11 @@ interface FilterProps {
   onSearch?: (query: string) => void;
 }
 
-const MagnifyingGlassIcon = () => (
-  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={COLORS.text.primary} strokeWidth={2}>
-    <Circle cx="11" cy="11" r="8" />
-    <Path d="m21 21-4.35-4.35" />
-  </Svg>
-);
-
-const SearchIcon = () => (
-  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={COLORS.primary} strokeWidth={2}>
-    <Circle cx="11" cy="11" r="8" />
-    <Path d="m21 21-4.35-4.35" />
-  </Svg>
-);
-
-const FilterContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  padding-vertical: 16px;
-  padding-horizontal: 20px;
-`;
-
-const ButtonGroup = styled.View`
-  flex-direction: row;
-  gap: 8px;
-  flex: 1;
-`;
-
-const FilterButton = styled.TouchableOpacity<{ isSelected: boolean }>`
-  padding-vertical: 8px;
-  padding-horizontal: 16px;
-  border-radius: 20px;
-  border-width: 1px;
-  border-color: ${props => props.isSelected ? COLORS.primary : COLORS.background.lightGray};
-  background-color: ${props => props.isSelected ? COLORS.white : COLORS.background.lightGray};
-`;
-
-const SearchButton = styled.TouchableOpacity`
-  padding: 4px;
-  justify-content: center;
-  align-items: center;
-`;
-
-const SearchInput = styled.TextInput`
-  flex: 1;
-  padding-vertical: 8px;
-  padding-horizontal: 16px;
-  border-width: 1px;
-  border-color: ${COLORS.background.lightGray};
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 400;
-  color: ${COLORS.text.primary};
-  background-color: ${COLORS.background.lightGray};
-`;
-
-const SearchIconButton = styled.TouchableOpacity`
-  padding: 4px;
-  justify-content: center;
-  align-items: center;
-`;
-
-const Filter: React.FC<FilterProps> = ({
+const Filter = ({
   selectedSort: initialSort = 'period',
   onSortChange,
   onSearch,
-}) => {
+}: FilterProps) => {
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSort, setSelectedSort] = useState<SortType>(initialSort);
@@ -110,14 +99,13 @@ const Filter: React.FC<FilterProps> = ({
   };
 
   return (
-    <FilterContainer>
+    <View style={styles.container}>
       {!isSearchVisible ? (
         <>
-          <ButtonGroup>
-            <FilterButton
-              isSelected={selectedSort === 'registration'}
+          <View style={styles.buttonGroup}>
+            <TouchableOpacity
+              style={styles.filterButton(selectedSort === 'registration')}
               onPress={() => handleSortClick('registration')}
-              activeOpacity={0.8}
             >
               <StyledText
                 fontSize={14}
@@ -126,12 +114,10 @@ const Filter: React.FC<FilterProps> = ({
               >
                 등록순
               </StyledText>
-            </FilterButton>
-            
-            <FilterButton
-              isSelected={selectedSort === 'distance'}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.filterButton(selectedSort === 'distance')}
               onPress={() => handleSortClick('distance')}
-              activeOpacity={0.8}
             >
               <StyledText
                 fontSize={14}
@@ -140,12 +126,10 @@ const Filter: React.FC<FilterProps> = ({
               >
                 거리순
               </StyledText>
-            </FilterButton>
-            
-            <FilterButton
-              isSelected={selectedSort === 'period'}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.filterButton(selectedSort === 'period')}
               onPress={() => handleSortClick('period')}
-              activeOpacity={0.8}
             >
               <StyledText
                 fontSize={14}
@@ -154,16 +138,16 @@ const Filter: React.FC<FilterProps> = ({
               >
                 기간순
               </StyledText>
-            </FilterButton>
-          </ButtonGroup>
-          
-          <SearchButton onPress={handleSearchToggle} activeOpacity={0.7}>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity style={styles.searchButton} onPress={handleSearchToggle}>
             <MagnifyingGlassIcon />
-          </SearchButton>
+          </TouchableOpacity>
         </>
       ) : (
         <>
-          <SearchInput
+          <TextInput
+            style={[styles.searchInput, styles.searchInputFocused]}
             placeholder="찾고 싶은 브랜드, 물품명"
             placeholderTextColor={COLORS.text.secondary}
             value={searchQuery}
@@ -171,12 +155,12 @@ const Filter: React.FC<FilterProps> = ({
             onSubmitEditing={handleSearchSubmit}
             autoFocus
           />
-          <SearchIconButton onPress={handleSearchToggle} activeOpacity={0.7}>
-            <SearchIcon />
-          </SearchIconButton>
+          <TouchableOpacity style={styles.searchButton} onPress={handleSearchToggle}>
+            <MagnifyingGlassIcon />
+          </TouchableOpacity>
         </>
       )}
-    </FilterContainer>
+    </View>
   );
 };
 

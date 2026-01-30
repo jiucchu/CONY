@@ -13,7 +13,7 @@ const FilterContainer = styled.div`
   border-bottom: 1px solid ${COLORS.background.lightGray};
 `;
 
-const TabButton = styled.button<{ isSelected: boolean }>`
+const TabButton = styled.button<{ $isSelected: boolean }>`
   border: none;
   cursor: pointer;
   padding: 0;
@@ -31,8 +31,8 @@ const TabButton = styled.button<{ isSelected: boolean }>`
     bottom: 0;
     left: 0;
     right: 0;
-    height: ${props => props.isSelected ? '3px' : '0px'};
-    background-color: ${props => props.isSelected ? COLORS.primary : 'transparent'};
+    height: ${props => props.$isSelected ? '3px' : '0px'};
+    background-color: ${props => props.$isSelected ? COLORS.primary : 'transparent'};
     border-radius: 3px 3px 0 0;
     transition: height 0.2s;
   }
@@ -63,7 +63,7 @@ const AvailableFilter = ({
   return (
     <FilterContainer>
       <TabButton
-        isSelected={selectedType === 'all'}
+        $isSelected={selectedType === 'all'}
         onClick={() => handleTabClick('all')}
       >
         <StyledText 
@@ -75,7 +75,7 @@ const AvailableFilter = ({
         </StyledText>
       </TabButton>
       <TabButton
-        isSelected={selectedType === 'available'}
+        $isSelected={selectedType === 'available'}
         onClick={() => handleTabClick('available')}
       >
         <StyledText 
@@ -87,7 +87,7 @@ const AvailableFilter = ({
         </StyledText>
       </TabButton>
       <TabButton
-        isSelected={selectedType === 'used'}
+        $isSelected={selectedType === 'used'}
         onClick={() => handleTabClick('used')}
       >
         <StyledText 

@@ -37,7 +37,7 @@ const Input = styled.input`
   border: 1px solid ${COLORS.background.lightGray};
   border-radius: 8px;
   font-family: 'Pretendard', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
   color: ${COLORS.text.primary};
   background-color: ${COLORS.white};
@@ -51,6 +51,7 @@ const Input = styled.input`
 
   &::placeholder {
     color: ${COLORS.text.secondary};
+    font-size: 16px;
   }
 `;
 

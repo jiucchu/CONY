@@ -1,7 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components/native';
-import { COLORS } from '../../../constants/colors';
-import { StyledText } from '../../../utils/StyledText';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { COLORS } from '@/constants/colors';
+import { StyledText } from '@/utils/StyledText';
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    width: '100%',
+    paddingHorizontal: '12%',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.background.lightGray,
+  },
+  tabButton: (isSelected: boolean) => ({
+    paddingBottom: 12,
+    borderBottomWidth: isSelected ? 3 : 0,
+    borderBottomColor: isSelected ? COLORS.primary : 'transparent',
+  }),
+});
 
 export type AvailableType = 'all' | 'available' | 'used';
 
@@ -10,35 +26,10 @@ interface AvailableFilterProps {
   onTypeChange?: (type: AvailableType) => void;
 }
 
-const FilterContainer = styled.View`
-  flex-direction: row;
-  width: 100%;
-  padding-horizontal: 12%;
-  justify-content: space-between;
-  border-bottom-width: 1px;
-  border-bottom-color: ${COLORS.background.lightGray};
-`;
-
-const TabButton = styled.TouchableOpacity`
-  padding-bottom: 12px;
-  position: relative;
-`;
-
-const Indicator = styled.View`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background-color: ${COLORS.primary};
-  border-top-left-radius: 3px;
-  border-top-right-radius: 3px;
-`;
-
-const AvailableFilter: React.FC<AvailableFilterProps> = ({
+const AvailableFilter = ({
   selectedType: initialType = 'available',
   onTypeChange,
-}) => {
+}: AvailableFilterProps) => {
   const [selectedType, setSelectedType] = useState<AvailableType>(initialType);
 
   useEffect(() => {
@@ -51,49 +42,32 @@ const AvailableFilter: React.FC<AvailableFilterProps> = ({
   };
 
   return (
-    <FilterContainer>
-      <TabButton
+    <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.tabButton(selectedType === 'all')}
         onPress={() => handleTabClick('all')}
-        activeOpacity={0.7}
       >
-        <StyledText
-          fontSize={16}
-          fontWeight={500}
-          color={COLORS.text.primary}
-        >
+        <StyledText fontSize={16} fontWeight={500} color={COLORS.text.primary}>
           전체보기
         </StyledText>
-        {selectedType === 'all' && <Indicator />}
-      </TabButton>
-      
-      <TabButton
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.tabButton(selectedType === 'available')}
         onPress={() => handleTabClick('available')}
-        activeOpacity={0.7}
       >
-        <StyledText
-          fontSize={16}
-          fontWeight={500}
-          color={COLORS.text.primary}
-        >
+        <StyledText fontSize={16} fontWeight={500} color={COLORS.text.primary}>
           사용가능
         </StyledText>
-        {selectedType === 'available' && <Indicator />}
-      </TabButton>
-      
-      <TabButton
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.tabButton(selectedType === 'used')}
         onPress={() => handleTabClick('used')}
-        activeOpacity={0.7}
       >
-        <StyledText
-          fontSize={16}
-          fontWeight={500}
-          color={COLORS.text.primary}
-        >
+        <StyledText fontSize={16} fontWeight={500} color={COLORS.text.primary}>
           사용완료
         </StyledText>
-        {selectedType === 'used' && <Indicator />}
-      </TabButton>
-    </FilterContainer>
+      </TouchableOpacity>
+    </View>
   );
 };
 

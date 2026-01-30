@@ -64,4 +64,10 @@ const goBackWithAlert = () => {
     }
 };
 
-export { goBack, goBackWithAlert, alert, showConfirm };
+const goToMain = () => {
+    if (typeof window !== 'undefined') {
+        window.location.href = '/';
+    }
+};
+
+export { goBack, goBackWithAlert, alert, showConfirm, goToMain };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components/native';
 import ContentLayout from '../../components/layout/ContentLayout';
 import FolderList from '../../components/couponBox/FolderList';
@@ -7,7 +7,8 @@ import ShareCoupon from '../../components/couponBox/ShareCoupon';
 import Filter from '../../components/couponBox/filter/Filter';
 import AvailableFilter from '../../components/couponBox/filter/AvailableFilter';
 import HorizontalGiftCard from '../../components/common/card/atomic/HorizontalGiftCard';
-import { getCoupons } from '../../mockDB/mock';
+import { getMyGifticons } from '../../api/gifticon/gifticonApi';
+import { GifticonListResponseDto } from '../../types/gifticon/gifticon';
 
 const FolderContainer = styled.View`
   background-color: #f5f5f5;
@@ -35,6 +36,7 @@ const CouponWrapper = styled.View`
 `;
 
 const CouponList: React.FC = () => {
+  const [coupons, setCoupons] = useState<GifticonListResponseDto[]>([]);
   const folders: FolderData[] = [
     { id: '1', title: '쿠폰함', type: 'selected' },
     { id: '2', title: '쿠폰함', type: 'unselected' },
@@ -48,6 +50,18 @@ const CouponList: React.FC = () => {
     { id: '10', title: '쿠폰함', type: 'unselected' },
   ];
 
+  useEffect(() => {
+    const fetchCoupons = async () => {
+      try {
+        const response = await getMyGifticons({ page: 0, size: 50 });
+        setCoupons(response.content || []);
+      } catch (err) {
+        console.error('기프티콘 목록 조회 실패:', err);
+      }
+    };
+    fetchCoupons();
+  }, []);
+
   return (
     <ContentLayout>
       <FolderContainer>
@@ -59,8 +73,8 @@ const CouponList: React.FC = () => {
       <Filter />
       <AvailableFilter />
       <CouponsContainer>
-        {getCoupons().map((coupon) => (
-          <CouponWrapper key={coupon.coupon_id}>
+        {coupons.map((coupon) => (
+          <CouponWrapper key={coupon.gifticonId}>
             <HorizontalGiftCard coupon={coupon} />
           </CouponWrapper>
         ))}

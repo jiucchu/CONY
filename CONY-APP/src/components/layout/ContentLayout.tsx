@@ -1,50 +1,64 @@
 import React, { ReactNode } from 'react';
-import styled from 'styled-components/native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import Header from '../common/header/Header';
 import Footer from '../common/footer/Footer';
+import { COLORS } from '../../constants/colors';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    width: '100%',
+  },
+  headerSection: {
+    width: '100%',
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.background.lightGray,
+  },
+  contentSection: {
+    flex: 1,
+  },
+  footerSection: {
+    width: '100%',
+    borderTopWidth: 1,
+    borderTopColor: COLORS.background.lightGray,
+  },
+});
 
 interface ContentLayoutProps {
   children: ReactNode;
+  headerType?: 'default' | 'back';
+  headerTitle?: ReactNode;
+  onBack?: () => void;
+  onNotificationClick?: () => void;
+  onProfileClick?: () => void;
 }
 
-const LayoutContainer = styled.View`
-  width: 100%;
-  height: 100%;
-  flex: 1;
-`;
-
-const HeaderSection = styled.View`
-  width: 100%;
-`;
-
-const ContentSection = styled.ScrollView`
-  flex: 1;
-`;
-
-const ContentContainer = styled.View`
-  flex-grow: 1;
-`;
-
-const FooterSection = styled.View`
-  width: 100%;
-`;
-
-const ContentLayout: React.FC<ContentLayoutProps> = ({ children }) => {
+const ContentLayout = ({
+  children,
+  headerType = 'default',
+  headerTitle,
+  onBack,
+  onNotificationClick,
+  onProfileClick,
+}: ContentLayoutProps) => {
   return (
-    <LayoutContainer>
-      <HeaderSection>
-        <Header />
-      </HeaderSection>
-      <ContentSection
-        contentContainerStyle={{ flexGrow: 1 }}
-        showsVerticalScrollIndicator={false}
-      >
+    <View style={styles.container}>
+      <View style={styles.headerSection}>
+        <Header
+          type={headerType}
+          title={headerTitle}
+          onBack={onBack}
+          onNotificationClick={onNotificationClick}
+          onProfileClick={onProfileClick}
+        />
+      </View>
+      <ScrollView style={styles.contentSection} showsVerticalScrollIndicator={false}>
         {children}
-      </ContentSection>
-      <FooterSection>
+      </ScrollView>
+      <View style={styles.footerSection}>
         <Footer />
-      </FooterSection>
-    </LayoutContainer>
+      </View>
+    </View>
   );
 };
 

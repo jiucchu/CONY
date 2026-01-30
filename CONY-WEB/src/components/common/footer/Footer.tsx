@@ -217,7 +217,7 @@ const Footer = () => {
   }, []);
 
   const handleCouponBoxClick = () => {
-    console.log('내 쿠폰함 clicked');
+    router.push('/coupon/myCoupon');
   };
 
   const handleAddClick = () => {
@@ -293,7 +293,7 @@ const Footer = () => {
   };
 
   const handleExchangeClick = () => {
-    console.log('콘 거래소 clicked');
+    router.push('/payment/main');
   };
 
   return (
