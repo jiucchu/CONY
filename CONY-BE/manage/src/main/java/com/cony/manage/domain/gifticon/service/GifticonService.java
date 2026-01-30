@@ -9,14 +9,19 @@ import java.util.List;
 
 public interface GifticonService {
     List<GifticonAnalysisResponseDto> analyzeGifticon(List<MultipartFile> images);
-    List<Long> registerGifticon(List<GifticonRegisterRequestDto> requests, Long userId);
+    List<Long> registerGifticon(List<GifticonRegisterRequestDto> requests, Long userId, MultipartFile image);
 
-    Page<GifticonListResponseDto> getMyGifticons(Long userId, Pageable pageable);
+    Page<GifticonListResponseDto> getMyGifticons(Long userId, GifticonSearchCondition condition, Pageable pageable);
     GifticonDetailResponseDto getGifticonDetail(Long gifticonId, Long userId);
 
     Long updateGifticon(Long gifticonId, Long userId, GifticonUpdateRequestDto request);
 
     Long useGifticon(Long gifticonId, Long userId, GifticonUseRequestDto request);
-    void cancelUseGifticon(Long logId, Long userId);
+    void cancelUseGifticon(Long logId, Long userId, boolean isProduct);
     void updateUsageLog(Long logId, Long userId, GifticonLogUpdateRequestDto request);
+
+    // 자동판매 관련
+    List<AutoSaleTargetResponseDto> getAutoSaleTargetsWithoutNotification();
+    List<AutoSaleTargetResponseDto> getAutoSaleTargetsWithNotification();
+    void markAutoSaleProcessed(Long gifticonId);
 }

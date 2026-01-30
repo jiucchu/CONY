@@ -8,13 +8,16 @@ import lombok.*;
 @Getter @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Table(name = "GIFTICON_IMAGE")
 public class GifticonImage {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "image_id")
     private Long id;
 
     private String imageUrl;
+    @Column(name = "s3_bucket")
     private String s3Bucket;
+    @Column(name = "s3_key")
     private String s3Key;
     private String originalFilename;
     private Long fileSize;

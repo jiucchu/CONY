@@ -48,6 +48,13 @@ public class GifticonDetailResponseDto {
     @Schema(description = "기프티콘 타입", example = "PRODUCT")
     private GifticonType gifticonType;
 
+    // === 자동판매 설정 === //
+    @Schema(description = "판매 예정일", example = "2024-11-30")
+    private LocalDate scheduledSaleDate;
+
+    @Schema(description = "판매 예정 금액", example = "4000")
+    private Integer plannedSalePrice;
+
     @Schema(description = "사용 이력 목록")
     private List<GifticonUsageLogResponseDto> histories;
 }

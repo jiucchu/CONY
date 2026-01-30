@@ -32,7 +32,14 @@ public class GifticonRegisterRequestDto { // OCR, 사용자 검수까지 마친 
     
     @Schema(description = "기프티콘 타입 (PRODUCT: 교환권, PREPAID: 금액권)", example = "PRODUCT")
     private GifticonType type;
-    
+
     @Schema(description = "기프티콘 이미지 URL", example = "https://example.com/image.jpg")
     private String imageUrl;
+
+    // === 자동판매 설정 === //
+    @Schema(description = "판매 예정일 (자동판매 시, null이면 자동판매 OFF)", example = "2024-11-30")
+    private LocalDate scheduledSaleDate;
+
+    @Schema(description = "판매 예정 금액 (자동판매 시)", example = "4000")
+    private Integer plannedSalePrice;
 }

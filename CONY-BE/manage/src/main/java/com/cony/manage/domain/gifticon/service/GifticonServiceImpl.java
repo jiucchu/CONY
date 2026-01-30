@@ -11,17 +11,26 @@ import com.cony.manage.domain.user.repository.UserRepository;
 import com.cony.manage.global.error.CustomException;
 import com.cony.manage.global.error.ErrorCode;
 import com.cony.manage.infrastructure.image.FileUploader;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -37,26 +46,93 @@ public class GifticonServiceImpl implements GifticonService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final GifticonUsageLogRepository gifticonUsageLogRepository;
+    private final StoreGeoService storeGeoService;
 
     private final FileUploader fileUploader;
+    private final RestClient restClient;
+    private final ObjectMapper objectMapper;
+
+    @Value("${spring.cloud.aws.s3.bucket}")
+    private String s3Bucket;
 
     @Override
     public List<GifticonAnalysisResponseDto> analyzeGifticon(List<MultipartFile> images) {
         List<GifticonAnalysisResponseDto> results = new ArrayList<>();
 
         for(MultipartFile image : images) {
-            String tempImageUrl = fileUploader.uploadTemp(image);
+            String s3Key = fileUploader.upload(image, null);
 
-            // AI OCR 기능이 완성되면 RestCilent 등을 이용해 post 요청
-            /*
-               Map<String, Object> requestBody = Map.of(
-                   "image_url", imageUrl,
-                   "image_type", "ORIGINAL"
-               );
-               // response = restClient.post().uri("/ocr").body(requestBody)...
-            */
+            try {
+                OcrRequestDto ocrRequest = OcrRequestDto.builder()
+                        .imageUrl(fileUploader.getPresignedUrl(s3Key))
+                        .imageType("ORIGINAL")
+                        .build();
 
-            results.add(createMockAnalysisResult(tempImageUrl));
+                String responseBody = restClient.post()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(ocrRequest)
+                        .exchange((request, response) -> {
+                            if(response.getStatusCode().is4xxClientError() || response.getStatusCode().is5xxServerError()) {
+                                throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+                            }
+
+                            InputStream is = response.getBody();
+                            byte[] bytes = is.readAllBytes();
+
+                            return new String(bytes, StandardCharsets.UTF_8);
+                        });
+
+                JsonNode rootNode = null;
+                if(responseBody != null && !responseBody.isEmpty()) {
+                    rootNode = objectMapper.readTree(responseBody);
+                }
+
+                if(rootNode != null) {
+                    JsonNode fields = rootNode.path("data").path("fields");
+
+                    GifticonAnalysisResponseDto.OcrFields ocrFields = GifticonAnalysisResponseDto.OcrFields.builder()
+                            .brandName(fields.path("brand_name").path("value").asText(null))
+                            .productName(fields.path("product_name").path("value").asText(null))
+                            .originalPrice(fields.path("original_price").path("value").asInt(0))
+                            .expiryDate(fields.path("expiry_date").path("value").asText(null))
+                            .gifticonType(fields.path("gifticon_type").path("value").asText(null))
+                            .barcodeNumber(fields.path("barcode_number").path("value").asText(null))
+                            .build();
+
+                    List<String> needsReview = new ArrayList<>();
+                    rootNode.path("data").path("needs_review").forEach(node -> needsReview.add(node.asText(null)));
+
+                    results.add(GifticonAnalysisResponseDto.builder()
+                            .imageUrl(s3Key)
+                            .fields(ocrFields)
+                            .needsReview(needsReview)
+                            .build());
+                }
+            } catch (Exception e) {
+                log.error("OCR Analysis failed for image: {}, error: {}", s3Key, e.getMessage());
+
+                // 1. 모든 필드를 '검토 필요(needsReview)' 항목으로 추가
+                // (프론트엔드에서 이 리스트를 보고 "아, 이 항목들을 입력받아야 하는구나"라고 판단하게 함)
+                List<String> allFieldsNeeded = List.of(
+                        "brandName",
+                        "productName",
+                        "originalPrice",
+                        "expiryDate",
+                        "gifticonType",
+                        "barcodeNumber"
+                );
+
+                // 2. 값은 모두 비어있는(null) 필드 객체 생성
+                GifticonAnalysisResponseDto.OcrFields emptyFields = GifticonAnalysisResponseDto.OcrFields.builder()
+                        .build();
+
+                // 3. 결과 리스트에 추가 (이미지 URL은 유지하여 사용자가 원본을 보고 입력할 수 있게 함)
+                results.add(GifticonAnalysisResponseDto.builder()
+                        .imageUrl(s3Key)
+                        .fields(emptyFields)
+                        .needsReview(allFieldsNeeded)
+                        .build());
+            }
         }
 
         return results;
@@ -64,7 +140,7 @@ public class GifticonServiceImpl implements GifticonService {
 
     @Override
     @Transactional
-    public List<Long> registerGifticon(List<GifticonRegisterRequestDto> requests, Long userId) {
+    public List<Long> registerGifticon(List<GifticonRegisterRequestDto> requests, Long userId, MultipartFile image) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
@@ -77,7 +153,12 @@ public class GifticonServiceImpl implements GifticonService {
                 throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
             }
 
-            String permanentImageUrl = fileUploader.copyToPermanent(request.getImageUrl(), userId);
+            String s3Key = null;
+            if(request.getImageUrl() != null) {
+                s3Key = fileUploader.copyToPermanent(request.getImageUrl(), userId);
+            } else if(image != null && !image.isEmpty()) {
+                s3Key = fileUploader.upload(image, userId);
+            }
 
             Brand brand = brandRepository.findByName(request.getBrandName())
                     .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
@@ -95,15 +176,22 @@ public class GifticonServiceImpl implements GifticonService {
                     .expiryDate(request.getExpiryDate())
                     .barcodeNumber(request.getBarcodeNumber())
                     .status(GifticonStatus.NOT_USED)
+                    // 자동판매 설정
+                    .scheduledSaleDate(request.getScheduledSaleDate())
+                    .plannedSalePrice(request.getPlannedSalePrice())
                     .build();
             Gifticon saved = gifticonRepository.save(gifticon);
 
-            GifticonImage gifticonImage = GifticonImage.builder()
-                    .gifticon(saved)
-                    .imageUrl(permanentImageUrl)
-                    .imageType(ImageType.ORIGINAL)
-                    .build();
-            gifticonImageRepository.save(gifticonImage);
+            if(s3Key != null) {
+                GifticonImage gifticonImage = GifticonImage.builder()
+                        .gifticon(saved)
+                        .imageUrl(s3Key)
+                        .s3Bucket(s3Bucket)
+                        .s3Key(s3Key)
+                        .imageType(ImageType.ORIGINAL)
+                        .build();
+                gifticonImageRepository.save(gifticonImage);
+            }
 
             return saved.getId();
         }).collect(Collectors.toList());
@@ -114,8 +202,27 @@ public class GifticonServiceImpl implements GifticonService {
      * - Pageable: page(0부터), size(개수), sort(정렬) 정보를 담음
      */
     @Override
-    public Page<GifticonListResponseDto> getMyGifticons(Long userId, Pageable pageable) {
-        Page<Gifticon> gifticonPage = gifticonRepository.findByUserId(userId, pageable);
+    public Page<GifticonListResponseDto> getMyGifticons(Long userId, GifticonSearchCondition condition, Pageable pageable) {
+
+        // [위치 기반 필터링]
+        if(condition.getLatitude() != null && condition.getLongitude() != null) {
+            int radius = (condition.getRadius() != null) ? condition.getRadius().intValue() : 1000;
+            List<Long> nearbyBrands = storeGeoService.getNearbyBrandIds(condition.getLatitude(), condition.getLongitude(), radius);
+            condition.setNearbyBrandIds(nearbyBrands);
+        }
+
+        // 사용완료 된 기프티콘을 보여준다면 => 미사용, 사용중 기프티콘이 먼저 나오도록 함.
+        if(!Boolean.TRUE.equals(condition.getExcludeUsed())) {
+            Sort statusSort = Sort.by(Sort.Order.asc("statusOrder"));
+
+            Sort finalSort = statusSort.and(pageable.getSort());
+
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), finalSort);
+        }
+
+        Specification<Gifticon> specification = GifticonSpecification.search(userId, condition);
+
+        Page<Gifticon> gifticonPage = gifticonRepository.findAll(specification, pageable);
         if(gifticonPage.isEmpty()) {
             return Page.empty(pageable);
         }
@@ -139,6 +246,7 @@ public class GifticonServiceImpl implements GifticonService {
                 .expiryDate(g.getExpiryDate())
                 .status(g.getStatus())
                 .imageUrl(imageMap.get(g.getId()))
+                .originalPrice(g.getOriginalPrice())
                 .build());
     }
 
@@ -154,8 +262,8 @@ public class GifticonServiceImpl implements GifticonService {
             throw new CustomException(ErrorCode.FORBIDDEN_USER);
         }
 
-        String imageUrl = gifticonImageRepository.findByGifticonIdAndImageType(gifticonId, ImageType.ORIGINAL)
-                .map(GifticonImage::getImageUrl)
+        String s3Key = gifticonImageRepository.findByGifticonIdAndImageType(gifticonId, ImageType.ORIGINAL)
+                .map(GifticonImage::getS3Key)
                 .orElse(null);
 
         List<GifticonUsageLogResponseDto> useLogs = new ArrayList<>();
@@ -179,8 +287,10 @@ public class GifticonServiceImpl implements GifticonService {
                 .originalPrice(gifticon.getOriginalPrice())
                 .currentBalance(gifticon.getCurrentBalance())
                 .categoryName(gifticon.getCategory().getName())
-                .imageUrl(imageUrl)
+                .imageUrl(fileUploader.getPresignedUrl(s3Key))
                 .gifticonType(gifticon.getGifticonType())
+                .scheduledSaleDate(gifticon.getScheduledSaleDate())
+                .plannedSalePrice(gifticon.getPlannedSalePrice())
                 .histories(useLogs)
                 .build();
     }
@@ -203,6 +313,12 @@ public class GifticonServiceImpl implements GifticonService {
         Category category = brand.getCategory();
 
         gifticon.updateInformation(brand, category, request.getProductName(), request.getExpiryDate(), request.getOriginalPrice());
+
+        // 자동판매 설정 업데이트
+        gifticon.updateAutoSaleSetting(
+                request.getScheduledSaleDate(),
+                request.getPlannedSalePrice()
+        );
 
         return gifticon.getId();
     }
@@ -242,9 +358,25 @@ public class GifticonServiceImpl implements GifticonService {
      */
     @Override
     @Transactional
-    public void cancelUseGifticon(Long logId, Long userId) {
-        GifticonUsageLog useLog = gifticonUsageLogRepository.findById(logId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USING_LOG_NOT_FOUND));
+    public void cancelUseGifticon(Long logId, Long userId, boolean isProduct) {
+        GifticonUsageLog useLog = null;
+        if(isProduct) {
+            Long gifticonId = logId;
+
+            // 상품권 기프티콘이 아니라면 이력으로만 삭제해야함.
+            Gifticon gifticon = gifticonRepository.findById(gifticonId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.GIFTICON_NOT_FOUND));
+            if(gifticon.getGifticonType() != GifticonType.PRODUCT) {
+                throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+
+            useLog = gifticonUsageLogRepository.findByGifticonIdAndIsCanceledFalse(gifticonId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.GIFTICON_NOT_FOUND));
+            logId = useLog.getId();
+        } else {
+            useLog = gifticonUsageLogRepository.findById(logId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.USING_LOG_NOT_FOUND));
+        }
 
         if(useLog.isCanceled()) {
             throw new CustomException(ErrorCode.ALREADY_CANCELED_LOG);
@@ -288,24 +420,63 @@ public class GifticonServiceImpl implements GifticonService {
         useLog.updateAmount(newAmount, gifticon.getCurrentBalance());
     }
 
+    /**
+     * 자동판매 대상 기프티콘 조회 (알림 불필요 - 사용자가 직접 설정한 경우)
+     * - 판매 예정일이 도래한 기프티콘
+     */
+    @Override
+    public List<AutoSaleTargetResponseDto> getAutoSaleTargetsWithoutNotification() {
+        List<Gifticon> gifticons = gifticonRepository.findAutoSaleTargetsWithoutNotification(
+                LocalDate.now(), GifticonStatus.NOT_USED);
 
-    // --- Mock Data Generator ---
-    private GifticonAnalysisResponseDto createMockAnalysisResult(String imageUrl) {
-        // AI가 분석 후 "확실하다"고 판단한 데이터만 넘어온다고 가정
-        GifticonAnalysisResponseDto.OcrFields fields = GifticonAnalysisResponseDto.OcrFields.builder()
-                .brandName("스타벅스")
-                .productName("아이스 아메리카노 T")
-                .originalPrice(4500)
-                .expiryDate("2025-12-31")
-                .barcodeNumber("1234-5678-9012")
-                .gifticonType("PRODUCT")
-                .build();
+        return convertToAutoSaleTargetDtos(gifticons);
+    }
 
-        return GifticonAnalysisResponseDto.builder()
-                .imageUrl(imageUrl)
-                .fields(fields)
-                // 신뢰성 검사 후에도 "사람의 확인이 필요하다"고 판단된 필드가 있다면 여기에 추가
-                .needsReview(Collections.emptyList())
-                .build();
+    /**
+     * 시스템 제안 대상 기프티콘 조회 (알림 필요 - 유효기간 1달 이내)
+     * - 자동판매 미설정이면서 유효기간 1달 이내인 기프티콘
+     */
+    @Override
+    public List<AutoSaleTargetResponseDto> getAutoSaleTargetsWithNotification() {
+        LocalDate today = LocalDate.now();
+        LocalDate oneMonthLater = today.plusMonths(1);
+
+        List<Gifticon> gifticons = gifticonRepository.findAutoSaleTargetsWithNotification(
+                today, oneMonthLater, GifticonStatus.NOT_USED);
+
+        return convertToAutoSaleTargetDtos(gifticons);
+    }
+
+    /**
+     * 자동판매 처리 완료 표시 (판매 등록 후 설정 초기화)
+     */
+    @Override
+    @Transactional
+    public void markAutoSaleProcessed(Long gifticonId) {
+        Gifticon gifticon = gifticonRepository.findById(gifticonId)
+                .orElseThrow(() -> new CustomException(ErrorCode.GIFTICON_NOT_FOUND));
+
+        gifticon.clearAutoSaleSetting();
+    }
+
+    private List<AutoSaleTargetResponseDto> convertToAutoSaleTargetDtos(List<Gifticon> gifticons) {
+        if (gifticons.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> gifticonIds = gifticons.stream()
+                .map(Gifticon::getId)
+                .toList();
+
+        Map<Long, String> imageMap = gifticonImageRepository.findAllByGifticonIdIn(gifticonIds, ImageType.ORIGINAL).stream()
+                .collect(Collectors.toMap(
+                        img -> img.getGifticon().getId(),
+                        GifticonImage::getImageUrl,
+                        (existing, replacement) -> existing
+                ));
+
+        return gifticons.stream()
+                .map(g -> AutoSaleTargetResponseDto.from(g, imageMap.get(g.getId())))
+                .toList();
     }
 }

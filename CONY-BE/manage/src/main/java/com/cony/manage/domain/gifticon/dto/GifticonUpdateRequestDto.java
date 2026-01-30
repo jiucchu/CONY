@@ -27,4 +27,11 @@ public class GifticonUpdateRequestDto {
 
     @Schema(description = "원가 (수정 시)", example = "4500")
     private Integer originalPrice;
+
+    // === 자동판매 설정 === //
+    @Schema(description = "판매 예정일 (자동판매 시, null이면 자동판매 OFF)", example = "2024-11-30")
+    private LocalDate scheduledSaleDate;
+
+    @Schema(description = "판매 예정 금액 (자동판매 시)", example = "4000")
+    private Integer plannedSalePrice;
 }
