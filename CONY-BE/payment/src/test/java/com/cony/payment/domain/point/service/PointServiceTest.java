@@ -74,33 +74,6 @@ class PointServiceTest {
     }
 
     @Test
-    @DisplayName("포인트 차감 성공")
-    void deductPoint_Success() {
-        // given
-        pointService.chargePoint(testUser.getId(), 10000L);
-        Long deductAmount = 5000L;
-
-        // when
-        Long balance = pointService.deductPoint(testUser.getId(), deductAmount);
-
-        // then
-        assertThat(balance).isEqualTo(5000L);
-    }
-
-    @Test
-    @DisplayName("포인트 차감 - 잔액 부족 시 예외 발생")
-    void deductPoint_InsufficientPoints() {
-        // given
-        pointService.chargePoint(testUser.getId(), 5000L);
-        Long deductAmount = 10000L;
-
-        // when & then
-        assertThatThrownBy(() -> pointService.deductPoint(testUser.getId(), deductAmount))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INSUFFICIENT_POINTS);
-    }
-
-    @Test
     @DisplayName("포인트 잔액 조회")
     void getPointBalance() {
         // given

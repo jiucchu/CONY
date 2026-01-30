@@ -29,11 +29,15 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/health-check").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger 허용
-                        .requestMatchers("/payments/**").permitAll()  // 카카오페이 결제 관련 API 허용
+                        .requestMatchers("/health-check", "/actuator/**").permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-resources/**",
+                                "/v3/api-docs/**",
+                                "/webjars/**"
+                        ).permitAll() // Swagger 관련 모든 경로 허용
+                        .requestMatchers("/**").permitAll() // 개발용: 모든 API 허용 (추후 제한 필요)
                         .anyRequest().authenticated())
-
                 .build();
     }
 
@@ -42,14 +46,17 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOriginPatterns(List.of(
-                "http://localhost:3000",    // Next.js (프론트엔드 서버)
-                "https://cony-domain.com",  // 실제 도메인 [추후 수정]
-                "http://localhost:8080"     // 관리 서버
+                "http://localhost:3000",        // Next.js (Local)
+                "http://i14c106.p.ssafy.io",    // Production Domain
+                "https://i14c106.p.ssafy.io",   // Production Domain (HTTPS)
+                "http://localhost:8080",        // Manage Server
+                "http://localhost:8081"         // Payment Server Self
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
+        config.setMaxAge(3600L); // 1시간 캐시
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

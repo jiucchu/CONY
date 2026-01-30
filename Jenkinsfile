@@ -1,108 +1,121 @@
 pipeline {
     agent any
 
-    // 1. 공통 환경 변수 설정 (필요시 수정)
-    environment {
-        // 이미 생성해둔 도커 네트워크 이름
-        DOCKER_NETWORK = 'cony-net' 
-    }
-
     stages {
-        // ===========================================================
-        // 2. 프론트엔드 (FE) 배포 스테이지
-        // 동작 조건: 브랜치 이름이 'FE' 이거나 'develop' 일 때 실행
-        // ===========================================================
-        stage('Frontend Build & Deploy') {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        // =========================================================
+        // 1. Backend 배포 (CONY-BE 폴더가 변경되었을 때만 실행)
+        // =========================================================
+        stage('Deploy Backend') {
             when {
-                anyOf {
-                    branch 'FE'       // FE 브랜치
-                    branch 'develop'  // develop 브랜치 (통합 배포용)
-                    branch 'buildtest' // buildtest 브랜치 (테스트용)
-                }
+                changeset "CONY-BE/**"
             }
             steps {
-                dir('CONY-WEB') {  // FE 폴더로 이동
+                dir('CONY-BE') { 
                     script {
-                        echo "🚀 [Frontend] 배포를 시작합니다..."
-                        
-                        // 1. 기존 컨테이너 중지 및 삭제 (에러 무시)
+                        echo "🚀 Backend 변경 감지! 배포 시작..."
+
+                        // 1. Jenkins Credential에서 값 가져오기
+                        withCredentials([
+                            string(credentialsId: 'SPRING_DATASOURCE_URL', variable: 'SPRING_DATASOURCE_URL'),
+                            string(credentialsId: 'SPRING_DATASOURCE_USERNAME', variable: 'SPRING_DATASOURCE_USERNAME'),
+                            string(credentialsId: 'SPRING_DATASOURCE_PASSWORD', variable: 'SPRING_DATASOURCE_PASSWORD'),
+                            string(credentialsId: 'REDIS_HOST', variable: 'REDIS_HOST'),
+                            string(credentialsId: 'REDIS_PORT', variable: 'REDIS_PORT'),
+                            string(credentialsId: 'AWS_ACCESS_KEY', variable: 'AWS_ACCESS_KEY'),
+                            string(credentialsId: 'AWS_SECRET_KEY', variable: 'AWS_SECRET_KEY'),
+                            string(credentialsId: 'S3_BUCKET_NAME', variable: 'S3_BUCKET_NAME'),
+                            string(credentialsId: 'OCR_API_URL', variable: 'OCR_API_URL'),
+                            string(credentialsId: 'GOOGLE_CLIENT_ID', variable: 'GOOGLE_CLIENT_ID'),
+                            string(credentialsId: 'GOOGLE_CLIENT_SECRET', variable: 'GOOGLE_CLIENT_SECRET'),
+                            string(credentialsId: 'KAKAO_CLIENT_ID', variable: 'KAKAO_CLIENT_ID'),
+                            string(credentialsId: 'KAKAO_CLIENT_SECRET', variable: 'KAKAO_CLIENT_SECRET'),
+                        ]) {
+                            // 2. .env 파일 생성
+                            sh """
+                                echo "SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}" > .env
+                                echo "SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}" >> .env
+                                echo "SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}" >> .env
+                                echo "REDIS_HOST=${REDIS_HOST}" >> .env
+                                echo "REDIS_PORT=${REDIS_PORT}" >> .env
+                                echo "AWS_ACCESS_KEY=${AWS_ACCESS_KEY}" >> .env
+                                echo "AWS_SECRET_KEY=${AWS_SECRET_KEY}" >> .env
+                                echo "S3_BUCKET_NAME=${S3_BUCKET_NAME}" >> .env
+                                echo "OCR_API_URL=${OCR_API_URL}" >> .env
+                                echo "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" >> .env
+                                echo "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}" >> .env
+                                echo "KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}" >> .env
+                                echo "KAKAO_CLIENT_SECRET=${KAKAO_CLIENT_SECRET}" >> .env
+                            """
+                        }
+
+                        // 3. Docker Compose 실행
+                        sh 'docker compose up -d --build'
+                    }
+                }
+            }
+        }
+
+        // =========================================================
+        // 2. Frontend 배포 (CONY-WEB 폴더가 변경되었을 때만 실행)
+        // =========================================================
+        stage('Deploy Frontend') {
+            when {
+                changeset "CONY-WEB/**"
+            }
+            steps {
+                dir('CONY-WEB') {
+                    script {
+                        echo "🎨 Frontend 변경 감지! 배포 시작..."
+
+                        // 1. 기존 컨테이너 중지 및 삭제 (에러 무시: || true)
+                        // 처음 배포할 땐 컨테이너가 없어서 에러 날 수 있으므로 || true를 붙임
                         sh 'docker stop cony-web || true'
                         sh 'docker rm cony-web || true'
-                        
-                        // 2. 도커 이미지 빌드 (캐시 활용)
-                        sh 'docker build --no-cache -t cony-web .'
-                        
-                        // 3. 컨테이너 실행 (네트워크 연결 필수!)
-                        // -d: 백그라운드, --network: 백엔드와 통신용
-                        sh "docker run -d --name cony-web -p 3000:3000 --network ${DOCKER_NETWORK} cony-web"
-                        
-                        // 4. 불필요한 이미지 정리
-                        sh 'docker image prune -f'
+
+                        // 2. Docker 이미지 빌드
+                        sh 'docker build -t cony-web .'
+
+                        // 3. Docker 컨테이너 실행 (3000번 포트)
+                        sh 'docker run -d --name cony-web -p 3000:3000 cony-web'
                     }
                 }
             }
         }
-
-        // ===========================================================
-        // 3. 백엔드 (BE) 배포 스테이지
-        // 동작 조건: 브랜치 이름이 'BE' 이거나 'develop' 일 때 실행
-        // ===========================================================
-        stage('Backend Build & Deploy') {
-            when {
-                anyOf {
-                    branch 'BE'       // BE 브랜치
-                    branch 'develop'  // develop 브랜치
-                    branch 'buildtest' // buildtest 브랜치 (테스트용)
+        
+        // =========================================================
+        // 3. 공통 작업 (이미지 정리)
+        // =========================================================
+        stage('Clean up Image') {
+             steps {
+                script {
+                    // 사용하지 않는 댕글링 이미지(Dangling images) 삭제
+                    sh 'docker image prune -f'
                 }
-            }
-            steps {
-                dir('CONY-BE') {  // BE 폴더로 이동
-                    script {
-                        echo "☕ [Backend] 배포를 시작합니다..."
-                        
-                        // ★ 중요: 젠킨스 Credential을 이용해 .env 파일 생성 ★
-                        // (젠킨스 관리 -> Credentials에 'cony-db-secret' 등의 ID로 등록해두면 보안상 더 좋습니다)
-                        // 지금은 수동으로 파일을 복사해주는 방식을 쓰시거나, 
-                        // 아래처럼 직접 값을 써주셔도 됩니다. (보안상 추천하진 않지만 가장 쉬운 방법)
-                        
-                        sh '''
-                            echo "MYSQL_URL=jdbc:mysql://cony-db:3306/cony?serverTimezone=Asia/Seoul" > .env
-                            echo "MYSQL_USERNAME=root" >> .env
-                            echo "MYSQL_PASSWORD=root" >> .env
-                        '''
-                        
-                        // 1. 기존 컨테이너 내리기
-                        try {
-                            sh 'docker compose down'
-                        } catch (Exception e) {
-                            sh 'docker-compose down || true'
-                        }
-
-                        // 2. 다시 빌드하고 실행 (빌드와 실행을 분리!)
-                        try {
-                            // (1) 캐시 없이 강제 빌드 먼저 수행
-                            sh 'docker compose build --no-cache'
-                            // (2) 빌드된 이미지로 컨테이너 실행
-                            sh 'docker compose up -d'
-                        } catch (Exception e) {
-                            // 혹시 구버전(docker-compose)일 경우를 대비한 백업
-                            sh 'docker-compose build --no-cache'
-                            sh 'docker-compose up -d'
-                        }
-                        
-                        // 3. 불필요한 이미지 정리
-                        sh 'docker image prune -f'
-                    }
-                }
-            }
+             }
         }
     }
-    
-    // 빌드 후 처리
+
     post {
         always {
-            // 작업 공간 청소 (디스크 용량 확보)
-            cleanWs()
+            // BE 폴더에 들어가서 .env 삭제
+            dir('CONY-BE') { 
+                script {
+                    sh "rm -f .env"
+                    echo "🧹 Backend .env file deleted."
+                }
+            }
+        }
+        success {
+            echo "🎉 모든 배포가 성공적으로 완료되었습니다!"
+        }
+        failure {
+            echo "💥 배포 중 오류가 발생했습니다."
         }
     }
 }

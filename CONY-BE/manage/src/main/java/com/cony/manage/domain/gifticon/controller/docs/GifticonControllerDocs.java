@@ -6,12 +6,14 @@ import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,15 +40,17 @@ public interface GifticonControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "중복된 기프티콘", content = @Content)
     })
     ApiResponse<List<Long>> registerGifticon(
-            @RequestBody(description = "기프티콘 등록 요청 데이터 목록", required = true) List<GifticonRegisterRequestDto> requests
+            @RequestBody(description = "기프티콘 등록 요청 데이터 목록", required = true) List<GifticonRegisterRequestDto> requests,
+            @Parameter(description = "기프티콘 이미지 파일 목록", required = false) MultipartFile image
     );
 
-    @Operation(summary = "내 기프티콘 목록 조회", description = "사용자의 기프티콘 목록을 페이징하여 조회합니다.")
+    @Operation(summary = "내 기프티콘 목록 조회", description = "조건에 따라 사용자의 기프티콘 목록을 페이징하여 조회합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
     ApiResponse<Page<GifticonListResponseDto>> getMyGifticons(
-            @Parameter(description = "페이지 정보 (page, size, sort)") Pageable pageable
+            @ParameterObject @PageableDefault(size = 20, sort = "expiryDate", direction = Sort.Direction.ASC) Pageable pageable,
+            @ParameterObject GifticonSearchCondition condition
     );
 
     @Operation(summary = "기프티콘 상세 조회", description = "특정 기프티콘의 상세 정보를 조회합니다.")
@@ -79,7 +83,17 @@ public interface GifticonControllerDocs {
             @RequestBody(description = "사용 요청 정보 (금액)", required = true) GifticonUseRequestDto request
     );
 
-    @Operation(summary = "기프티콘 사용 취소", description = "기프티콘 사용 이력을 취소하고 잔액을 복구합니다.")
+    @Operation(summary = "기프티콘 사용 취소(Product)", description = "기프티콘 사용 이력을 취소하고 잔액을 복구합니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "취소 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "사용 이력을 찾을 수 없음", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 취소된 이력", content = @Content)
+    })
+    ApiResponse<Void> cancelUseGifticonProduct(
+            @Parameter(description = "기프티콘 ID (Gifticon ID)", required = true) @PathVariable Long gifticonId
+    );
+
+    @Operation(summary = "기프티콘 사용 취소(PREPAID)", description = "기프티콘 사용 이력을 취소하고 잔액을 복구합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "취소 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "사용 이력을 찾을 수 없음", content = @Content),
@@ -98,4 +112,10 @@ public interface GifticonControllerDocs {
             @Parameter(description = "사용 이력 ID (Log ID)", required = true) @PathVariable Long logId,
             @RequestBody(description = "수정할 사용 내역 정보", required = true) @Valid GifticonLogUpdateRequestDto request
     );
+
+    @Operation(summary = "보유 기프티콘 브랜드 목록", description = "보유중인 기프티콘의 브랜드 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "브랜드 목록 반환")
+    })
+    public ApiResponse<List<BrandResponseDto>> getBrandList();
 }

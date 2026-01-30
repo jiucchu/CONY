@@ -1,5 +1,6 @@
 package com.cony.payment.domain.transaction.controller;
 
+import com.cony.payment.domain.transaction.controller.docs.TransactionControllerDocs;
 import com.cony.payment.domain.transaction.dto.TransactionResponse;
 import com.cony.payment.domain.transaction.entity.Transaction;
 import com.cony.payment.domain.transaction.enums.TransactionType;
@@ -23,29 +24,22 @@ import java.util.stream.Collectors;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/transactions")
-public class TransactionController {
+public class TransactionController implements TransactionControllerDocs {
 
     private final TransactionService transactionService;
     private final UserRepository userRepository;
 
-    /**
-     * 거래 내역 목록 조회 (페이징)
-     * @param userId 사용자 ID
-     * @param page 페이지 번호 (default: 0)
-     * @param size 페이지 크기 (default: 20)
-     * @param type 거래 유형 (선택)
-     * @return 거래 내역 목록
-     */
+    @Override
     @GetMapping
     public ApiResponse<Page<TransactionResponse>> getTransactions(
-            @RequestParam Long userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) TransactionType type) {
 
-        log.info("거래 내역 조회: userId={}, page={}, size={}, type={}", userId, page, size, type);
+        Long testUserId = 1L;
+        log.info("거래 내역 조회 (테스트): userId={}, page={}, size={}, type={}", testUserId, page, size, type);
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(testUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         Pageable pageable = PageRequest.of(page, size);
@@ -62,11 +56,7 @@ public class TransactionController {
         return ApiResponse.success(response);
     }
 
-    /**
-     * 거래 내역 상세 조회
-     * @param transactionId 거래 ID
-     * @return 거래 내역 상세
-     */
+    @Override
     @GetMapping("/{transactionId}")
     public ApiResponse<TransactionResponse> getTransaction(@PathVariable Long transactionId) {
         log.info("거래 내역 상세 조회: transactionId={}", transactionId);
@@ -77,41 +67,13 @@ public class TransactionController {
         return ApiResponse.success(response);
     }
 
-    /**
-     * 사용자별 거래 내역 조회
-     * @param userId 사용자 ID
-     * @param page 페이지 번호
-     * @param size 페이지 크기
-     * @return 거래 내역 목록
-     */
-    @GetMapping("/user/{userId}")
-    public ApiResponse<Page<TransactionResponse>> getTransactionsByUser(
-            @PathVariable Long userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    @Override
+    @GetMapping("/recent")
+    public ApiResponse<List<TransactionResponse>> getRecentTransactions() {
+        Long testUserId = 1L;
+        log.info("최근 거래 내역 조회 (테스트): userId={}", testUserId);
 
-        log.info("사용자별 거래 내역 조회: userId={}, page={}, size={}", userId, page, size);
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Transaction> transactions = transactionService.getTransactionsByUser(user, pageable);
-        Page<TransactionResponse> response = transactions.map(TransactionResponse::from);
-
-        return ApiResponse.success(response);
-    }
-
-    /**
-     * 최근 거래 내역 조회 (최근 10개)
-     * @param userId 사용자 ID
-     * @return 최근 거래 내역
-     */
-    @GetMapping("/recent/{userId}")
-    public ApiResponse<List<TransactionResponse>> getRecentTransactions(@PathVariable Long userId) {
-        log.info("최근 거래 내역 조회: userId={}", userId);
-
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(testUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         List<Transaction> transactions = transactionService.getRecentTransactions(user);

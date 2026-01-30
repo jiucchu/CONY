@@ -1,5 +1,6 @@
 package com.cony.payment.domain.payment.controller;
 
+import com.cony.payment.domain.payment.controller.docs.PaymentControllerDocs;
 import com.cony.payment.domain.payment.dto.PaymentReadyRequest;
 import com.cony.payment.domain.payment.service.PaymentService;
 import com.cony.payment.global.common.ApiResponse;
@@ -18,32 +19,26 @@ import java.io.IOException;
 @RestController
 @RequestMapping("/payments")
 @RequiredArgsConstructor
-public class PaymentController {
+public class PaymentController implements PaymentControllerDocs {
 
     private final PaymentService paymentService;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
-    /**
-     * 결제 준비
-     * @param request 결제 준비 요청
-     * @return 결제 URL
-     */
+    @Override
     @PostMapping("/ready")
     public ApiResponse<KakaoPayReadyResponse> ready(@Valid @RequestBody PaymentReadyRequest request) {
-        log.info("결제 준비 요청: userId={}, amount={}", request.getUserId(), request.getAmount());
+        // 테스트 편의를 위해 userId를 1L로 하드코딩
+        Long testUserId = 1L;
+        log.info("결제 준비 요청 (테스트): userId={}, amount={}", testUserId, request.getAmount());
 
-        KakaoPayReadyResponse response = paymentService.ready(request.getUserId(), request.getAmount());
+        KakaoPayReadyResponse response = paymentService.ready(testUserId, request.getAmount());
 
         return ApiResponse.success("결제 준비가 완료되었습니다.", response);
     }
 
-    /**
-     * 결제 승인 (카카오페이 리다이렉트)
-     * @param pgToken 카카오페이 pg_token
-     * @param partnerOrderId 주문 번호
-     */
+    @Override
     @GetMapping("/approve")
     public void approve(
             @RequestParam("pg_token") String pgToken,
@@ -65,9 +60,7 @@ public class PaymentController {
         }
     }
 
-    /**
-     * 결제 취소 (카카오페이 리다이렉트)
-     */
+    @Override
     @GetMapping("/cancel")
     public void cancel(
             @RequestParam(value = "partner_order_id", required = false) String partnerOrderId,
@@ -81,9 +74,7 @@ public class PaymentController {
         response.sendRedirect(frontendUrl + "/payment/cancel");
     }
 
-    /**
-     * 결제 실패 (카카오페이 리다이렉트)
-     */
+    @Override
     @GetMapping("/fail")
     public void fail(
             @RequestParam(value = "partner_order_id", required = false) String partnerOrderId,

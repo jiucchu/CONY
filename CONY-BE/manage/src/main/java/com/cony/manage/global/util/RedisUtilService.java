@@ -1,9 +1,16 @@
 package com.cony.manage.global.util;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.GeoResults;
+import org.springframework.data.redis.connection.RedisGeoCommands;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.domain.geo.GeoReference;
+import org.springframework.data.redis.domain.geo.Metrics;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -46,5 +53,41 @@ public class RedisUtilService {
      */
     public boolean existData(String key) {
         return redisTemplate.hasKey(key);
+    }
+
+    /**
+     * GEO 조회: 특정 좌표 반경 내의 멤버 검색
+     * @param key 키값
+     * @param lat 위도
+     * @param lon 경도
+     * @param radiusMeter 좌표 반경
+     * @return
+     */
+    public GeoResults<RedisGeoCommands.GeoLocation<Object>> getGeoRadius(String key, double lat, double lon, int radiusMeter) {
+        return redisTemplate.opsForGeo().search(
+                key,
+                GeoReference.fromCoordinate(lon, lat),
+                new Distance(radiusMeter, Metrics.METERS),
+                RedisGeoCommands.GeoSearchCommandArgs.newGeoSearchArgs().includeDistance()
+        );
+    }
+
+    /**
+     * Pipeline 실행: 여러 명령어를 한번에 실행(네트워크 최적화)
+     * Service 계층에서 넘어온 구체적인 로직(Callback)의 실행 담당.
+     * @param action
+     * @return
+     */
+    public List<Object> executePipeline(RedisCallback<Object> action) {
+        return redisTemplate.executePipelined(action);
+    }
+
+    /**
+     * 직렬화 도구 노출 (파이파라인 내부 키 변환에 사용)
+     * 혹은 RedisSerializer를 직접 빈으로 주입받아도 되지만, 편의상 추가
+     * @return
+     */
+    public RedisTemplate<String, Object> getTemplate() {
+        return redisTemplate;
     }
 }

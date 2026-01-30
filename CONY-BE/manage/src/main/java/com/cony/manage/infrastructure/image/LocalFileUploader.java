@@ -35,31 +35,40 @@ public class LocalFileUploader implements FileUploader {
     private String domainUrl;
 
     @Override
-    public String uploadTemp(MultipartFile file) {
+    public String upload(MultipartFile file, Long userId) {
         if(file == null || file.isEmpty()) {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
         try {
-            String tempPath = rootPath + "/temp";
-            File directory = new File(tempPath);
+            // [분기 로직] userId가 없으면 "temp", 있으면 "userId"를 서브 경로로 사용
+            String subPath = (userId == null) ? "temp" : String.valueOf(userId);
+
+            // 1. 사용자별 디렉토리 생성 (/uploads/{userId} or /uploads/temp)
+            String directoryPath = rootPath + "/" + subPath;
+            File directory = new File(directoryPath);
             if (!directory.exists()) {
                 directory.mkdirs();
             }
 
+            // 2. 파일명 생성 (UUID_원본명)
             String originalFilename = file.getOriginalFilename();
             String savedFilename = UUID.randomUUID() + "_" + originalFilename;
 
-            File dest = new File(tempPath + "/" + savedFilename);
+            // 3. 파일 저장
+            File dest = new File(directoryPath + "/" + savedFilename);
             file.transferTo(dest);
 
+            // 4. URL 인코딩 (한글 파일명 등 특수문자 처리)
             String encodedFileName = URLEncoder.encode(savedFilename, StandardCharsets.UTF_8)
-                    .replace("+", "%20"); // 공백이 +로 바뀌는 것을 %20으로 보정 (선택 사항이지만 추천)
+                    .replace("+", "%20");
 
-            return domainUrl + "/temp/" + encodedFileName;
+            // 5. 최종 URL 반환
+            return subPath + "/" + encodedFileName;
+
         } catch(IOException e) {
-            log.error("임시 파일 업로드 실패: ", e);
-            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+            log.error("[Local] 직접 업로드 실패: ", e);
+            throw new CustomException(ErrorCode.FAIL_FILE_UPLOAD);
         }
     }
 
@@ -108,7 +117,7 @@ public class LocalFileUploader implements FileUploader {
             Files.copy(sourcePath, targetPath);
 
             // 4. 변경된(혹은 기존) 파일명이 포함된 새로운 영구 URL 반환
-            return domainUrl + "/" + userId + "/" + filename;
+            return userId + "/" + filename;
 
         } catch(IOException e) {
             log.error("파일 영구 이동 실패: {}", tempImageUrl, e);
@@ -139,5 +148,10 @@ public class LocalFileUploader implements FileUploader {
         } catch (IOException e) {
             log.error("[Local] 임시 폴더 스캔 실패", e);
         }
+    }
+
+    @Override
+    public String getPresignedUrl(String filePath) {
+        return domainUrl + "/" + filePath;
     }
 }
