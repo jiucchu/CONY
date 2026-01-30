@@ -1,15 +1,17 @@
-import os
-from pathlib import Path
-
 import chromadb
+from config import get_settings
 
 def get_chroma_collection():
-    # 항상 ai/ 디렉토리 기준의 고정 경로를 기본값으로 사용
-    root_dir = Path(__file__).resolve().parents[1]
-    default_persist_dir = root_dir / "chroma_db"
+    settings = get_settings()
 
-    persist_dir = os.getenv("CHROMA_PERSIST_DIR", str(default_persist_dir))
-    collection_name = os.getenv("CHROMA_COLLECTION", "sale_embeddings")
+    persist_dir = settings.CHROMA_PERSIST_DIR
+    collection_name = settings.CHROMA_COLLECTION
 
-    client = chromadb.PersistentClient(path=persist_dir)
+    if settings.CHROMA_HOST or settings.CHROMA_PORT:
+        host = settings.CHROMA_HOST or "localhost"
+        port = settings.CHROMA_PORT or 8000
+        client = chromadb.HttpClient(host=host, port=port)
+    else:
+        client = chromadb.PersistentClient(path=persist_dir)
+
     return client.get_or_create_collection(name=collection_name)

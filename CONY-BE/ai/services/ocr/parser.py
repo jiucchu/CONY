@@ -1,7 +1,7 @@
 import json
-import os
 from typing import Any
 import requests
+from config import get_settings
 from schemas.ocr import OCRFields, OCRIntField, OCRTextField
 
 GMS_API_URL = "https://gms.ssafy.io/gmsapi/api.openai.com/v1/chat/completions"
@@ -87,13 +87,15 @@ def parse_ocr_results(raw_results: list[Any], barcode_value: str | None = None) 
     if not items:
         return None, ["brand_name", "product_name", "original_price", "expiry_date", "gifticon_type", "barcode_number"]
 
+    settings = get_settings()
+
     # GMS API KEY
-    GMS_API_KEY = os.getenv("GMS_API_KEY")
+    GMS_API_KEY = settings.GMS_API_KEY
     if not GMS_API_KEY:
         raise RuntimeError("GMS_API_KEY 확인이 필요합니다.")
 
     # GMS Model
-    model = os.getenv("GMS_MODEL")
+    model = settings.GMS_MODEL
 
     # system prompt
     system_msg = (
