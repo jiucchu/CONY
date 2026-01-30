@@ -1,7 +1,7 @@
-﻿import os
-from typing import Any, Dict, Optional, Tuple
+﻿from typing import Any, Dict, Optional, Tuple
 import requests
 
+from config import get_settings
 from services.chroma import get_chroma_collection
 from schemas.embedding import Response
 
@@ -10,13 +10,13 @@ GMS_API_URL = "https://gms.ssafy.io/gmsapi/api.openai.com/v1/embeddings"
 
 # 임베딩 생성
 def _generate_embedding(content_text: str) -> list[float]:
-    GMS_API_KEY = os.getenv("GMS_API_KEY")
-    print("GMS_API_KEY:", os.getenv("GMS_API_KEY"))
+    settings = get_settings()
+    GMS_API_KEY = settings.GMS_API_KEY
 
     if not GMS_API_KEY:
         raise RuntimeError("GMS_API_KEY가 없습니다")
 
-    model = os.getenv("EMBEDDING_MODEL")
+    model = settings.EMBEDDING_MODEL
 
     headers = {
         "Authorization": f"Bearer {GMS_API_KEY}",
