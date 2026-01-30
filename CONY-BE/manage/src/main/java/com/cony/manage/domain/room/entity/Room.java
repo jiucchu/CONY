@@ -33,7 +33,7 @@ public class Room extends BaseTimeEntity {
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
-    // === Business Logic === //
+    // === 비즈니스 로직 === //
     public void updateName(String name) {
         this.name = name;
     }

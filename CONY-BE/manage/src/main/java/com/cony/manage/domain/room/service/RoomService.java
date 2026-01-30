@@ -1,12 +1,14 @@
 package com.cony.manage.domain.room.service;
 
 import com.cony.manage.domain.gifticon.entity.Gifticon;
+import com.cony.manage.domain.gifticon.enums.GifticonStatus;
 import com.cony.manage.domain.gifticon.repository.GifticonRepository;
 import com.cony.manage.domain.room.dto.request.RoomCreateRequestDto;
 import com.cony.manage.domain.room.dto.response.GifticonRoomResponseDto;
 import com.cony.manage.domain.room.dto.response.RoomResponseDto;
 import com.cony.manage.domain.room.entity.Room;
 import com.cony.manage.domain.room.entity.RoomMember;
+import com.cony.manage.domain.room.enums.GifticonSearchStatus;
 import com.cony.manage.domain.room.enums.RoomRole;
 import com.cony.manage.domain.room.enums.RoomType;
 import com.cony.manage.domain.room.repository.RoomMemberRepository;
@@ -15,12 +17,16 @@ import com.cony.manage.domain.user.entity.User;
 import com.cony.manage.domain.user.repository.UserRepository;
 import com.cony.manage.global.error.CustomException;
 import com.cony.manage.global.error.ErrorCode;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -36,20 +42,18 @@ public class RoomService {
     private final UserRepository userRepository;
     private final GifticonRepository gifticonRepository;
 
+    // 내 방 목록 조회
     public List<RoomResponseDto> getMyRooms(Long userId) {
         List<RoomMember> members = roomMemberRepository.findAllByUserId(userId);
 
-        // Sorting: DEFAULT first, then SHARED by logic (here created at desc for
-        // simplicity or as defined)
+        // 정렬: DEFAULT 먼저, 그다음 SHARED (최신순)
         return members.stream()
                 .sorted(Comparator.comparing((RoomMember rm) -> rm.getRoom().getType() == RoomType.DEFAULT ? 0 : 1)
-                        .thenComparing(rm -> rm.getRoom().getCreatedAt(), Comparator.reverseOrder())) // Latest shared
-                                                                                                      // rooms first
+                        .thenComparing(rm -> rm.getRoom().getCreatedAt(), Comparator.reverseOrder())) // 최근 공유된 방 먼저
                 .map(rm -> {
                     Room room = rm.getRoom();
-                    // Hardcoded count for now or need separate query.
-                    // PRD says "memberCount". This might cause N+1.
-                    // For MVP optimization, assume checking local implementation later.
+                    // 현재는 멤버 수를 하드코딩하거나 별도 쿼리가 필요함
+                    // MVP 최적화를 위해 추후 구현 예정
                     return RoomResponseDto.of(room, 1, List.of());
                 })
                 .collect(Collectors.toList());
@@ -87,18 +91,18 @@ public class RoomService {
     }
 
     public Page<GifticonRoomResponseDto> getGifticonsInRoom(Long userId, Long roomId,
-            com.cony.manage.domain.room.enums.GifticonSearchStatus status,
+            GifticonSearchStatus status,
             String keyword,
             Pageable pageable) {
         checkRoomAccess(userId, roomId);
 
-        org.springframework.data.jpa.domain.Specification<Gifticon> spec = (root, query, cb) -> {
-            java.util.List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+        Specification<Gifticon> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
-            // 1. Room ID
+            // 1. 방 ID
             predicates.add(cb.equal(root.get("room").get("id"), roomId));
 
-            // 2. Keyword
+            // 2. 키워드 검색
             if (keyword != null && !keyword.isBlank()) {
                 String likePattern = "%" + keyword + "%";
                 predicates.add(cb.or(
@@ -106,29 +110,20 @@ public class RoomService {
                         cb.like(root.get("productName"), likePattern)));
             }
 
-            // 3. Status
+            // 3. 상태 필터링
             if (status != null) {
                 switch (status) {
                     case AVAILABLE:
-                        // status IN (NOT_USED, IN_USE)
+                        // 사용 가능: (NOT_USED, IN_USE) 상태이고 만료되지 않음
                         predicates.add(root.get("status").in(
-                                com.cony.manage.domain.gifticon.enums.GifticonStatus.NOT_USED,
-                                com.cony.manage.domain.gifticon.enums.GifticonStatus.IN_USE));
-                        // AND expiryDate >= now() is usually implied by NOT_USED/IN_USE logic but PRD
-                        // says "expiryDate < now" implies USED.
-                        // So AVAILABLE means not expired.
-                        // But if status is NOT_USED, it could be expired?
-                        // PRD: "USED: status = 'USED' OR expiryDate < now()"
-                        // So AVAILABLE must trigger if NOT(USED or Expired).
-                        // i.e., status != USED AND expiryDate >= now
-                        predicates.add(cb.greaterThanOrEqualTo(root.get("expiryDate"), java.time.LocalDate.now()));
+                                GifticonStatus.NOT_USED,
+                                GifticonStatus.IN_USE));
+                        predicates.add(cb.greaterThanOrEqualTo(root.get("expiryDate"), LocalDate.now()));
                         break;
                     case USED:
-                        // status = USED OR expiryDate < now()
-                        jakarta.persistence.criteria.Predicate isUsed = cb.equal(root.get("status"),
-                                com.cony.manage.domain.gifticon.enums.GifticonStatus.USED);
-                        jakarta.persistence.criteria.Predicate isExpired = cb.lessThan(root.get("expiryDate"),
-                                java.time.LocalDate.now());
+                        // 사용 완료: USED 상태이거나 만료됨
+                        Predicate isUsed = cb.equal(root.get("status"), GifticonStatus.USED);
+                        Predicate isExpired = cb.lessThan(root.get("expiryDate"), LocalDate.now());
                         predicates.add(cb.or(isUsed, isExpired));
                         break;
                     case ALL:
@@ -137,7 +132,7 @@ public class RoomService {
                 }
             }
 
-            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+            return cb.and(predicates.toArray(new Predicate[0]));
         };
 
         Page<Gifticon> gifticons = gifticonRepository.findAll(spec, pageable);
