@@ -131,8 +131,8 @@ class UserInteractionLogServiceTest {
     private Sale createSale(Long sellerId) {
         SaleRequestDto request = SaleRequestDto.builder()
                 .gifticonId(123L)
-                .originalPrice(10000L)
-                .salePrice(5000L)
+                .originalPrice(10000)
+                .salePrice(5000)
                 .build();
         Long saleId = saleService.createSale(sellerId, request);
         return saleRepository.findById(saleId).orElseThrow();
