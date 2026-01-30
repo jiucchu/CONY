@@ -1,7 +1,6 @@
 package com.cony.manage.domain.room.dto.response;
 
 import com.cony.manage.domain.room.entity.Room;
-import com.cony.manage.domain.room.enums.RoomType;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -12,7 +11,6 @@ import java.util.List;
 public class RoomResponseDto {
     private Long roomId;
     private String name;
-    private RoomType type;
     private int memberCount;
     private List<String> thumbnailUrls;
 
@@ -20,7 +18,6 @@ public class RoomResponseDto {
         return RoomResponseDto.builder()
                 .roomId(room.getId())
                 .name(room.getName())
-                .type(room.getType())
                 .memberCount(memberCount)
                 .thumbnailUrls(thumbnailUrls)
                 .build();

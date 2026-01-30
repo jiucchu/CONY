@@ -46,10 +46,9 @@ public class RoomService {
     public List<RoomResponseDto> getMyRooms(Long userId) {
         List<RoomMember> members = roomMemberRepository.findAllByUserId(userId);
 
-        // 정렬: DEFAULT 먼저, 그다음 SHARED (최신순)
+        // 정렬: 최신순 (생성일 기준 내림차순)
         return members.stream()
-                .sorted(Comparator.comparing((RoomMember rm) -> rm.getRoom().getType() == RoomType.DEFAULT ? 0 : 1)
-                        .thenComparing(rm -> rm.getRoom().getCreatedAt(), Comparator.reverseOrder())) // 최근 공유된 방 먼저
+                .sorted(Comparator.comparing((RoomMember rm) -> rm.getRoom().getCreatedAt()).reversed())
                 .map(rm -> {
                     Room room = rm.getRoom();
                     // 현재는 멤버 수를 하드코딩하거나 별도 쿼리가 필요함
@@ -66,9 +65,10 @@ public class RoomService {
 
         Room room = Room.builder()
                 .name(requestDto.getName())
-                .type(RoomType.SHARED)
+                // .type(RoomType.SHARED) // 삭제됨
                 .owner(user)
-                .inviteCode(UUID.randomUUID().toString().substring(0, 8))
+                .roomCode(UUID.randomUUID().toString().substring(0, 8)) // inviteCode -> roomCode 변경
+                .maxMembers(10) // 기본값 10명 설정
                 .build();
 
         roomRepository.save(room);
@@ -100,7 +100,7 @@ public class RoomService {
             List<Predicate> predicates = new ArrayList<>();
 
             // 1. 방 ID
-            predicates.add(cb.equal(root.get("room").get("id"), roomId));
+            predicates.add(cb.equal(root.get("room").get("id"), roomId)); // Room.id (shared_room_id)
 
             // 2. 키워드 검색
             if (keyword != null && !keyword.isBlank()) {
