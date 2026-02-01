@@ -1,5 +1,10 @@
 package com.cony.manage.global.auth;
 
+import com.cony.manage.domain.user.entity.User;
+import com.cony.manage.domain.user.repository.UserRepository;
+import com.cony.manage.global.error.CustomException;
+import com.cony.manage.global.error.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -8,7 +13,6 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -17,12 +21,15 @@ import java.util.Date;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class JwtProvider {
 
     @Value("${jwt.secret}")
     private String secretKey;
 
     private Key key;
+
+    private final UserRepository userRepository;
 
     // 유효 기간 설정 (밀리초 단위)
     private static final long accessTokenExpiration = 3600000;
@@ -33,11 +40,12 @@ public class JwtProvider {
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    public String createAccessToken(String email, String role) {
+    public String createAccessToken(String email, String role, Long userId) {
         Date now = new Date();
         return Jwts.builder()
                 .setSubject(email)
                 .claim("role", role)
+                .claim("userId", userId)
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + accessTokenExpiration))
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -90,10 +98,18 @@ public class JwtProvider {
                 .getBody();
 
         String role = claims.get("role", String.class);
-        List<SimpleGrantedAuthority> authorities =
-                Collections.singletonList(new SimpleGrantedAuthority(role));
+        List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(role));
 
-        User principal = new User(claims.getSubject(), "", authorities);
+        Long userId = claims.get("userId", Long.class);
+        String email = claims.getSubject();
+
+        if (userId == null) {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userId = user.getId();
+        }
+
+        CustomUserDetails principal = new CustomUserDetails(email, "", authorities, userId);
 
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }

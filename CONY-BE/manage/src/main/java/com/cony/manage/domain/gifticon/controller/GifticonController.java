@@ -2,6 +2,7 @@ package com.cony.manage.domain.gifticon.controller;
 
 import com.cony.manage.domain.gifticon.controller.docs.GifticonControllerDocs;
 import com.cony.manage.domain.gifticon.dto.*;
+import com.cony.manage.global.auth.annotation.AuthUser;
 import com.cony.manage.domain.gifticon.service.BrandService;
 import com.cony.manage.domain.gifticon.service.GifticonService;
 import com.cony.manage.global.common.ApiResponse;
@@ -34,7 +35,8 @@ public class GifticonController implements GifticonControllerDocs {
 
     @Override
     @PostMapping(value = "/analyze", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<List<GifticonAnalysisResponseDto>> analyzeGifticon(@RequestPart("images") List<MultipartFile> images) {
+    public ApiResponse<List<GifticonAnalysisResponseDto>> analyzeGifticon(
+            @RequestPart("images") List<MultipartFile> images) {
 
         return ApiResponse.success(gifticonService.analyzeGifticon(images));
     }
@@ -42,8 +44,7 @@ public class GifticonController implements GifticonControllerDocs {
     // JSON으로 등록 (imageUrl 사용)
     @Override
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ApiResponse<List<Long>> registerGifticon(@RequestBody List<GifticonRegisterRequestDto> requests) {
-        Long userId = 1L; // 추후 SecurityContextHolder 에서 추출.
+    public ApiResponse<List<Long>> registerGifticon(@RequestBody List<GifticonRegisterRequestDto> requests, @AuthUser Long userId) {
 
         return ApiResponse.success("기프티콘 등록 성공.", gifticonService.registerGifticon(requests, userId, null, null));
     }
@@ -54,8 +55,8 @@ public class GifticonController implements GifticonControllerDocs {
             @RequestPart(value = "requests", required = false) MultipartFile requestsPart,
             @RequestParam(value = "requests", required = false) String requestsString,
             @RequestPart(value = "image", required = false) MultipartFile image,
-            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail) {
-        Long userId = 1L; // 추후 SecurityContextHolder 에서 추출.
+            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
+             @AuthUser Long userId) {
 
         try {
             log.info("=== Multipart 요청 수신 ===");
@@ -123,24 +124,23 @@ public class GifticonController implements GifticonControllerDocs {
     @GetMapping
     public ApiResponse<Page<GifticonListResponseDto>> getMyGifticons(
             @PageableDefault(size = 20, sort = "expiryDate", direction = Sort.Direction.ASC) Pageable pageable,
-            @ModelAttribute GifticonSearchCondition condition) {
-        Long userId = 1L; // 추후 SeurityContextHolder 에서 추출.
-
+            @ModelAttribute GifticonSearchCondition condition,
+            @AuthUser Long userId) {
         return ApiResponse.success(gifticonService.getMyGifticons(userId, condition, pageable));
     }
 
     @Override
     @GetMapping("/{gifticonId}")
-    public ApiResponse<GifticonDetailResponseDto> getGifticonDetail(@PathVariable Long gifticonId) {
-        Long userId = 1L;
-
+    public ApiResponse<GifticonDetailResponseDto> getGifticonDetail(@PathVariable Long gifticonId,
+            @AuthUser Long userId) {
         return ApiResponse.success(gifticonService.getGifticonDetail(gifticonId, userId));
     }
 
     @Override
     @PutMapping(value = "/{gifticonId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ApiResponse<Long> updateGifticonInfo(@PathVariable Long gifticonId, @RequestBody @Valid GifticonUpdateRequestDto request) {
-        Long userId = 1L;
+    public ApiResponse<Long> updateGifticonInfo(@PathVariable Long gifticonId,
+            @RequestBody @Valid GifticonUpdateRequestDto request, 
+            @AuthUser Long userId) {
 
         return ApiResponse.success("잘못된 정보가 수정되었습니다.", gifticonService.updateGifticon(gifticonId, userId, request, null, null));
     }
@@ -150,8 +150,8 @@ public class GifticonController implements GifticonControllerDocs {
             @PathVariable Long gifticonId,
             @RequestPart(value = "request") @Valid GifticonUpdateRequestDto request,
             @RequestPart(value = "image", required = false) MultipartFile image,
-            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail) {
-        Long userId = 1L;
+            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail, 
+            @AuthUser Long userId) {
 
         try {
             log.info("=== 기프티콘 수정 Multipart 요청 수신 ===");
@@ -174,16 +174,14 @@ public class GifticonController implements GifticonControllerDocs {
 
     @Override
     @PostMapping("/{gifticonId}/use")
-    public ApiResponse<Long> useGifticon(@PathVariable Long gifticonId, @RequestBody GifticonUseRequestDto request) {
-        Long userId = 1L;
-
+    public ApiResponse<Long> useGifticon(@PathVariable Long gifticonId, @RequestBody GifticonUseRequestDto request,
+            @AuthUser Long userId) {
         return ApiResponse.success("사용이 완료되었습니다.", gifticonService.useGifticon(gifticonId, userId, request));
     }
 
     @Override
     @PostMapping("/{gifticonId}/cancel")
-    public ApiResponse<Void> cancelUseGifticonProduct(@PathVariable Long gifticonId) {
-        Long userId = 1L;
+    public ApiResponse<Void> cancelUseGifticonProduct(@PathVariable Long gifticonId, @AuthUser Long userId) {
         gifticonService.cancelUseGifticon(gifticonId, userId, true);
 
         return ApiResponse.success("사용 이력이 취소 되었습니다");
@@ -191,8 +189,7 @@ public class GifticonController implements GifticonControllerDocs {
 
     @Override
     @PostMapping("/log/{logId}/cancel")
-    public ApiResponse<Void> cancelUseGifticon(@PathVariable Long logId) {
-        Long userId = 1L;
+    public ApiResponse<Void> cancelUseGifticon(@PathVariable Long logId, @AuthUser Long userId) {
         gifticonService.cancelUseGifticon(logId, userId, false);
 
         return ApiResponse.success("사용 이력이 취소 되었습니다.");
@@ -200,8 +197,8 @@ public class GifticonController implements GifticonControllerDocs {
 
     @Override
     @PutMapping("/log/{logId}")
-    public ApiResponse<Void> updateUseLog(@PathVariable Long logId, @RequestBody @Valid GifticonLogUpdateRequestDto request) {
-        Long userId = 1L;
+    public ApiResponse<Void> updateUseLog(@PathVariable Long logId,
+            @RequestBody @Valid GifticonLogUpdateRequestDto request, @AuthUser Long userId) {
         gifticonService.updateUsageLog(logId, userId, request);
 
         return ApiResponse.success("사용 금액을 변경하였습니다.");
@@ -209,9 +206,7 @@ public class GifticonController implements GifticonControllerDocs {
 
     @Override
     @GetMapping("/brands")
-    public ApiResponse<List<BrandResponseDto>> getBrandList() {
-        Long userId = 1L;
-
+    public ApiResponse<List<BrandResponseDto>> getBrandList(@AuthUser Long userId) {
         return ApiResponse.success(brandService.getList(userId));
     }
 
