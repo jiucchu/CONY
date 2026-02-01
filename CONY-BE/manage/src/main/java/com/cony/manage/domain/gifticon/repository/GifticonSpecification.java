@@ -27,8 +27,9 @@ public class GifticonSpecification {
             }
 
             if(Boolean.TRUE.equals(condition.getExcludeUsed())) {
-                // AND status <> 'USED'
+                // AND status <> 'USED' AND expiry_date >= 오늘 (만료되지 않은 것만)
                 predicates.add(criteriaBuilder.notEqual(root.get("status"), GifticonStatus.USED));
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("expiryDate"), LocalDate.now()));
             }
 
             if(condition.getCategoryId() != null) {
