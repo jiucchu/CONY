@@ -20,6 +20,8 @@ import CouponDetail from './src/page/manage/crud/CouponDetail';
 import CouponModify from './src/page/manage/crud/CouponModify';
 import PaymentDetail from './src/page/payment/detail/Detail';
 import LoginPage from './src/page/auth/LoginPage';
+import OAuthCallback from './src/page/auth/OAuthCallback';
+import AlertPage from './src/page/mypage/AlertPage';
 
 const Stack = createStackNavigator();
 
@@ -46,6 +48,8 @@ function App() {
           <Stack.Screen name="CouponModify" component={CouponModify} />
           <Stack.Screen name="PaymentDetail" component={PaymentDetail} />
           <Stack.Screen name="LoginPage" component={LoginPage} />
+          <Stack.Screen name="OAuthCallback" component={OAuthCallback} />
+          <Stack.Screen name="AlertPage" component={AlertPage} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

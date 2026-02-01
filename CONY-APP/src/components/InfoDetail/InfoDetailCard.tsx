@@ -182,7 +182,7 @@ const InfoDetailCard = ({ coupon, barcodeNumber, onEdit, onDelete }: InfoDetailC
       <View style={styles.barcodeContainer}>
         <View style={styles.barcodeWrapper}>
           <BarcodeView 
-            value={formattedBarcode} 
+            value={defaultBarcode} 
             width={280}
             height={80}
             format="CODE128"

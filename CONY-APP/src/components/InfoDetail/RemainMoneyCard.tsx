@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { COLORS } from '@/constants/colors';
 import { StyledText } from '@/utils/StyledText';
 import { GifticonDetailResponseDto, GifticonUsageLogResponseDto, GifticonType } from '@/types/gifticon/gifticon';
 import { getUserInfo } from '@/api/user/userApi';
-import { updateUseLog, cancelUseGifticon } from '@/api/gifticon/gifticonApi';
+import { updateUseLog, cancelUseGifticon, useGifticon } from '@/api/gifticon/gifticonApi';
 import { UserInfo } from '@/types/user/user';
 import { Svg, Path, Line } from 'react-native-svg';
+import AmountInputModal from '@/components/common/atomic/AmountInputModal';
 
 interface ExtendedUsageLog extends GifticonUsageLogResponseDto {
   userId?: number;
@@ -24,6 +25,7 @@ interface RemainMoneyCardProps {
   gifticon?: GifticonDetailResponseDto;
   coupon?: GifticonDetailResponseDto;
   onUpdate?: () => void;
+  gifticonId?: number;
 }
 
 const styles = StyleSheet.create({
@@ -83,15 +85,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  editInput: {
-    width: 100,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderWidth: 1,
-    borderColor: COLORS.background.lightGray,
-    borderRadius: 4,
-    fontSize: 18,
-    fontWeight: '700',
+  useButton: {
+    width: '100%',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primary,
+    marginTop: 8,
   },
 });
 
@@ -119,10 +120,13 @@ const formatDate = (dateString: string): string => {
   return `${year}.${month}.${day}/${hours}:${minutes}`;
 };
 
-const RemainMoneyCard = ({ gifticon, coupon, onUpdate }: RemainMoneyCardProps) => {
+const RemainMoneyCard = ({ gifticon, coupon, onUpdate, gifticonId }: RemainMoneyCardProps) => {
   const [currentUser, setCurrentUser] = useState<UserInfo | null>(null);
-  const [editingLogId, setEditingLogId] = useState<number | null>(null);
   const [editAmount, setEditAmount] = useState<string>('');
+  const [showAmountModal, setShowAmountModal] = useState(false);
+  const [useAmount, setUseAmount] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingLog, setEditingLog] = useState<ExtendedUsageLog | null>(null);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -157,9 +161,14 @@ const RemainMoneyCard = ({ gifticon, coupon, onUpdate }: RemainMoneyCardProps) =
   }
 
   const originalPrice = cardData.price || 0;
-  const currentBalance = cardData.currentBalance || 0;
-  const usedAmount = originalPrice - currentBalance;
+  // currentBalance가 없으면 originalPrice를 기본값으로 사용 (금액권은 항상 잔액이 있어야 함)
+  const currentBalance = cardData.currentBalance !== undefined && cardData.currentBalance !== null 
+    ? cardData.currentBalance 
+    : originalPrice;
   const histories = cardData.histories || [];
+  
+  // 사용금액 계산: originalPrice - currentBalance (웹 버전과 동일)
+  const usedAmount = originalPrice - currentBalance;
 
   const extendedHistories: ExtendedUsageLog[] = histories.map(log => ({
     ...log,
@@ -167,26 +176,54 @@ const RemainMoneyCard = ({ gifticon, coupon, onUpdate }: RemainMoneyCardProps) =
     userNickname: '사용자닉네임',
   }));
 
-  const handleEdit = async (logId: number, currentAmount: number) => {
-    if (editingLogId === logId) {
-      try {
-        const newAmount = parseFloat(editAmount);
-        if (isNaN(newAmount) || newAmount <= 0) {
-          Alert.alert('오류', '올바른 금액을 입력해주세요.');
-          return;
-        }
-        await updateUseLog(logId, { newAmount });
-        setEditingLogId(null);
-        setEditAmount('');
-        onUpdate?.();
-      } catch (error) {
-        console.error('사용 내역 수정 실패:', error);
-        Alert.alert('오류', '사용 내역 수정에 실패했습니다.');
-      }
-    } else {
-      setEditingLogId(logId);
-      setEditAmount(currentAmount.toString());
+  const handleEdit = (log: ExtendedUsageLog) => {
+    setEditingLog(log);
+    setEditAmount(log.usedAmount.toString());
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = async () => {
+    if (!editingLog) return;
+
+    const newAmount = parseFloat(editAmount);
+    if (isNaN(newAmount) || newAmount <= 0) {
+      Alert.alert('오류', '올바른 금액을 입력해주세요.');
+      return;
     }
+
+    if (newAmount === editingLog.usedAmount) {
+      setShowEditModal(false);
+      setEditingLog(null);
+      setEditAmount('');
+      return;
+    }
+
+    Alert.alert(
+      '수정 확인',
+      `사용 금액을 ${editingLog.usedAmount.toLocaleString('ko-KR')}원에서 ${newAmount.toLocaleString('ko-KR')}원으로 변경하시겠습니까?`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '확인',
+          onPress: async () => {
+            try {
+              await updateUseLog(editingLog.logId, { newAmount });
+              Alert.alert('알림', '사용 금액이 수정되었습니다.');
+              setShowEditModal(false);
+              setEditingLog(null);
+              setEditAmount('');
+              onUpdate?.();
+            } catch (error: any) {
+              console.error('사용 내역 수정 실패:', error);
+              Alert.alert(
+                '오류',
+                `사용 내역 수정에 실패했습니다. ${error?.message || '알 수 없는 오류가 발생했습니다.'}`
+              );
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleDelete = async (logId: number) => {
@@ -201,10 +238,63 @@ const RemainMoneyCard = ({ gifticon, coupon, onUpdate }: RemainMoneyCardProps) =
           onPress: async () => {
             try {
               await cancelUseGifticon(logId);
+              Alert.alert('알림', '사용 내역이 삭제되었습니다.');
               onUpdate?.();
-            } catch (error) {
+            } catch (error: any) {
               console.error('사용 내역 삭제 실패:', error);
-              Alert.alert('오류', '사용 내역 삭제에 실패했습니다.');
+              Alert.alert('오류', `사용 내역 삭제에 실패했습니다. ${error?.message || '알 수 없는 오류가 발생했습니다.'}`);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handlePartialUse = () => {
+    setShowAmountModal(true);
+  };
+
+  const handleAmountSubmit = async () => {
+    if (!gifticonId) {
+      Alert.alert('오류', '기프티콘 ID가 없습니다.');
+      return;
+    }
+
+    const amount = parseFloat(useAmount);
+    
+    if (isNaN(amount) || amount <= 0) {
+      Alert.alert('오류', '올바른 금액을 입력해주세요.');
+      return;
+    }
+
+    if (amount > currentBalance) {
+      Alert.alert(
+        '오류',
+        `사용 가능한 금액을 초과했습니다.\n현재 잔액: ${currentBalance.toLocaleString('ko-KR')}원`
+      );
+      return;
+    }
+
+    Alert.alert(
+      '사용 확인',
+      `${amount.toLocaleString('ko-KR')}원을 사용하시겠습니까?`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '확인',
+          onPress: async () => {
+            try {
+              await useGifticon(gifticonId, { amount });
+              Alert.alert('알림', '금액 사용 처리되었습니다.');
+              setShowAmountModal(false);
+              setUseAmount('');
+              onUpdate?.();
+            } catch (error: any) {
+              console.error('금액 사용 처리 실패:', error);
+              Alert.alert(
+                '오류',
+                `금액 사용 처리에 실패했습니다. ${error?.message || '알 수 없는 오류가 발생했습니다.'}`
+              );
             }
           },
         },
@@ -240,24 +330,14 @@ const RemainMoneyCard = ({ gifticon, coupon, onUpdate }: RemainMoneyCardProps) =
       <View style={styles.transactionList}>
         {extendedHistories.map((log) => {
           const canEdit = canEditOrDelete(log);
-          const isEditing = editingLogId === log.logId;
 
           return (
             <View key={log.logId} style={styles.transactionItem}>
               <View style={styles.transactionLeft}>
                 <View style={styles.amountDateRow}>
-                  {isEditing ? (
-                    <TextInput
-                      style={styles.editInput}
-                      value={editAmount}
-                      onChangeText={setEditAmount}
-                      keyboardType="numeric"
-                    />
-                  ) : (
-                    <StyledText fontSize={18} fontWeight={700} color={COLORS.text.primary}>
-                      {log.usedAmount.toLocaleString()}
-                    </StyledText>
-                  )}
+                  <StyledText fontSize={18} fontWeight={700} color={COLORS.text.primary}>
+                    {log.usedAmount.toLocaleString()}원
+                  </StyledText>
                   <StyledText fontSize={12} fontWeight={300} color={COLORS.text.secondary}>
                     {formatDate(log.usedAt)}
                   </StyledText>
@@ -271,7 +351,7 @@ const RemainMoneyCard = ({ gifticon, coupon, onUpdate }: RemainMoneyCardProps) =
                   <>
                     <TouchableOpacity
                       style={styles.iconButton}
-                      onPress={() => handleEdit(log.logId, log.usedAmount)}
+                      onPress={() => handleEdit(log)}
                     >
                       <EditIcon />
                     </TouchableOpacity>
@@ -288,6 +368,47 @@ const RemainMoneyCard = ({ gifticon, coupon, onUpdate }: RemainMoneyCardProps) =
           );
         })}
       </View>
+
+      {currentBalance > 0 && (
+        <TouchableOpacity
+          style={styles.useButton}
+          onPress={handlePartialUse}
+          disabled={currentBalance <= 0}
+        >
+          <StyledText fontSize={15} fontWeight={600} color={COLORS.white}>
+            잔액 변경
+          </StyledText>
+        </TouchableOpacity>
+      )}
+
+      {showAmountModal && (
+        <AmountInputModal
+          currentBalance={currentBalance}
+          amount={useAmount}
+          onAmountChange={setUseAmount}
+          onClose={() => {
+            setShowAmountModal(false);
+            setUseAmount('');
+          }}
+          onSubmit={handleAmountSubmit}
+        />
+      )}
+
+      {showEditModal && editingLog && (
+        <AmountInputModal
+          currentBalance={originalPrice}
+          amount={editAmount}
+          onAmountChange={setEditAmount}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingLog(null);
+            setEditAmount('');
+          }}
+          onSubmit={handleEditSubmit}
+          title="사용 금액 수정"
+          placeholder="수정할 금액을 입력하세요"
+        />
+      )}
     </View>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import styled from 'styled-components/native';
 import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '@/constants/colors';
@@ -45,6 +46,7 @@ const TitleRow2 = styled.View`
 `;
 
 const MainPage = () => {
+  const navigation = useNavigation();
   const [coupons, setCoupons] = useState<GifticonListResponseDto[]>([]);
   const [isAtTop, setIsAtTop] = useState(true);
   const [userName, setUserName] = useState('CONY');
@@ -66,7 +68,7 @@ const MainPage = () => {
   };
 
   const handleMoreClick = () => {
-    console.log('더보기 클릭');
+    (navigation as any).navigate('CouponList');
   };
 
   const mainTitle = (name: string) => {
