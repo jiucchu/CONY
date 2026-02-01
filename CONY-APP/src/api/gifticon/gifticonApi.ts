@@ -314,21 +314,20 @@ export const registerGifticons = async (
  */
 export const registerGifticonsWithImage = async (
   gifticons: GifticonRegisterRequestDto[],
-  imageFile?: { uri: string; type?: string; name?: string }
+  imageFile?: { uri: string; type?: string; name?: string },
+  thumbnailFile?: { uri: string; type?: string; name?: string }
 ): Promise<number[]> => {
   const formData = new FormData();
   
   // JSON 데이터를 문자열로 변환하여 FormData에 추가
-  // React Native에서는 Blob을 사용하여 Content-Type을 명시할 수 있습니다
   const jsonString = JSON.stringify(gifticons);
   console.log('[registerGifticonsWithImage] JSON 데이터:', jsonString);
   console.log('[registerGifticonsWithImage] 이미지 파일:', imageFile);
+  console.log('[registerGifticonsWithImage] 썸네일 파일:', thumbnailFile);
   
-  // React Native FormData는 Blob을 지원하지 않으므로, 문자열로 추가
-  // 백엔드에서 Content-Type을 확인하지 않고 JSON으로 파싱하도록 수정됨
   formData.append('requests', jsonString);
   
-  // 이미지 파일이 있으면 추가
+  // 원본 이미지 파일이 있으면 추가
   if (imageFile) {
     const imageFormData = {
       uri: imageFile.uri,
@@ -337,6 +336,17 @@ export const registerGifticonsWithImage = async (
     };
     console.log('[registerGifticonsWithImage] 이미지 FormData:', imageFormData);
     formData.append('image', imageFormData as any);
+  }
+  
+  // 썸네일 이미지 파일이 있으면 추가
+  if (thumbnailFile) {
+    const thumbnailFormData = {
+      uri: thumbnailFile.uri,
+      type: thumbnailFile.type || 'image/jpeg',
+      name: thumbnailFile.name || 'thumbnail.jpg',
+    };
+    console.log('[registerGifticonsWithImage] 썸네일 FormData:', thumbnailFormData);
+    formData.append('thumbnail', thumbnailFormData as any);
   }
   
   console.log('[registerGifticonsWithImage] API 호출:', `${API_BASE_URL}${API_ENDPOINTS.GIFTCONS}`);

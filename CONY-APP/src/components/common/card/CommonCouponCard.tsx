@@ -124,6 +124,9 @@ const CommonCouponCard = ({
     ? `${coupon.productName.substring(0, 8)}...`
     : coupon.productName;
 
+  // Presigned URL을 React Native에서 안정적으로 로드하기 위해 정규화
+  const imageUri = coupon.imageUrl ? coupon.imageUrl.trim() : null;
+
   // 클릭 이벤트 함수
   const handleCardClick = () => {
     if (handleCardClickProps) {
@@ -152,7 +155,32 @@ const CommonCouponCard = ({
         <View style={styles.ddayWrapper}>
           <DdayView type="common" dday={daysUntilExpiration} size="Medium" />
         </View>
-        <Image source={{ uri: coupon.imageUrl }} style={styles.productImage} />
+        {imageUri ? (
+          <Image 
+            source={{ uri: imageUri }} 
+            style={styles.productImage}
+            resizeMode="cover"
+            onError={(error: any) => {
+              console.warn('[CommonCouponCard] 이미지 로딩 실패');
+              console.warn('[CommonCouponCard] URL:', imageUri);
+              console.warn('[CommonCouponCard] 에러 객체:', error);
+              if (error?.nativeEvent) {
+                console.warn('[CommonCouponCard] nativeEvent:', JSON.stringify(error.nativeEvent, null, 2));
+              }
+            }}
+            onLoad={() => {
+              console.log('[CommonCouponCard] 이미지 로딩 성공');
+            }}
+            onLoadStart={() => {
+              console.log('[CommonCouponCard] 이미지 로딩 시작');
+            }}
+            onLoadEnd={() => {
+              console.log('[CommonCouponCard] 이미지 로딩 종료');
+            }}
+          />
+        ) : (
+          <View style={styles.productImage} />
+        )}
       </View>
       <View style={styles.infoContainer}>
         <StyledText fontSize={13} fontWeight={600} color={COLORS.text.secondary}>

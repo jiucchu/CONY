@@ -126,7 +126,17 @@ const MainGiftCard = ({ coupon }: { coupon: GifticonDetailResponseDto | Gifticon
         <View style={styles.ddayWrapper}>
           <DdayView type="gift" dday={daysUntilExpiration} size="Large" />
         </View>
-        <Image source={{ uri: coupon.imageUrl }} style={styles.productImage} />
+        {coupon.imageUrl && coupon.imageUrl.trim() !== '' ? (
+          <Image 
+            source={{ uri: coupon.imageUrl }} 
+            style={styles.productImage}
+            onError={(error) => {
+              console.warn('이미지 로딩 실패:', coupon.imageUrl, error);
+            }}
+          />
+        ) : (
+          <View style={styles.productImage} />
+        )}
       </View>
       <View style={styles.infoContainer}>
         <View style={styles.textContainer}>

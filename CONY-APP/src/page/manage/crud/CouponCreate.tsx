@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, BackHandler, Dimensions, Platform, PermissionsAndroid } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { launchImageLibrary, ImagePickerResponse, MediaType } from 'react-native-image-picker';
+import ImagePicker from 'react-native-image-crop-picker';
 import InfoModifyCard from '@/components/InfoModify/InfoModifyCard';
 import { GifticonDetailResponseDto, GifticonRegisterRequestDto, GifticonType } from '@/types/gifticon/gifticon';
 import { COLORS } from '@/constants/colors';
@@ -107,7 +108,8 @@ const CloseIcon = () => (
 interface CouponFormData {
   id: string;
   imageUrl: string;
-  imageFile?: { uri: string; type?: string; name?: string }; // 실제 이미지 파일 정보
+  imageFile?: { uri: string; type?: string; name?: string }; // 실제 이미지 파일 정보 (원본)
+  thumbnailFile?: { uri: string; type?: string; name?: string }; // 썸네일 이미지 파일 정보
   giftCardName: string;
   barcode: string;
   store: string;
@@ -201,52 +203,66 @@ const CouponCreate = () => {
         return;
       }
 
-      // 이미지 라이브러리 열기
-      launchImageLibrary(
-        {
-          mediaType: 'photo' as MediaType,
-          includeBase64: false,
-          maxHeight: 2000,
-          maxWidth: 2000,
-          quality: 0.8,
-          selectionLimit: 1, // 1개만 선택
-        },
-        (response: ImagePickerResponse) => {
-          if (response.didCancel) {
-            console.log('사용자가 이미지 선택을 취소했습니다.');
-          } else if (response.errorCode) {
-            console.error('ImagePicker Error: ', response.errorCode, response.errorMessage);
-            Alert.alert('오류', `이미지 선택 중 오류가 발생했습니다: ${response.errorMessage}`);
-          } else if (response.assets && response.assets.length > 0) {
-            const asset = response.assets[0];
-            console.log('선택된 이미지 asset:', asset);
-            if (asset.uri) {
-              const imageFile = {
-                uri: asset.uri,
-                type: asset.type || 'image/jpeg',
-                name: asset.fileName || `image_${Date.now()}.jpg`,
-              };
-              console.log('이미지 파일 정보 저장:', imageFile);
-              console.log('쿠폰 ID:', couponId);
-              
-              // 두 필드를 한 번에 업데이트
-              setCoupons(prevCoupons => 
-                prevCoupons.map(coupon => 
-                  coupon.id === couponId 
-                    ? { ...coupon, imageUrl: asset.uri, imageFile: imageFile }
-                    : coupon
-                )
-              );
-              
-              console.log('이미지 업데이트 완료');
-            } else {
-              console.warn('이미지 URI가 없습니다.');
-            }
-          } else {
-            console.warn('선택된 이미지가 없습니다.');
-          }
+      // 이미지 선택 (원본은 전체, 썸네일만 크롭)
+      try {
+        // 원본 이미지 선택 (크롭 없이 전체 이미지)
+        const originalImage = await ImagePicker.openPicker({
+          width: 2000,
+          height: 2000,
+          cropping: false, // 원본은 크롭 없이 전체 이미지 사용
+          compressImageQuality: 0.9,
+          mediaType: 'photo',
+        });
+
+        const imageFile = {
+          uri: originalImage.path,
+          type: originalImage.mime || 'image/jpeg',
+          name: originalImage.filename || `image_${Date.now()}.jpg`,
+        };
+
+        // 썸네일 생성: 같은 이미지를 작은 크기로 크롭
+        const thumbnailImage = await ImagePicker.openCropper({
+          path: originalImage.path,
+          width: 400,
+          height: 400,
+          cropping: true,
+          cropperToolbarTitle: '썸네일 영역 선택',
+          compressImageQuality: 0.7,
+          mediaType: 'photo',
+        });
+
+        const thumbnailFile = {
+          uri: thumbnailImage.path,
+          type: thumbnailImage.mime || 'image/jpeg',
+          name: `thumbnail_${originalImage.filename || `image_${Date.now()}.jpg`}`,
+        };
+
+        console.log('원본 이미지 (전체):', imageFile);
+        console.log('썸네일 이미지 (크롭):', thumbnailFile);
+
+        // 두 필드를 한 번에 업데이트
+        setCoupons(prevCoupons => 
+          prevCoupons.map(coupon => 
+            coupon.id === couponId 
+              ? { 
+                  ...coupon, 
+                  imageUrl: originalImage.path, 
+                  imageFile: imageFile,
+                  thumbnailFile: thumbnailFile
+                }
+              : coupon
+          )
+        );
+        
+        console.log('이미지 및 썸네일 업데이트 완료');
+      } catch (error: any) {
+        if (error.message !== 'User cancelled image selection') {
+          console.error('이미지 선택 오류:', error);
+          Alert.alert('오류', `이미지 선택 중 오류가 발생했습니다: ${error.message || '알 수 없는 오류'}`);
+        } else {
+          console.log('사용자가 이미지 선택을 취소했습니다.');
         }
-      );
+      }
     } catch (error) {
       console.error('이미지 선택 오류:', error);
       Alert.alert('오류', '이미지 선택 중 오류가 발생했습니다.');
@@ -389,11 +405,14 @@ const CouponCreate = () => {
       
       if (hasImageFile) {
         // 첫 번째 쿠폰의 이미지 파일 사용 (여러 쿠폰 등록 시 첫 번째 이미지만 사용)
-        const firstImageFile = coupons.find(coupon => coupon.imageFile)?.imageFile;
+        const firstCoupon = coupons.find(coupon => coupon.imageFile);
+        const firstImageFile = firstCoupon?.imageFile;
+        const firstThumbnailFile = firstCoupon?.thumbnailFile;
         console.log('첫 번째 이미지 파일:', firstImageFile);
+        console.log('첫 번째 썸네일 파일:', firstThumbnailFile);
         if (firstImageFile) {
-          console.log('Multipart 방식으로 등록 시도');
-          await registerGifticonsWithImage(registerData, firstImageFile);
+          console.log('Multipart 방식으로 등록 시도 (원본 + 썸네일)');
+          await registerGifticonsWithImage(registerData, firstImageFile, firstThumbnailFile);
         } else {
           console.log('이미지 파일이 없어 JSON 방식으로 등록');
           await registerGifticons(registerData);

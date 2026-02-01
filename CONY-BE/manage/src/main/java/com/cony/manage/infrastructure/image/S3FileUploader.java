@@ -148,9 +148,9 @@ public class S3FileUploader implements FileUploader {
                     .key(path) // path는 "1/uuid_filename.jpg" 형태여야 함
                     .build();
 
-            // 2. Presigned URL 요청 생성 (유효기간 10분 설정)
+            // 2. Presigned URL 요청 생성 (유효기간 1시간 설정 - React Native에서 안정적인 로딩을 위해)
             GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                    .signatureDuration(Duration.ofMinutes(10)) // 필요에 따라 시간 조절
+                    .signatureDuration(Duration.ofHours(1)) // React Native에서 안정적인 로딩을 위해 1시간으로 증가
                     .getObjectRequest(getObjectRequest)
                     .build();
 

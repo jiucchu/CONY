@@ -12,7 +12,7 @@ import {
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import MainPage from './src/page/manage/main/MainPage';
-import CouponList from './src/page/couponBox/CouponList';
+import CouponList from './src/page/manage/couponBox/CouponList';
 import Mypage from './src/page/mypage/Mypage';
 import PaymentMain from './src/page/payment/main/Main';
 import CouponCreate from './src/page/manage/crud/CouponCreate';

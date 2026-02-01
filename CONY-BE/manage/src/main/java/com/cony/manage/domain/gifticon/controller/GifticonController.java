@@ -45,7 +45,7 @@ public class GifticonController implements GifticonControllerDocs {
     public ApiResponse<List<Long>> registerGifticon(@RequestBody List<GifticonRegisterRequestDto> requests) {
         Long userId = 1L; // 추후 SecurityContextHolder 에서 추출.
 
-        return ApiResponse.success("기프티콘 등록 성공.", gifticonService.registerGifticon(requests, userId, null));
+        return ApiResponse.success("기프티콘 등록 성공.", gifticonService.registerGifticon(requests, userId, null, null));
     }
     
     // Multipart로 등록 (실제 이미지 파일 전송)
@@ -53,7 +53,8 @@ public class GifticonController implements GifticonControllerDocs {
     public ApiResponse<List<Long>> registerGifticonWithImage(
             @RequestPart(value = "requests", required = false) MultipartFile requestsPart,
             @RequestParam(value = "requests", required = false) String requestsString,
-            @RequestPart(value = "image", required = false) MultipartFile image) {
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail) {
         Long userId = 1L; // 추후 SecurityContextHolder 에서 추출.
 
         try {
@@ -63,6 +64,8 @@ public class GifticonController implements GifticonControllerDocs {
             log.info("requestsString: {}", requestsString != null ? String.format("있음 (길이: %d)", requestsString.length()) : "없음");
             log.info("image 파일: {}", image != null ? String.format("있음 (이름: %s, 크기: %d, Content-Type: %s)", 
                 image.getOriginalFilename(), image.getSize(), image.getContentType()) : "없음");
+            log.info("thumbnail 파일: {}", thumbnail != null ? String.format("있음 (이름: %s, 크기: %d, Content-Type: %s)", 
+                thumbnail.getOriginalFilename(), thumbnail.getSize(), thumbnail.getContentType()) : "없음");
             
             String jsonString = null;
             
@@ -103,7 +106,7 @@ public class GifticonController implements GifticonControllerDocs {
                     req.getExpiryDate(), req.getType(), req.getOriginalPrice(), req.getImageUrl());
             }
             
-            return ApiResponse.success("기프티콘 등록 성공.", gifticonService.registerGifticon(requests, userId, image));
+            return ApiResponse.success("기프티콘 등록 성공.", gifticonService.registerGifticon(requests, userId, image, thumbnail));
         } catch (com.cony.manage.global.error.CustomException e) {
             // CustomException은 그대로 전파 (GlobalExceptionHandler에서 처리)
             log.warn("CustomException 발생: {}", e.getMessage());
@@ -135,11 +138,38 @@ public class GifticonController implements GifticonControllerDocs {
     }
 
     @Override
-    @PutMapping("/{gifticonId}")
+    @PutMapping(value = "/{gifticonId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ApiResponse<Long> updateGifticonInfo(@PathVariable Long gifticonId, @RequestBody @Valid GifticonUpdateRequestDto request) {
         Long userId = 1L;
 
-        return ApiResponse.success("잘못된 정보가 수정되었습니다.", gifticonService.updateGifticon(gifticonId, userId, request));
+        return ApiResponse.success("잘못된 정보가 수정되었습니다.", gifticonService.updateGifticon(gifticonId, userId, request, null, null));
+    }
+
+    @PutMapping(value = "/{gifticonId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<Long> updateGifticonInfoWithImage(
+            @PathVariable Long gifticonId,
+            @RequestPart(value = "request") @Valid GifticonUpdateRequestDto request,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail) {
+        Long userId = 1L;
+
+        try {
+            log.info("=== 기프티콘 수정 Multipart 요청 수신 ===");
+            log.info("gifticonId: {}", gifticonId);
+            log.info("image 파일: {}", image != null ? String.format("있음 (이름: %s, 크기: %d, Content-Type: %s)", 
+                image.getOriginalFilename(), image.getSize(), image.getContentType()) : "없음");
+            log.info("thumbnail 파일: {}", thumbnail != null ? String.format("있음 (이름: %s, 크기: %d, Content-Type: %s)", 
+                thumbnail.getOriginalFilename(), thumbnail.getSize(), thumbnail.getContentType()) : "없음");
+            
+            return ApiResponse.success("잘못된 정보가 수정되었습니다.", gifticonService.updateGifticon(gifticonId, userId, request, image, thumbnail));
+        } catch (com.cony.manage.global.error.CustomException e) {
+            log.warn("CustomException 발생: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("기프티콘 수정 Multipart 요청 처리 오류: {}", e.getMessage(), e);
+            e.printStackTrace();
+            throw new RuntimeException("요청 데이터 처리 실패: " + e.getMessage(), e);
+        }
     }
 
     @Override
