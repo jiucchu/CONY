@@ -67,8 +67,12 @@ const MainPage = () => {
     setIsAtTop(scrollTop === 0);
   };
 
-  const handleMoreClick = () => {
-    (navigation as any).navigate('CouponList');
+  const handleMoreClick = (sortType?: 'distance' | 'period', expiringSoonFilter?: boolean) => {
+    console.log('[MainPage] handleMoreClick 호출:', { sortType, expiringSoonFilter });
+    (navigation as any).navigate('CouponList', { 
+      initialSort: sortType,
+      initialExpiringSoon: expiringSoonFilter 
+    });
   };
 
   const mainTitle = (name: string) => {
@@ -165,7 +169,7 @@ const MainPage = () => {
           <CouponList
             coupons={coupons}
             title="근처 사용 가능 쿠폰"
-            onMoreClick={handleMoreClick}
+            onMoreClick={() => handleMoreClick('distance', true)}
           />
         </View>
       )}
@@ -174,7 +178,7 @@ const MainPage = () => {
           <CouponList
             coupons={expiringSoonCoupons}
             title="유효기간 임박 쿠폰"
-            onMoreClick={handleMoreClick}
+            onMoreClick={() => handleMoreClick('period', true)}
           />
         </View>
       
