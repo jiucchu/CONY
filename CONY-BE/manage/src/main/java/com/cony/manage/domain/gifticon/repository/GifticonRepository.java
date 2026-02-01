@@ -18,6 +18,9 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 @Repository
 public interface GifticonRepository extends JpaRepository<Gifticon, Long>, JpaSpecificationExecutor<Gifticon> {
     boolean existsByBarcodeNumber(String barcodeNumber);
+    
+    // 사용자별 바코드 중복 체크
+    boolean existsByBarcodeNumberAndUserId(String barcodeNumber, Long userId);
 
     // 내 기프티콘 목록 페이징 조회
     // N+1 문제 방지를 위한 fetch join 사용

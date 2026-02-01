@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-@Profile("prod") // ★ prod 프로필일 때만 빈으로 등록됨
+@Profile({"prod", "local"}) // prod 또는 local 프로필일 때 사용
 @RequiredArgsConstructor
 public class S3FileUploader implements FileUploader {
 
@@ -44,21 +44,36 @@ public class S3FileUploader implements FileUploader {
     @Override
     public String upload(MultipartFile file, Long userId) {
         if(file == null || file.isEmpty()) {
+            log.warn("[S3] 파일이 null이거나 비어있습니다.");
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
-        String originalFilename = file.getOriginalFilename();
-        String savedFileName = UUID.randomUUID() + "_" + originalFilename;
+        try {
+            log.info("[S3] 파일 업로드 시작: originalFilename={}, size={}, contentType={}, bucket={}", 
+                file.getOriginalFilename(), file.getSize(), file.getContentType(), bucket);
+            
+            String originalFilename = file.getOriginalFilename();
+            if (originalFilename == null || originalFilename.isEmpty()) {
+                originalFilename = "image.jpg"; // 기본 파일명
+            }
+            String savedFileName = UUID.randomUUID() + "_" + originalFilename;
 
-        // [분기 로직] userId가 null이면 temp/, 아니면 userId/
-        String pathPrefix = (userId == null) ? TEMP_DIR : userId + "/";
-        String key = pathPrefix + savedFileName;
+            // [분기 로직] userId가 null이면 temp/, 아니면 userId/
+            String pathPrefix = (userId == null) ? TEMP_DIR : userId + "/";
+            String key = pathPrefix + savedFileName;
 
-        try (InputStream is = file.getInputStream()) {
-            s3Template.upload(bucket, key, is);
-            return key;
-        } catch (IOException e) {
-            log.error("[S3] 파일 업로드 실패", e);
+            try (InputStream is = file.getInputStream()) {
+                s3Template.upload(bucket, key, is);
+                log.info("[S3] 파일 업로드 완료: bucket={}, key={}", bucket, key);
+                return key;
+            } catch (IOException e) {
+                log.error("[S3] 파일 업로드 실패: key={}, error={}", key, e.getMessage(), e);
+                throw new CustomException(ErrorCode.FAIL_FILE_UPLOAD);
+            }
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("[S3] 예상치 못한 오류 발생: {}", e.getMessage(), e);
             throw new CustomException(ErrorCode.FAIL_FILE_UPLOAD);
         }
     }

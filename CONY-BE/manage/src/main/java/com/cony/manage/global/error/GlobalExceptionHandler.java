@@ -39,7 +39,24 @@ public class GlobalExceptionHandler {
     // 3. 예상하지 못한 모든 예외 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
-        log.error("Unhandled Exception: ", e);
+        // 전체 스택 트레이스 로깅
+        log.error("Unhandled Exception 발생!", e);
+        log.error("Exception Type: {}", e.getClass().getName());
+        log.error("Exception Message: {}", e.getMessage());
+        
+        if (e.getCause() != null) {
+            log.error("Caused by: {} - {}", e.getCause().getClass().getName(), e.getCause().getMessage());
+            e.getCause().printStackTrace();
+        }
+        
+        // 스택 트레이스의 첫 몇 줄도 로깅
+        StackTraceElement[] stackTrace = e.getStackTrace();
+        if (stackTrace.length > 0) {
+            log.error("Stack trace (first 10 lines):");
+            for (int i = 0; i < Math.min(10, stackTrace.length); i++) {
+                log.error("  at {}", stackTrace[i]);
+            }
+        }
 
         return ResponseEntity
                 .status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())

@@ -5,24 +5,32 @@ import com.cony.manage.domain.gifticon.dto.*;
 import com.cony.manage.domain.gifticon.service.BrandService;
 import com.cony.manage.domain.gifticon.service.GifticonService;
 import com.cony.manage.global.common.ApiResponse;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.servlet.http.HttpServletRequest;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/v1/gifticons")
 @RequiredArgsConstructor
 public class GifticonController implements GifticonControllerDocs {
     private final GifticonService gifticonService;
     private final BrandService brandService;
+    private final ObjectMapper objectMapper;
 
     @Override
     @PostMapping(value = "/analyze", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -31,12 +39,81 @@ public class GifticonController implements GifticonControllerDocs {
         return ApiResponse.success(gifticonService.analyzeGifticon(images));
     }
 
+    // JSON으로 등록 (imageUrl 사용)
     @Override
-    @PostMapping
-    public ApiResponse<List<Long>> registerGifticon(@RequestPart List<GifticonRegisterRequestDto> requests, @RequestPart(value = "image", required = false) MultipartFile image) {
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ApiResponse<List<Long>> registerGifticon(@RequestBody List<GifticonRegisterRequestDto> requests) {
         Long userId = 1L; // 추후 SecurityContextHolder 에서 추출.
 
-        return ApiResponse.success("기프티콘 등록 성공.", gifticonService.registerGifticon(requests, userId, image));
+        return ApiResponse.success("기프티콘 등록 성공.", gifticonService.registerGifticon(requests, userId, null));
+    }
+    
+    // Multipart로 등록 (실제 이미지 파일 전송)
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<List<Long>> registerGifticonWithImage(
+            @RequestPart(value = "requests", required = false) MultipartFile requestsPart,
+            @RequestParam(value = "requests", required = false) String requestsString,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
+        Long userId = 1L; // 추후 SecurityContextHolder 에서 추출.
+
+        try {
+            log.info("=== Multipart 요청 수신 ===");
+            log.info("requestsPart: {}", requestsPart != null ? String.format("있음 (이름: %s, 크기: %d, Content-Type: %s)", 
+                requestsPart.getName(), requestsPart.getSize(), requestsPart.getContentType()) : "없음");
+            log.info("requestsString: {}", requestsString != null ? String.format("있음 (길이: %d)", requestsString.length()) : "없음");
+            log.info("image 파일: {}", image != null ? String.format("있음 (이름: %s, 크기: %d, Content-Type: %s)", 
+                image.getOriginalFilename(), image.getSize(), image.getContentType()) : "없음");
+            
+            String jsonString = null;
+            
+            // requestsPart가 있으면 파일로 받은 경우
+            if (requestsPart != null && !requestsPart.isEmpty()) {
+                log.info("requestsPart로 받음");
+                jsonString = StreamUtils.copyToString(requestsPart.getInputStream(), StandardCharsets.UTF_8);
+            } 
+            // requestsString이 있으면 문자열로 받은 경우 (React Native)
+            else if (requestsString != null && !requestsString.trim().isEmpty()) {
+                log.info("requestsString으로 받음");
+                jsonString = requestsString;
+            } 
+            // 둘 다 없으면 에러
+            else {
+                log.error("requests 파트가 없습니다. requestsPart={}, requestsString={}", 
+                    requestsPart != null, requestsString != null);
+                throw new RuntimeException("요청 데이터가 비어있습니다.");
+            }
+            
+            log.info("받은 JSON 문자열 (길이: {}): {}", jsonString.length(), jsonString);
+            
+            if (jsonString == null || jsonString.trim().isEmpty()) {
+                log.error("JSON 문자열이 비어있습니다.");
+                throw new RuntimeException("요청 데이터가 비어있습니다.");
+            }
+            
+            List<GifticonRegisterRequestDto> requests = objectMapper.readValue(
+                jsonString,
+                new TypeReference<List<GifticonRegisterRequestDto>>() {}
+            );
+            
+            log.info("파싱된 요청 개수: {}", requests.size());
+            for (int i = 0; i < requests.size(); i++) {
+                GifticonRegisterRequestDto req = requests.get(i);
+                log.info("요청[{}]: brandName={}, productName={}, barcodeNumber={}, expiryDate={}, type={}, originalPrice={}, imageUrl={}",
+                    i, req.getBrandName(), req.getProductName(), req.getBarcodeNumber(),
+                    req.getExpiryDate(), req.getType(), req.getOriginalPrice(), req.getImageUrl());
+            }
+            
+            return ApiResponse.success("기프티콘 등록 성공.", gifticonService.registerGifticon(requests, userId, image));
+        } catch (com.cony.manage.global.error.CustomException e) {
+            // CustomException은 그대로 전파 (GlobalExceptionHandler에서 처리)
+            log.warn("CustomException 발생: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Multipart 요청 처리 오류: {}", e.getMessage(), e);
+            e.printStackTrace();
+            // CustomException이 아닌 경우에만 RuntimeException으로 감싸기
+            throw new RuntimeException("요청 데이터 처리 실패: " + e.getMessage(), e);
+        }
     }
 
     @Override
