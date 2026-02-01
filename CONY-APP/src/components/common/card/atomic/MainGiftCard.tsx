@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { GifticonDetailResponseDto, GifticonListResponseDto } from '@/types/gifticon/gifticon';
 import { COLORS } from '@/constants/colors';
 import { calculateDaysUntilExpiration } from '@/utils/DayUtils';
@@ -63,13 +64,18 @@ const styles = StyleSheet.create({
 });
 
 const MainGiftCard = ({ coupon }: { coupon: GifticonDetailResponseDto | GifticonListResponseDto }) => {
+  const navigation = useNavigation();
   const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiryDate);
   const couponOriginalPrice = 'originalPrice' in coupon ? coupon.originalPrice : 0;
   const hasValidPrice = couponOriginalPrice > 0;
   const formattedPrice = hasValidPrice ? couponOriginalPrice.toLocaleString('ko-KR') : '';
 
+  const handleCardClick = () => {
+    (navigation as any).navigate('CouponDetail', { id: coupon.gifticonId });
+  };
+
   return (
-    <View style={styles.container}>
+    <TouchableOpacity style={styles.container} onPress={handleCardClick} activeOpacity={0.8}>
       <View style={styles.topText}>
         <StyledText fontSize={16} fontWeight={600} color={COLORS.text.secondary}>
           최근 12회 이용 브랜드
@@ -97,7 +103,7 @@ const MainGiftCard = ({ coupon }: { coupon: GifticonDetailResponseDto | Gifticon
         </View>
 
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

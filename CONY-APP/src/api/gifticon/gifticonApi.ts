@@ -1,4 +1,4 @@
-import { API_BASE_URL, API_ENDPOINTS } from '@/constants/api';
+import { API_BASE_URL, API_ENDPOINTS, LOCAL_HOST, LOCAL_MANAGE_PORT } from '@/constants/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type {
   ApiResponse,
@@ -30,7 +30,11 @@ async function apiCall<T>(
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const url = `${API_BASE_URL}${endpoint}`;
+    console.log(`[Gifticon API] ${options.method || 'GET'} ${url}`);
+    console.log(`[Gifticon API] API_BASE_URL: ${API_BASE_URL}`);
+    console.log(`[Gifticon API] Request body:`, options.body);
+    const response = await fetch(url, {
       ...options,
       headers,
     });
@@ -131,17 +135,28 @@ async function apiCallFormData<T>(
   const token = await AsyncStorage.getItem('accessToken');
 
   const headers: Record<string, string> = {};
+  // FormData를 사용할 때는 Content-Type을 명시하지 않아야 합니다
+  // 브라우저/React Native가 자동으로 multipart/form-data와 boundary를 설정합니다
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  const url = `${API_BASE_URL}${endpoint}`;
+  console.log('[apiCallFormData] ====== Multipart 요청 시작 ======');
+  console.log('[apiCallFormData] API_BASE_URL:', API_BASE_URL);
+  console.log('[apiCallFormData] endpoint:', endpoint);
+  console.log('[apiCallFormData] 최종 요청 URL:', url);
+  console.log('[apiCallFormData] 헤더:', headers);
+
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetch(url, {
       method: 'POST',
       body: formData,
       headers,
     });
+    
+    console.log('[apiCallFormData] 응답 상태:', response.status, response.statusText);
 
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -253,7 +268,7 @@ export const getMyGifticons = async (
 };
 
 /**
- * 기프티콘 등록
+ * 기프티콘 등록 (JSON 방식 - imageUrl 사용)
  */
 export const registerGifticons = async (
   gifticons: GifticonRegisterRequestDto[]
@@ -264,6 +279,47 @@ export const registerGifticons = async (
       method: 'POST',
       body: JSON.stringify(gifticons),
     }
+  );
+  return (response.body as number[]) || [];
+};
+
+/**
+ * 기프티콘 등록 (Multipart 방식 - 실제 이미지 파일 전송)
+ * @param gifticons 기프티콘 등록 데이터 배열
+ * @param imageFile 이미지 파일 (React Native ImagePickerResponse 또는 { uri, type, name } 형식)
+ */
+export const registerGifticonsWithImage = async (
+  gifticons: GifticonRegisterRequestDto[],
+  imageFile?: { uri: string; type?: string; name?: string }
+): Promise<number[]> => {
+  const formData = new FormData();
+  
+  // JSON 데이터를 문자열로 변환하여 FormData에 추가
+  // React Native에서는 Blob을 사용하여 Content-Type을 명시할 수 있습니다
+  const jsonString = JSON.stringify(gifticons);
+  console.log('[registerGifticonsWithImage] JSON 데이터:', jsonString);
+  console.log('[registerGifticonsWithImage] 이미지 파일:', imageFile);
+  
+  // React Native FormData는 Blob을 지원하지 않으므로, 문자열로 추가
+  // 백엔드에서 Content-Type을 확인하지 않고 JSON으로 파싱하도록 수정됨
+  formData.append('requests', jsonString);
+  
+  // 이미지 파일이 있으면 추가
+  if (imageFile) {
+    const imageFormData = {
+      uri: imageFile.uri,
+      type: imageFile.type || 'image/jpeg',
+      name: imageFile.name || 'image.jpg',
+    };
+    console.log('[registerGifticonsWithImage] 이미지 FormData:', imageFormData);
+    formData.append('image', imageFormData as any);
+  }
+  
+  console.log('[registerGifticonsWithImage] API 호출:', `${API_BASE_URL}${API_ENDPOINTS.GIFTCONS}`);
+  
+  const response = await apiCallFormData<number[]>(
+    API_ENDPOINTS.GIFTCONS,
+    formData
   );
   return (response.body as number[]) || [];
 };

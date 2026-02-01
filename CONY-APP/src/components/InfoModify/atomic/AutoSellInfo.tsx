@@ -3,6 +3,7 @@ import { View, StyleSheet, TextInput } from 'react-native';
 import { COLORS } from '@/constants/colors';
 import { StyledText } from '@/utils/StyledText';
 import SwitchToggle from '@/components/common/atomic/SwitchToggle';
+import DatePicker from '@/components/common/atomic/DatePicker';
 
 const styles = StyleSheet.create({
   container: {
@@ -71,21 +72,11 @@ const AutoSellInfo = ({
     onAutoSellToggle?.(newValue);
   };
 
-  const handleDateChange = (text: string) => {
-    let value = text.replace(/[^0-9/]/g, '');
-    
-    if (value.length > 4 && value[4] !== '/') {
-      value = value.slice(0, 4) + '/' + value.slice(4);
-    }
-    if (value.length > 7 && value[7] !== '/') {
-      value = value.slice(0, 7) + '/' + value.slice(7);
-    }
-    if (value.length > 10) {
-      value = value.slice(0, 10);
-    }
-    
-    setLocalSaleDate(value);
-    onSaleDateChange?.(value);
+  const handleDateChange = (date: string) => {
+    // DatePicker는 YYYY-MM-DD 형식으로 반환하므로 YYYY/MM/DD로 변환
+    const formattedDate = date.replace(/-/g, '/');
+    setLocalSaleDate(formattedDate);
+    onSaleDateChange?.(formattedDate);
   };
 
   const handleAmountChange = (text: string) => {
@@ -119,13 +110,11 @@ const AutoSellInfo = ({
             <StyledText fontSize={14} fontWeight={600} color={COLORS.text.primary}>
               판매일자
             </StyledText>
-            <TextInput
-              style={styles.input}
-              value={localSaleDate}
-              onChangeText={handleDateChange}
-              placeholder="YYYY/MM/DD"
-              maxLength={10}
-              placeholderTextColor={COLORS.text.secondary}
+            <DatePicker
+              value={localSaleDate.replace(/\//g, '-')}
+              onChange={handleDateChange}
+              minimumDate={new Date()}
+              placeholder="판매일자를 선택하세요"
             />
           </View>
 

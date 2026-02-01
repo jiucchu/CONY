@@ -5,6 +5,7 @@ import { StyledText } from '@/utils/StyledText';
 import AutoSellInfo from './atomic/AutoSellInfo';
 import FolderSelector from './FolderSelector';
 import { FolderData } from '@/types/coupon/coupon';
+import DatePicker from '@/components/common/atomic/DatePicker';
 
 const styles = StyleSheet.create({
   container: {
@@ -135,6 +136,7 @@ const InfoModifyCard = ({
   onPriceChange,
   onExpirationDateChange,
 }: InfoModifyCardProps) => {
+  const [localImageUrl, setLocalImageUrl] = useState(imageUrl);
   const [localGiftCardName, setLocalGiftCardName] = useState(giftCardName);
   const [localBarcode, setLocalBarcode] = useState(barcode);
   const [localStore, setLocalStore] = useState(store);
@@ -142,6 +144,10 @@ const InfoModifyCard = ({
   const [localType, setLocalType] = useState<'product' | 'amount'>(type);
   const [localPrice, setLocalPrice] = useState(price.toString());
   const [localExpirationDate, setLocalExpirationDate] = useState(expirationDate);
+
+  useEffect(() => {
+    setLocalImageUrl(imageUrl);
+  }, [imageUrl]);
 
   useEffect(() => {
     setLocalGiftCardName(giftCardName);
@@ -235,7 +241,15 @@ const InfoModifyCard = ({
     <View style={styles.container}>
       <View style={styles.imageSection}>
         <View style={styles.imageCard}>
-          {imageUrl && <Image source={{ uri: imageUrl }} style={styles.productImage} />}
+          {localImageUrl ? (
+            <Image source={{ uri: localImageUrl }} style={styles.productImage} />
+          ) : (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <StyledText fontSize={12} fontWeight={400} color={COLORS.text.secondary}>
+                이미지 없음
+              </StyledText>
+            </View>
+          )}
           <TouchableOpacity style={styles.editButton} onPress={onImageEdit}>
             <StyledText fontSize={12} fontWeight={600} color={COLORS.text.primary}>
               편집
@@ -347,12 +361,11 @@ const InfoModifyCard = ({
           <StyledText fontSize={14} fontWeight={600} color={COLORS.text.primary}>
             유효기간
           </StyledText>
-          <TextInput
-            style={styles.input}
+          <DatePicker
             value={formatDateForInput(localExpirationDate)}
-            onChangeText={handleExpirationDateChange}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor={COLORS.text.secondary}
+            onChange={handleExpirationDateChange}
+            minimumDate={new Date()}
+            placeholder="날짜를 선택하세요"
           />
         </View>
 

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, BackHandler } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import InfoDetailCard from '@/components/InfoDetail/InfoDetailCard';
+import RemainMoneyCard from '@/components/InfoDetail/RemainMoneyCard';
+import AutoSellInfoCard from '@/components/InfoDetail/atomic/AutoSellInfoCard';
 import { GifticonDetailResponseDto } from '@/types/gifticon/gifticon';
 import { COLORS } from '@/constants/colors';
 import { getGifticonDetail, useGifticon, cancelUseGifticon } from '@/api/gifticon/gifticonApi';
@@ -9,11 +11,13 @@ import ContentLayout from '@/components/layout/ContentLayout';
 import { StyledText } from '@/utils/StyledText';
 import { DefaultButton } from '@/components/common/atomic/Button';
 import { Alert } from 'react-native';
+import { calculateDaysUntilExpiration } from '@/utils/DayUtils';
 
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     padding: 20,
+    gap: 20,
   },
   buttonGroup: {
     flexDirection: 'row',
@@ -262,11 +266,35 @@ const CouponDetail = () => {
     );
   }
 
+  // 자동 판매 정보 계산
+  const autoSellDate = coupon.autoSellDate || coupon.expiryDate;
+  const autoSellAmount = coupon.autoSellAmount || 0;
+  const daysLeftUntilAutoSell = calculateDaysUntilExpiration(autoSellDate);
+  const hasAutoSell = autoSellAmount > 0 && daysLeftUntilAutoSell >= 0;
+
+  const handleUpdate = async () => {
+    try {
+      const updatedCoupon = await getGifticonDetail(id);
+      setCoupon(updatedCoupon);
+    } catch (err: any) {
+      console.error('기프티콘 조회 실패:', err);
+    }
+  };
+
   return (
     <ContentLayout headerType="back" headerTitle="쿠폰 상세" onBack={handleBack}>
       <ScrollView>
         <View style={styles.container}>
+          {/* 자동 판매 정보 카드 (자동 판매 설정이 있는 경우에만 표시) */}
+          {hasAutoSell && (
+            <AutoSellInfoCard 
+              daysLeft={daysLeftUntilAutoSell} 
+              amount={autoSellAmount} 
+            />
+          )}
+
           <InfoDetailCard coupon={coupon} />
+
           <View style={styles.buttonGroup}>
             <TouchableOpacity
               style={[styles.actionButton, styles.usedButton]}
@@ -287,6 +315,15 @@ const CouponDetail = () => {
               </TouchableOpacity>
             )}
           </View>
+
+          {/* 정액권 남은 금액 카드 (PREPAID 타입일 때만 표시) */}
+          {coupon.gifticonType === 'PREPAID' && (
+            <RemainMoneyCard 
+              coupon={coupon} 
+              gifticonId={id}
+              onUpdate={handleUpdate}
+            />
+          )}
         </View>
       </ScrollView>
     </ContentLayout>

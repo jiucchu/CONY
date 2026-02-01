@@ -83,7 +83,7 @@ const Header = ({
     if (onNotificationClick) {
       onNotificationClick();
     } else {
-      console.log('Notification clicked');
+      (navigation as any).navigate('AlertPage');
     }
   };
 
