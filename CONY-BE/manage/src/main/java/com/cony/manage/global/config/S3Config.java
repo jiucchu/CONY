@@ -10,7 +10,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 @Configuration
-@Profile("prod")
+@Profile({"prod", "local"}) // prod 또는 local 프로필일 때 S3 설정 사용
 public class S3Config {
 
     @Value("${spring.cloud.aws.credentials.access-key}")

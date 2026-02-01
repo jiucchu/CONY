@@ -8,6 +8,11 @@ import com.cony.manage.domain.gifticon.enums.ImageType;
 import com.cony.manage.domain.gifticon.repository.*;
 import com.cony.manage.domain.user.entity.User;
 import com.cony.manage.domain.user.repository.UserRepository;
+import com.cony.manage.domain.room.entity.Room;
+import com.cony.manage.domain.room.entity.RoomMember;
+import com.cony.manage.domain.room.enums.RoomRole;
+import com.cony.manage.domain.room.repository.RoomRepository;
+import com.cony.manage.domain.room.repository.RoomMemberRepository;
 import com.cony.manage.global.error.CustomException;
 import com.cony.manage.global.error.ErrorCode;
 import com.cony.manage.infrastructure.image.FileUploader;
@@ -47,6 +52,8 @@ public class GifticonServiceImpl implements GifticonService {
     private final UserRepository userRepository;
     private final GifticonUsageLogRepository gifticonUsageLogRepository;
     private final StoreGeoService storeGeoService;
+    private final RoomRepository roomRepository;
+    private final RoomMemberRepository roomMemberRepository;
 
     private final FileUploader fileUploader;
     private final RestClient restClient;
@@ -145,29 +152,117 @@ public class GifticonServiceImpl implements GifticonService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         return requests.stream().map(request -> {
-            if(gifticonRepository.existsByBarcodeNumber(request.getBarcodeNumber())) {
-                throw new CustomException(ErrorCode.DUPLICATE_GIFTICON);
+            // 필수 필드 검증
+            if(request.getBrandName() == null || request.getBrandName().trim().isEmpty()) {
+                log.warn("브랜드명이 없습니다.");
+                throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
             }
-
+            if(request.getProductName() == null || request.getProductName().trim().isEmpty()) {
+                log.warn("상품명이 없습니다.");
+                throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+            if(request.getBarcodeNumber() == null || request.getBarcodeNumber().trim().isEmpty()) {
+                log.warn("바코드 번호가 없습니다.");
+                throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+            if(request.getExpiryDate() == null) {
+                log.warn("유효기간이 없습니다.");
+                throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+            if(request.getOriginalPrice() == null || request.getOriginalPrice() <= 0) {
+                log.warn("원가가 없거나 0 이하입니다: {}", request.getOriginalPrice());
+                throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+            if(request.getType() == null) {
+                log.warn("기프티콘 타입이 없습니다.");
+                throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+        
             if(request.getExpiryDate().isBefore(LocalDate.now())) {
+                log.warn("과거 날짜: {}", request.getExpiryDate());
                 throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
             }
 
             String s3Key = null;
-            if(request.getImageUrl() != null) {
-                s3Key = fileUploader.copyToPermanent(request.getImageUrl(), userId);
-            } else if(image != null && !image.isEmpty()) {
-                s3Key = fileUploader.upload(image, userId);
+            // multipart 요청에서 실제 이미지 파일이 있으면 우선 사용
+            // imageUrl이 로컬 파일 경로(file://)로 시작하면 무시
+            try {
+                if(image != null && !image.isEmpty()) {
+                    log.info("Multipart 이미지 파일 업로드 시작: originalFilename={}, size={}, contentType={}", 
+                        image.getOriginalFilename(), image.getSize(), image.getContentType());
+                    s3Key = fileUploader.upload(image, userId);
+                    log.info("Multipart 이미지 파일 업로드 완료: s3Key={}", s3Key);
+                } else if(request.getImageUrl() != null && !request.getImageUrl().trim().isEmpty()) {
+                    // imageUrl이 로컬 파일 경로가 아닌 경우에만 사용
+                    if(!request.getImageUrl().startsWith("file://")) {
+                        log.info("이미지 URL에서 복사: {}", request.getImageUrl());
+                        s3Key = fileUploader.copyToPermanent(request.getImageUrl(), userId);
+                    } else {
+                        log.warn("로컬 파일 경로는 무시됩니다: {}", request.getImageUrl());
+                    }
+                } else {
+                    log.info("이미지가 없습니다. s3Key는 null로 유지됩니다.");
+                }
+            } catch (Exception e) {
+                log.error("이미지 업로드 중 오류 발생: {}", e.getMessage(), e);
+                throw e; // CustomException이면 그대로 전파, 아니면 RuntimeException으로 변환됨
             }
 
+            // 브랜드 찾기 또는 생성
             Brand brand = brandRepository.findByName(request.getBrandName())
-                    .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
+                    .orElseGet(() -> {
+                        log.info("새 브랜드 생성: {}", request.getBrandName());
+                        // 카테고리 찾기 또는 생성 (기본값: "기타")
+                        Category category = categoryRepository.findByName("기타")
+                                .orElseGet(() -> {
+                                    log.info("기본 카테고리 '기타' 생성");
+                                    Category newCategory = Category.builder()
+                                            .name("기타")
+                                            .displayOrder(999)
+                                            .build();
+                                    return categoryRepository.save(newCategory);
+                                });
+                        
+                        // 새 브랜드 생성
+                        Brand newBrand = Brand.builder()
+                                .name(request.getBrandName())
+                                .category(category)
+                                .build();
+                        return brandRepository.save(newBrand);
+                    });
             Category category = brand.getCategory();
+
+            // 사용자의 기본 Room 찾기 또는 생성
+            Room room = roomMemberRepository.findAllByUserId(userId).stream()
+                    .findFirst()
+                    .map(RoomMember::getRoom)
+                    .orElseGet(() -> {
+                        log.info("사용자 {}의 기본 Room 생성", userId);
+                        // 기본 Room 생성
+                        Room defaultRoom = Room.builder()
+                                .name(user.getName() + "의 쿠폰함")
+                                .roomCode(java.util.UUID.randomUUID().toString().substring(0, 8))
+                                .maxMembers(10)
+                                .owner(user)
+                                .build();
+                        Room savedRoom = roomRepository.save(defaultRoom);
+                        
+                        // RoomMember 생성
+                        RoomMember roomMember = RoomMember.builder()
+                                .room(savedRoom)
+                                .user(user)
+                                .role(RoomRole.OWNER)
+                                .build();
+                        roomMemberRepository.save(roomMember);
+                        
+                        return savedRoom;
+                    });
 
             Gifticon gifticon = Gifticon.builder()
                     .user(user)
                     .brand(brand)
                     .category(category)
+                    .room(room)
                     .productName(request.getProductName())
                     .brandName(brand.getName())
                     .gifticonType(request.getType())

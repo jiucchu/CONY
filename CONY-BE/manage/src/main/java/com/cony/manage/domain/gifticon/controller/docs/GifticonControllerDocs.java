@@ -40,8 +40,7 @@ public interface GifticonControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "중복된 기프티콘", content = @Content)
     })
     ApiResponse<List<Long>> registerGifticon(
-            @RequestBody(description = "기프티콘 등록 요청 데이터 목록", required = true) List<GifticonRegisterRequestDto> requests,
-            @Parameter(description = "기프티콘 이미지 파일 목록", required = false) MultipartFile image
+            @RequestBody(description = "기프티콘 등록 요청 데이터 목록", required = true) List<GifticonRegisterRequestDto> requests
     );
 
     @Operation(summary = "내 기프티콘 목록 조회", description = "조건에 따라 사용자의 기프티콘 목록을 페이징하여 조회합니다.")
