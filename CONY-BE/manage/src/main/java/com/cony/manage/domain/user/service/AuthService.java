@@ -52,7 +52,7 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-        String newAccessToken = jwtProvider.createAccessToken(email, user.getRole().name());
+        String newAccessToken = jwtProvider.createAccessToken(email, user.getRole().name(), user.getId());
         String newRefreshToken = jwtProvider.createRefreshToken(email);
 
         return new TokenResponseDto(newAccessToken, newRefreshToken);

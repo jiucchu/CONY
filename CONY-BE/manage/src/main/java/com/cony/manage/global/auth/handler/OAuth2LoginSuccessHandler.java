@@ -33,21 +33,20 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     @Override
     @Transactional
     public void onAuthenticationSuccess(HttpServletRequest request,
-                                        HttpServletResponse response,
-                                        Authentication authentication) throws IOException {
+            HttpServletResponse response,
+            Authentication authentication) throws IOException {
 
         OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 
         OAuth2UserInfo userInfo = getOAuth2UserInfo(
                 oauthToken.getAuthorizedClientRegistrationId(),
-                oAuth2User.getAttributes()
-        );
+                oAuth2User.getAttributes());
 
         User user = authService.saveOrUpdate(userInfo);
 
         // 토큰 생성
-        String accessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().name());
+        String accessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().name(), user.getId());
         String refreshToken = jwtProvider.createRefreshToken(user.getEmail());
 
         TokenResponseDto tokenDto = new TokenResponseDto(accessToken, refreshToken);
@@ -68,8 +67,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                         "    }, '*');" +
                         "    setTimeout(() => window.close(), 100);" + // 메시지 전달 시간을 위해 아주 짧은 딜레이 후 닫기
                         "  }" +
-                        "</script></body></html>"
-        );
+                        "</script></body></html>");
         response.getWriter().flush();
     }
 
