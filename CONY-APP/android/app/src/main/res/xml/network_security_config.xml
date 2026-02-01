@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 모든 도메인에 대해 HTTPS와 HTTP 모두 허용 (개발 환경용) -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- S3 도메인에 대한 특별 설정 -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">s3.ap-northeast-2.amazonaws.com</domain>
+        <domain includeSubdomains="true">*.s3.ap-northeast-2.amazonaws.com</domain>
+    </domain-config>
+</network-security-config>

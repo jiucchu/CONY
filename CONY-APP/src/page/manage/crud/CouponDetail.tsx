@@ -281,6 +281,12 @@ const CouponDetail = () => {
     }
   };
 
+  const handleEdit = () => {
+    if (id) {
+      (navigation as any).navigate('CouponModify', { id });
+    }
+  };
+
   return (
     <ContentLayout headerType="back" headerTitle="쿠폰 상세" onBack={handleBack}>
       <ScrollView>
@@ -293,7 +299,7 @@ const CouponDetail = () => {
             />
           )}
 
-          <InfoDetailCard coupon={coupon} />
+          <InfoDetailCard coupon={coupon} onEdit={handleEdit} />
 
           <View style={styles.buttonGroup}>
             <TouchableOpacity

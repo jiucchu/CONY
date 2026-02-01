@@ -36,8 +36,10 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -145,12 +147,54 @@ public class GifticonServiceImpl implements GifticonService {
         return results;
     }
 
+    /**
+     * 이미지 업로드 헬퍼 메서드
+     */
+    private String uploadImage(MultipartFile image, Long userId, String type) {
+        try {
+            log.info("공유 {} 이미지 파일 업로드 시작: originalFilename={}, size={}, contentType={}", 
+                type, image.getOriginalFilename(), image.getSize(), image.getContentType());
+            String s3Key = fileUploader.upload(image, userId);
+            log.info("공유 {} 이미지 파일 업로드 완료: s3Key={}", type, s3Key);
+            return s3Key;
+        } catch (Exception e) {
+            log.error("공유 {} 이미지 업로드 중 오류 발생: {}", type, e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * 썸네일 업로드 헬퍼 메서드
+     */
+    private String uploadThumbnail(MultipartFile thumbnail, Long userId) {
+        try {
+            log.info("공유 썸네일 이미지 파일 업로드 시작: originalFilename={}, size={}, contentType={}", 
+                thumbnail.getOriginalFilename(), thumbnail.getSize(), thumbnail.getContentType());
+            String s3Key = fileUploader.upload(thumbnail, userId);
+            log.info("공유 썸네일 이미지 파일 업로드 완료: s3Key={}", s3Key);
+            return s3Key;
+        } catch (Exception e) {
+            log.error("공유 썸네일 이미지 업로드 중 오류 발생: {}", e.getMessage(), e);
+            // 썸네일 업로드 실패해도 원본은 저장되므로 null 반환
+            return null;
+        }
+    }
+
     @Override
     @Transactional
-    public List<Long> registerGifticon(List<GifticonRegisterRequestDto> requests, Long userId, MultipartFile image) {
+    public List<Long> registerGifticon(List<GifticonRegisterRequestDto> requests, Long userId, MultipartFile image, MultipartFile thumbnail) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
+        // 이미지와 썸네일은 먼저 한 번만 업로드 (여러 쿠폰 등록 시 첫 번째 쿠폰에만 사용)
+        final String sharedS3Key = (image != null && !image.isEmpty()) ? 
+            uploadImage(image, userId, "원본") : null;
+        
+        final String sharedThumbnailS3Key = (thumbnail != null && !thumbnail.isEmpty()) ? 
+            uploadThumbnail(thumbnail, userId) : null;
+
+        // 각 쿠폰에 대해 등록 (첫 번째 쿠폰에만 이미지 연결)
+        final AtomicBoolean isFirstRequest = new AtomicBoolean(true); // 첫 번째 요청인지 추적
         return requests.stream().map(request -> {
             // 필수 필드 검증
             if(request.getBrandName() == null || request.getBrandName().trim().isEmpty()) {
@@ -184,28 +228,27 @@ public class GifticonServiceImpl implements GifticonService {
             }
 
             String s3Key = null;
-            // multipart 요청에서 실제 이미지 파일이 있으면 우선 사용
-            // imageUrl이 로컬 파일 경로(file://)로 시작하면 무시
-            try {
-                if(image != null && !image.isEmpty()) {
-                    log.info("Multipart 이미지 파일 업로드 시작: originalFilename={}, size={}, contentType={}", 
-                        image.getOriginalFilename(), image.getSize(), image.getContentType());
-                    s3Key = fileUploader.upload(image, userId);
-                    log.info("Multipart 이미지 파일 업로드 완료: s3Key={}", s3Key);
-                } else if(request.getImageUrl() != null && !request.getImageUrl().trim().isEmpty()) {
-                    // imageUrl이 로컬 파일 경로가 아닌 경우에만 사용
-                    if(!request.getImageUrl().startsWith("file://")) {
-                        log.info("이미지 URL에서 복사: {}", request.getImageUrl());
+            // 이미 업로드된 공유 이미지가 있으면 첫 번째 쿠폰에만 사용, 없으면 imageUrl 사용
+            if(sharedS3Key != null && isFirstRequest.get()) {
+                // 첫 번째 쿠폰에만 공유 이미지 사용
+                s3Key = sharedS3Key;
+                log.info("첫 번째 쿠폰에 공유 원본 이미지 사용: s3Key={}", s3Key);
+                isFirstRequest.set(false); // 다음 요청부터는 이미지 사용 안 함
+            } else if(request.getImageUrl() != null && !request.getImageUrl().trim().isEmpty()) {
+                // imageUrl이 로컬 파일 경로가 아닌 경우에만 사용
+                if(!request.getImageUrl().startsWith("file://")) {
+                    log.info("이미지 URL에서 복사: {}", request.getImageUrl());
+                    try {
                         s3Key = fileUploader.copyToPermanent(request.getImageUrl(), userId);
-                    } else {
-                        log.warn("로컬 파일 경로는 무시됩니다: {}", request.getImageUrl());
+                    } catch (Exception e) {
+                        log.error("이미지 URL 복사 중 오류 발생: {}", e.getMessage(), e);
+                        throw e;
                     }
                 } else {
-                    log.info("이미지가 없습니다. s3Key는 null로 유지됩니다.");
+                    log.warn("로컬 파일 경로는 무시됩니다: {}", request.getImageUrl());
                 }
-            } catch (Exception e) {
-                log.error("이미지 업로드 중 오류 발생: {}", e.getMessage(), e);
-                throw e; // CustomException이면 그대로 전파, 아니면 RuntimeException으로 변환됨
+            } else {
+                log.info("이미지가 없습니다. s3Key는 null로 유지됩니다.");
             }
 
             // 브랜드 찾기 또는 생성
@@ -277,6 +320,7 @@ public class GifticonServiceImpl implements GifticonService {
                     .build();
             Gifticon saved = gifticonRepository.save(gifticon);
 
+            // 원본 이미지 저장
             if(s3Key != null) {
                 GifticonImage gifticonImage = GifticonImage.builder()
                         .gifticon(saved)
@@ -286,6 +330,31 @@ public class GifticonServiceImpl implements GifticonService {
                         .imageType(ImageType.ORIGINAL)
                         .build();
                 gifticonImageRepository.save(gifticonImage);
+                log.info("원본 이미지 저장 완료: gifticonId={}, s3Key={}", saved.getId(), s3Key);
+            } else {
+                log.warn("원본 이미지가 저장되지 않음: gifticonId={}", saved.getId());
+            }
+
+            // 썸네일 이미지 저장 (이미 업로드된 공유 썸네일 사용 - 첫 번째 쿠폰에만)
+            // sharedS3Key를 사용한 경우에만 썸네일도 사용 (첫 번째 쿠폰)
+            boolean useThumbnail = (sharedS3Key != null && sharedS3Key.equals(s3Key));
+            if(sharedThumbnailS3Key != null && useThumbnail) {
+                // 첫 번째 쿠폰에만 공유 썸네일 사용
+                try {
+                    log.info("첫 번째 쿠폰에 공유 썸네일 이미지 사용: s3Key={}", sharedThumbnailS3Key);
+                    GifticonImage thumbnailImage = GifticonImage.builder()
+                            .gifticon(saved)
+                            .imageUrl(sharedThumbnailS3Key)
+                            .s3Bucket(s3Bucket)
+                            .s3Key(sharedThumbnailS3Key)
+                            .imageType(ImageType.THUMBNAIL)
+                            .build();
+                    gifticonImageRepository.save(thumbnailImage);
+                    log.info("썸네일 이미지 저장 완료: gifticonId={}, s3Key={}", saved.getId(), sharedThumbnailS3Key);
+                } catch (Exception e) {
+                    log.error("썸네일 이미지 저장 중 오류 발생: {}", e.getMessage(), e);
+                    // 썸네일 저장 실패해도 원본은 저장되므로 계속 진행
+                }
             }
 
             return saved.getId();
@@ -326,12 +395,28 @@ public class GifticonServiceImpl implements GifticonService {
                 .map(Gifticon::getId)
                 .toList();
 
-        Map<Long, String> imageMap = gifticonImageRepository.findAllByGifticonIdIn(gifticonIds, ImageType.THUMBNAIL).stream()
+        // THUMBNAIL 이미지 먼저 조회
+        Map<Long, String> thumbnailMap = gifticonImageRepository.findAllByGifticonIdIn(gifticonIds, ImageType.THUMBNAIL).stream()
+                .filter(img -> img.getS3Key() != null && !img.getS3Key().isEmpty())
                 .collect(Collectors.toMap(
                         img -> img.getGifticon().getId(),
-                        GifticonImage::getImageUrl,
+                        img -> fileUploader.getPresignedUrl(img.getS3Key()),
                         (existing, replacement) -> existing
                 ));
+
+        // THUMBNAIL이 없는 경우 ORIGINAL 이미지 사용
+        Map<Long, String> originalMap = gifticonImageRepository.findAllByGifticonIdIn(gifticonIds, ImageType.ORIGINAL).stream()
+                .filter(img -> img.getS3Key() != null && !img.getS3Key().isEmpty())
+                .filter(img -> !thumbnailMap.containsKey(img.getGifticon().getId())) // THUMBNAIL이 없는 경우만
+                .collect(Collectors.toMap(
+                        img -> img.getGifticon().getId(),
+                        img -> fileUploader.getPresignedUrl(img.getS3Key()),
+                        (existing, replacement) -> existing
+                ));
+
+        // 두 맵을 합치기 (THUMBNAIL 우선)
+        Map<Long, String> imageMap = new HashMap<>(thumbnailMap);
+        imageMap.putAll(originalMap);
 
         return gifticonPage.map(g -> GifticonListResponseDto.builder()
                 .gifticonId(g.getId())
@@ -340,7 +425,7 @@ public class GifticonServiceImpl implements GifticonService {
                 .barcodeNumber(g.getBarcodeNumber())
                 .expiryDate(g.getExpiryDate())
                 .status(g.getStatus())
-                .imageUrl(imageMap.get(g.getId()))
+                .imageUrl(imageMap.getOrDefault(g.getId(), null))
                 .originalPrice(g.getOriginalPrice())
                 .build());
     }
@@ -395,7 +480,7 @@ public class GifticonServiceImpl implements GifticonService {
      */
     @Override
     @Transactional
-    public Long updateGifticon(Long gifticonId, Long userId, GifticonUpdateRequestDto request) {
+    public Long updateGifticon(Long gifticonId, Long userId, GifticonUpdateRequestDto request, MultipartFile image, MultipartFile thumbnail) {
         Gifticon gifticon = gifticonRepository.findById(gifticonId)
                 .orElseThrow(() -> new CustomException(ErrorCode.GIFTICON_NOT_FOUND));
 
@@ -414,6 +499,60 @@ public class GifticonServiceImpl implements GifticonService {
                 request.getScheduledSaleDate(),
                 request.getPlannedSalePrice()
         );
+
+        // 원본 이미지 업데이트
+        if(image != null && !image.isEmpty()) {
+            try {
+                log.info("기프티콘 수정 - 원본 이미지 파일 업로드 시작: originalFilename={}, size={}, contentType={}", 
+                    image.getOriginalFilename(), image.getSize(), image.getContentType());
+                String s3Key = fileUploader.upload(image, userId);
+                log.info("기프티콘 수정 - 원본 이미지 파일 업로드 완료: s3Key={}", s3Key);
+                
+                // 기존 원본 이미지 삭제
+                gifticonImageRepository.findByGifticonIdAndImageType(gifticonId, ImageType.ORIGINAL)
+                        .ifPresent(gifticonImageRepository::delete);
+                
+                // 새 원본 이미지 저장
+                GifticonImage gifticonImage = GifticonImage.builder()
+                        .gifticon(gifticon)
+                        .imageUrl(s3Key)
+                        .s3Bucket(s3Bucket)
+                        .s3Key(s3Key)
+                        .imageType(ImageType.ORIGINAL)
+                        .build();
+                gifticonImageRepository.save(gifticonImage);
+            } catch (Exception e) {
+                log.error("기프티콘 수정 - 원본 이미지 업로드 중 오류 발생: {}", e.getMessage(), e);
+                // 이미지 업로드 실패해도 다른 정보는 수정되므로 계속 진행
+            }
+        }
+
+        // 썸네일 이미지 업데이트
+        if(thumbnail != null && !thumbnail.isEmpty()) {
+            try {
+                log.info("기프티콘 수정 - 썸네일 이미지 파일 업로드 시작: originalFilename={}, size={}, contentType={}", 
+                    thumbnail.getOriginalFilename(), thumbnail.getSize(), thumbnail.getContentType());
+                String thumbnailS3Key = fileUploader.upload(thumbnail, userId);
+                log.info("기프티콘 수정 - 썸네일 이미지 파일 업로드 완료: s3Key={}", thumbnailS3Key);
+                
+                // 기존 썸네일 이미지 삭제
+                gifticonImageRepository.findByGifticonIdAndImageType(gifticonId, ImageType.THUMBNAIL)
+                        .ifPresent(gifticonImageRepository::delete);
+                
+                // 새 썸네일 이미지 저장
+                GifticonImage thumbnailImage = GifticonImage.builder()
+                        .gifticon(gifticon)
+                        .imageUrl(thumbnailS3Key)
+                        .s3Bucket(s3Bucket)
+                        .s3Key(thumbnailS3Key)
+                        .imageType(ImageType.THUMBNAIL)
+                        .build();
+                gifticonImageRepository.save(thumbnailImage);
+            } catch (Exception e) {
+                log.error("기프티콘 수정 - 썸네일 이미지 업로드 중 오류 발생: {}", e.getMessage(), e);
+                // 썸네일 업로드 실패해도 다른 정보는 수정되므로 계속 진행
+            }
+        }
 
         return gifticon.getId();
     }

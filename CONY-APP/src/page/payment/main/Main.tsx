@@ -9,8 +9,8 @@ import SearchBar from '@/components/payment/common/SearchBar';
 import BrandFilterBar from '@/components/payment/common/BrandFilterBar';
 import CommonCouponCard from '@/components/common/card/CommonCouponCard';
 import RecentSearch from '@/components/common/RecentSearch';
-import { getMyGifticons } from '@/api/gifticon/gifticonApi';
-import { GifticonListResponseDto } from '@/types/gifticon/gifticon';
+import { getSalesOnSale } from '@/api/sale/saleApi';
+import { SaleListResponseDto } from '@/types/sale/sale';
 
 const screenWidth = Dimensions.get('window').width;
 const cardWidth = (screenWidth - 60) / 2; // 화면 너비에서 패딩과 gap 제외 후 2로 나눔
@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
 
 const Main = () => {
   const navigation = useNavigation();
-  const [coupons, setCoupons] = useState<GifticonListResponseDto[]>([]);
+  const [coupons, setCoupons] = useState<SaleListResponseDto[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [recentSearches] = useState<string[]>([]);
@@ -46,12 +46,12 @@ const Main = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await getMyGifticons({ page: 0, size: 20 });
+        const response = await getSalesOnSale(undefined, { page: 0, size: 20 });
         setCoupons(response.content);
         const uniqueBrands = Array.from(new Set(response.content.map(c => c.brandName)));
         setBrands(uniqueBrands);
       } catch (err) {
-        console.error('기프티콘 목록 조회 실패:', err);
+        console.error('판매 중인 기프티콘 목록 조회 실패:', err);
       } finally {
         setLoading(false);
       }
@@ -84,12 +84,28 @@ const Main = () => {
           <BrandFilterBar brands={brands} />
           <Filter />
           <View style={styles.couponContainer}>
-            {coupons.map((coupon) => (
-              <View key={coupon.gifticonId} style={styles.couponWrapper}>
+            {coupons.map((sale) => (
+              <View key={sale.saleId} style={styles.couponWrapper}>
                 <CommonCouponCard
-                  coupon={coupon}
+                  coupon={{
+                    gifticonId: sale.gifticonId,
+                    brandName: sale.brandName,
+                    productName: sale.productName,
+                    barcodeNumber: '',
+                    expiryDate: sale.expiryDate,
+                    status: 'NOT_USED' as const,
+                    imageUrl: sale.imageUrl,
+                  }}
+                  discountRate={sale.originalPrice > 0 ? Math.round((1 - sale.salePrice / sale.originalPrice) * 100) : 0}
+                  originalPrice={sale.originalPrice}
                   handleCardClickProps={() => {
-                    (navigation as any).navigate('PaymentDetail', { coupon });
+                    (navigation as any).navigate('PaymentDetail', { 
+                      coupon: {
+                        ...sale,
+                        gifticonType: 'PRODUCT' as const,
+                        originalPrice: sale.originalPrice,
+                      }
+                    });
                   }}
                 />
               </View>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, Alert, BackHandler } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, BackHandler, Platform, PermissionsAndroid } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import { launchImageLibrary, ImagePickerResponse, MediaType } from 'react-native-image-picker';
 import ContentLayout from '@/components/layout/ContentLayout';
 import InfoModifyCard from '@/components/InfoModify/InfoModifyCard';
 import { DefaultButton } from '@/components/common/atomic/Button';
@@ -20,6 +21,7 @@ const styles = StyleSheet.create({
     width: '60%',
     marginVertical: 20,
     marginBottom: 60,
+    alignSelf: 'center',
   },
 });
 
@@ -95,6 +97,7 @@ const CouponModify = () => {
   }, [coupon]);
 
   const [formData, setFormData] = useState(initialFormData);
+  const [imageFile, setImageFile] = useState<{ uri: string; type?: string; name?: string } | undefined>(undefined);
 
   useEffect(() => {
     if (coupon) {
@@ -110,6 +113,43 @@ const CouponModify = () => {
       });
     }
   }, [coupon]);
+
+  const requestImagePermission = async (): Promise<boolean> => {
+    if (Platform.OS === 'android') {
+      try {
+        const androidVersion = Platform.Version;
+        let permission: string;
+        
+        if (androidVersion >= 33) {
+          permission = PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES;
+        } else {
+          permission = PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+        }
+
+        const checkResult = await PermissionsAndroid.check(permission);
+        if (checkResult) {
+          return true;
+        }
+
+        const granted = await PermissionsAndroid.request(
+          permission,
+          {
+            title: '이미지 접근 권한',
+            message: '이미지를 선택하려면 갤러리 접근 권한이 필요합니다.',
+            buttonNeutral: '나중에',
+            buttonNegative: '취소',
+            buttonPositive: '확인',
+          }
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn('권한 요청 오류:', err);
+        return false;
+      }
+    }
+    // iOS는 react-native-image-picker가 자동으로 권한을 처리합니다.
+    return true;
+  };
 
   if (loading) {
     return (
@@ -135,8 +175,63 @@ const CouponModify = () => {
     );
   }
 
-  const handleImageEdit = () => {
-    console.log('이미지 편집 클릭');
+  const handleImageEdit = async () => {
+    try {
+      // 권한 요청
+      const hasPermission = await requestImagePermission();
+      if (!hasPermission) {
+        Alert.alert(
+          '권한 필요',
+          '이미지를 선택하려면 갤러리 접근 권한이 필요합니다.\n설정에서 권한을 허용해주세요.'
+        );
+        return;
+      }
+
+      // 이미지 라이브러리 열기
+      launchImageLibrary(
+        {
+          mediaType: 'photo' as MediaType,
+          includeBase64: false,
+          maxHeight: 2000,
+          maxWidth: 2000,
+          quality: 0.8,
+          selectionLimit: 1, // 1개만 선택
+        },
+        (response: ImagePickerResponse) => {
+          if (response.didCancel) {
+            console.log('사용자가 이미지 선택을 취소했습니다.');
+          } else if (response.errorCode) {
+            console.error('ImagePicker Error: ', response.errorCode, response.errorMessage);
+            Alert.alert('오류', `이미지 선택 중 오류가 발생했습니다: ${response.errorMessage}`);
+          } else if (response.assets && response.assets.length > 0) {
+            const asset = response.assets[0];
+            if (asset.uri) {
+              const selectedImageFile = {
+                uri: asset.uri,
+                type: asset.type || 'image/jpeg',
+                name: asset.fileName || `image_${Date.now()}.jpg`,
+              };
+              
+              // formData와 imageFile 업데이트
+              setFormData(prev => ({
+                ...prev,
+                imageUrl: asset.uri,
+              }));
+              setImageFile(selectedImageFile);
+              
+              console.log('이미지 선택 완료:', selectedImageFile);
+            } else {
+              console.warn('이미지 URI가 없습니다.');
+            }
+          } else {
+            console.warn('선택된 이미지가 없습니다.');
+          }
+        }
+      );
+    } catch (error) {
+      console.error('이미지 선택 오류:', error);
+      Alert.alert('오류', '이미지 선택 중 오류가 발생했습니다.');
+    }
   };
 
   const handleSubmit = async () => {

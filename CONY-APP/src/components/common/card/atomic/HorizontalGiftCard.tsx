@@ -74,7 +74,8 @@ const styles = StyleSheet.create({
   productImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'contain',
+    resizeMode: 'cover',
+    backgroundColor: '#E5E5E5',
   },
   infoContainer: {
     flex: 1,
@@ -116,6 +117,10 @@ const HorizontalGiftCard = ({ coupon, filter }: HorizontalGiftCardProps) => {
   const isDisabled = isUsed || isExpired;
   const badgeText = isUsed ? '사용 완료' : isExpired ? '기간 만료' : '';
 
+  // Presigned URL을 React Native에서 안정적으로 로드하기 위해 정규화
+  // 이미 인코딩된 URL이므로 그대로 사용하되, 공백이나 특수 문자 문제를 방지
+  const imageUri = coupon.imageUrl ? coupon.imageUrl.trim() : null;
+
   const handleCardClick = () => {
     (navigation as any).navigate('CouponDetail', { 
       id: coupon.gifticonId,
@@ -142,7 +147,28 @@ const HorizontalGiftCard = ({ coupon, filter }: HorizontalGiftCardProps) => {
         <DdayView type="gift" dday={daysUntilExpiration} size="Small" />
       </View>
       <View style={styles.imageContainer}>
-        <Image source={{ uri: coupon.imageUrl }} style={styles.productImage} />
+        {imageUri ? (
+          <Image 
+            source={{ 
+              uri: imageUri,
+            }} 
+            style={styles.productImage}
+            resizeMode="cover"
+            onError={(error: any) => {
+              console.warn('이미지 로딩 실패');
+              console.warn('URL:', imageUri);
+              console.warn('에러:', error?.nativeEvent || error);
+            }}
+            onLoad={() => {
+              console.log('이미지 로딩 성공');
+            }}
+            onLoadStart={() => {
+              console.log('이미지 로딩 시작');
+            }}
+          />
+        ) : (
+          <View style={styles.productImage} />
+        )}
       </View>
       <View style={styles.infoContainer}>
         <StyledText fontSize={14} fontWeight={400} color={COLORS.text.secondary}>

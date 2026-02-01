@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Alert } from 'react-native';
+import styled from 'styled-components/native';
 import { GifticonDetailResponseDto } from '@/types/gifticon/gifticon';
 import DdayView from '@/components/common/card/atomic/DdayView';
 import { COLORS } from '@/constants/colors';
@@ -8,86 +9,91 @@ import { StyledText } from '@/utils/StyledText';
 import { Svg, Path, Line } from 'react-native-svg';
 import BarcodeView from '@/components/common/barcode/BarcodeView';
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    width: '90%',
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 5,
-    position: 'relative',
-  },
-  imageContainer: {
-    width: '100%',
-    aspectRatio: 1.4,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-    marginBottom: 16,
-    backgroundColor: '#E5E5E5',
-  },
-  productImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#E5E5E5',
-    borderRadius: 10,
-    resizeMode: 'cover',
-  },
-  ddayWrapper: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    zIndex: 10,
-  },
-  actionButtonsWrapper: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    zIndex: 20,
-  },
-  actionButton: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderWidth: 1,
-    borderColor: COLORS.background.lightGray,
-    borderRadius: 16,
-  },
-  infoContainer: {
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 20,
-  },
-  barcodeContainer: {
-    alignItems: 'center',
-    width: '100%',
-    marginTop: 8,
-  },
-  barcodeWrapper: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: 20,
-  },
-  barcodeText: {
-    marginTop: 12,
-  },
-});
+const Container = styled.View`
+  background-color: #FFFFFF;
+  border-radius: 10px;
+  width: 90%;
+  padding-vertical: 10%;
+  padding-horizontal: 20%;
+  align-items: center;
+  shadow-color: #000;
+  shadow-offset: 0px 4px;
+  shadow-opacity: 0.15;
+  shadow-radius: 10px;
+  elevation: 5;
+  position: relative;
+`;
+
+const ImageContainer = styled.View`
+  width: 80%;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 16px;
+  background-color: #E5E5E5;
+`;
+
+const ProductImage = styled.Image`
+  width: 100%;
+  height: 100%;
+  background-color: #E5E5E5;
+  border-radius: 10px;
+  resize-mode: cover;
+`;
+
+const DdayWrapper = styled.View`
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 10;
+`;
+
+const ActionButtonsWrapper = styled.View`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  z-index: 20;
+`;
+
+const ActionButton = styled.TouchableOpacity`
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-width: 1px;
+  border-color: ${COLORS.background.lightGray};
+  border-radius: 16px;
+`;
+
+const InfoContainer = styled.View`
+  align-items: center;
+  width: 100%;
+  margin-bottom: 20px;
+`;
+
+const BarcodeContainer = styled.View`
+  align-items: center;
+  width: 100%;
+  margin-top: 8px;
+`;
+
+const BarcodeWrapper = styled.View`
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding-horizontal: 20px;
+`;
+
+const BarcodeText = styled.View`
+  margin-top: 12px;
+`;
 
 const EditIcon = () => (
   <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={COLORS.text.primary} strokeWidth={2}>
@@ -135,6 +141,10 @@ const InfoDetailCard = ({ coupon, barcodeNumber, onEdit, onDelete }: InfoDetailC
   const defaultBarcode = barcodeNumber || String(coupon.gifticonId).padStart(16, '0');
   const formattedBarcode = formatBarcodeNumber(defaultBarcode);
 
+  // Presigned URL을 React Native에서 안정적으로 로드하기 위해 정규화
+  // 이미 인코딩된 URL이므로 그대로 사용하되, 공백이나 특수 문자 문제를 방지
+  const imageUri = coupon.imageUrl ? coupon.imageUrl.trim() : null;
+
   const handleDelete = () => {
     Alert.alert(
       '삭제 확인',
@@ -147,26 +157,50 @@ const InfoDetailCard = ({ coupon, barcodeNumber, onEdit, onDelete }: InfoDetailC
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.actionButtonsWrapper}>
+    <Container>
+      <ActionButtonsWrapper>
         {onEdit && (
-          <TouchableOpacity style={styles.actionButton} onPress={onEdit}>
+          <ActionButton onPress={onEdit}>
             <EditIcon />
-          </TouchableOpacity>
+          </ActionButton>
         )}
         {onDelete && (
-          <TouchableOpacity style={styles.actionButton} onPress={handleDelete}>
+          <ActionButton onPress={handleDelete}>
             <DeleteIcon />
-          </TouchableOpacity>
+          </ActionButton>
         )}
-      </View>
-      <View style={styles.imageContainer}>
-        <View style={styles.ddayWrapper}>
-          <DdayView type="gift" dday={daysUntilExpiration} size="Medium" />
-        </View>
-        <Image source={{ uri: coupon.imageUrl }} style={styles.productImage} />
-      </View>
-      <View style={styles.infoContainer}>
+      </ActionButtonsWrapper>
+      <ImageContainer>
+        <DdayWrapper>
+          <DdayView type="common" dday={daysUntilExpiration} size="Large" />
+        </DdayWrapper>
+        {imageUri && imageUri.trim() !== '' ? (
+          <ProductImage 
+            source={{ 
+              uri: imageUri,
+              cache: 'force-cache',
+            }}
+            resizeMode="cover"
+            onError={(error: any) => {
+              console.warn('[InfoDetailCard] 이미지 로딩 실패');
+              console.warn('[InfoDetailCard] URL:', imageUri);
+              console.warn('[InfoDetailCard] 에러 객체:', error);
+              if (error?.nativeEvent) {
+                console.warn('[InfoDetailCard] nativeEvent:', JSON.stringify(error.nativeEvent, null, 2));
+              }
+            }}
+            onLoad={() => {
+              console.log('[InfoDetailCard] 이미지 로딩 성공:', imageUri);
+            }}
+            onLoadStart={() => {
+              console.log('[InfoDetailCard] 이미지 로딩 시작:', imageUri);
+            }}
+          />
+        ) : (
+          <View style={{ width: '100%', height: '100%', backgroundColor: '#E5E5E5', borderRadius: 10 }} />
+        )}
+      </ImageContainer>
+      <InfoContainer>
         <View style={{ marginBottom: 5 }}>
           <StyledText fontSize={16} fontWeight={600} color={COLORS.text.secondary}>
             {coupon.brandName}
@@ -178,21 +212,23 @@ const InfoDetailCard = ({ coupon, barcodeNumber, onEdit, onDelete }: InfoDetailC
         <StyledText fontSize={16} fontWeight={400} color={COLORS.text.primary}>
           {formattedExpiration}
         </StyledText>
-      </View>
-      <View style={styles.barcodeContainer}>
-        <View style={styles.barcodeWrapper}>
+      </InfoContainer>
+      <BarcodeContainer>
+        <BarcodeWrapper>
           <BarcodeView 
             value={defaultBarcode} 
             width={280}
             height={80}
             format="CODE128"
           />
-        </View>
-        <StyledText style={styles.barcodeText} fontSize={15} fontWeight={400} color={COLORS.text.primary}>
-          {formattedBarcode}
-        </StyledText>
-      </View>
-    </View>
+        </BarcodeWrapper>
+        <BarcodeText>
+          <StyledText fontSize={15} fontWeight={400} color={COLORS.text.primary}>
+            {formattedBarcode}
+          </StyledText>
+        </BarcodeText>
+      </BarcodeContainer>
+    </Container>
   );
 };
 

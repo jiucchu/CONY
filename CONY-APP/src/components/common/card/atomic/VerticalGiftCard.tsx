@@ -92,7 +92,17 @@ const VerticalGiftCard = ({ coupon }: { coupon: GifticonDetailResponseDto | Gift
         <DdayView type="gift" dday={daysUntilExpiration} size="Small" />
       </View>
       <View style={styles.imageContainer}>
-        <Image source={{ uri: coupon.imageUrl }} style={styles.productImage} />
+        {coupon.imageUrl && coupon.imageUrl.trim() !== '' ? (
+          <Image 
+            source={{ uri: coupon.imageUrl }} 
+            style={styles.productImage}
+            onError={(error) => {
+              console.warn('이미지 로딩 실패:', coupon.imageUrl, error);
+            }}
+          />
+        ) : (
+          <View style={styles.productImage} />
+        )}
       </View>
       <View style={styles.infoContainer}>
         <StyledText fontSize={13} fontWeight={600} color={COLORS.text.secondary}>

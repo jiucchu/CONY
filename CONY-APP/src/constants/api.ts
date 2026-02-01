@@ -6,12 +6,13 @@
 const isLocalDev = __DEV__; // React Native의 개발 모드 플래그
 export const LOCAL_HOST = '10.0.2.2'; // Android 에뮬레이터용 (실제 기기나 iOS는 환경 변수로 변경 필요)
 export const LOCAL_MANAGE_PORT = '8080'; // Manage 서버 포트
-export const LOCAL_PAYMENT_PORT = '8081'; // Payment 서버 포트
+export const LOCAL_PAYMENT_PORT = '8081'; // Payment 서버 포트 (React Native가 8082 사용)
 
 // 로컬 개발 서버 URL
 // 로컬에서는 /api/manage prefix 없이 직접 접근 (Nginx 없이 직접 실행)
 const LOCAL_API_BASE_URL = `http://${LOCAL_HOST}:${LOCAL_MANAGE_PORT}`;
-const LOCAL_PAYMENT_API_BASE_URL = `http://${LOCAL_HOST}:${LOCAL_PAYMENT_PORT}`;
+// Payment 서버는 context-path가 /api/payment로 설정되어 있음
+const LOCAL_PAYMENT_API_BASE_URL = `http://${LOCAL_HOST}:${LOCAL_PAYMENT_PORT}/api/payment`;
 
 // 운영 서버 URL
 const PROD_API_BASE_URL = 'http://i14c106.p.ssafy.io/api/manage';

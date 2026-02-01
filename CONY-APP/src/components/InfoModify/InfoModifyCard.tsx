@@ -6,6 +6,7 @@ import AutoSellInfo from './atomic/AutoSellInfo';
 import FolderSelector from './FolderSelector';
 import { FolderData } from '@/types/coupon/coupon';
 import DatePicker from '@/components/common/atomic/DatePicker';
+import { Svg, Path } from 'react-native-svg';
 
 const styles = StyleSheet.create({
   container: {
@@ -98,6 +99,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   }),
 });
+
+const EditIcon = () => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={COLORS.text.primary} strokeWidth={2}>
+    <Path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+    <Path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+  </Svg>
+);
 
 interface InfoModifyCardProps {
   imageUrl?: string;
@@ -251,9 +259,7 @@ const InfoModifyCard = ({
             </View>
           )}
           <TouchableOpacity style={styles.editButton} onPress={onImageEdit}>
-            <StyledText fontSize={12} fontWeight={600} color={COLORS.text.primary}>
-              편집
-            </StyledText>
+            <EditIcon />
           </TouchableOpacity>
         </View>
       </View>
