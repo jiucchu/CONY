@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { GifticonDetailResponseDto, GifticonListResponseDto } from '@/types/gifticon/gifticon';
 import DdayView from './DdayView';
 import BarcodeButton from './BarcodeButton';
@@ -25,6 +26,33 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 5,
+  },
+  containerDisabled: {
+    opacity: 0.6,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderRadius: 10,
+    zIndex: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badge: {
+    backgroundColor: COLORS.text.secondary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    zIndex: 6,
+  },
+  badgeText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: '700',
   },
   ddayWrapper: {
     position: 'absolute',
@@ -67,14 +95,49 @@ const styles = StyleSheet.create({
   },
 });
 
-const HorizontalGiftCard = ({ coupon }: { coupon: GifticonDetailResponseDto | GifticonListResponseDto }) => {
+interface HorizontalGiftCardProps {
+  coupon: GifticonDetailResponseDto | GifticonListResponseDto;
+  filter?: {
+    initialSort?: string;
+    initialExpiringSoon?: boolean;
+  };
+}
+
+const HorizontalGiftCard = ({ coupon, filter }: HorizontalGiftCardProps) => {
+  const navigation = useNavigation();
   const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiryDate);
   const originalPrice = 'originalPrice' in coupon ? coupon.originalPrice : 0;
   const hasValidPrice = originalPrice > 0;
   const formattedPrice = hasValidPrice ? originalPrice.toLocaleString('ko-KR') : '';
 
+  // 사용 완료 또는 만료 여부 확인
+  const isUsed = coupon.status === 'USED' || ('isUsed' in coupon && coupon.isUsed === true);
+  const isExpired = ('isExpired' in coupon && coupon.isExpired === true) || daysUntilExpiration < 0;
+  const isDisabled = isUsed || isExpired;
+  const badgeText = isUsed ? '사용 완료' : isExpired ? '기간 만료' : '';
+
+  const handleCardClick = () => {
+    (navigation as any).navigate('CouponDetail', { 
+      id: coupon.gifticonId,
+      ...(filter && { initialSort: filter.initialSort, initialExpiringSoon: filter.initialExpiringSoon })
+    });
+  };
+
   return (
-    <View style={styles.container}>
+    <TouchableOpacity 
+      style={[styles.container, isDisabled && styles.containerDisabled]} 
+      onPress={handleCardClick}
+      disabled={false} // 클릭은 가능하지만 시각적으로 비활성화 표시
+    >
+      {isDisabled && (
+        <View style={styles.overlay}>
+          <View style={styles.badge}>
+            <StyledText fontSize={12} fontWeight={700} color={COLORS.white}>
+              {badgeText}
+            </StyledText>
+          </View>
+        </View>
+      )}
       <View style={styles.ddayWrapper}>
         <DdayView type="gift" dday={daysUntilExpiration} size="Small" />
       </View>
@@ -97,7 +160,7 @@ const HorizontalGiftCard = ({ coupon }: { coupon: GifticonDetailResponseDto | Gi
         </View>
       </View>
 
-    </View>
+    </TouchableOpacity>
   );
 };
 

@@ -28,16 +28,14 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     flexDirection: 'row',
-    gap: 25,
+    gap: 10,
     paddingBottom: 8,
   },
   scrollContent: {
     paddingLeft: '6%',
     paddingRight: '6%',
-    gap: 10,
   },
   cardWrapper: {
-    marginRight: 10,
     width: 200,
   },
 });

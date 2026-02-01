@@ -11,6 +11,7 @@ import type {
   Pageable,
   PageGifticonListResponseDto,
   GifticonListResponseDto,
+  GifticonSearchCondition,
 } from '@/types/gifticon/gifticon';
 
 // API 호출 헬퍼 함수 (규격서에 따른 응답 형식 처리)
@@ -247,16 +248,39 @@ export const getGifticonDetail = async (
 };
 
 /**
- * 내 기프티콘 목록 조회 (페이징)
+ * 내 기프티콘 목록 조회 (페이징 및 필터링)
  */
 export const getMyGifticons = async (
-  pageable: Pageable = { page: 0, size: 10 }
+  pageable: Pageable = { page: 0, size: 10 },
+  condition?: GifticonSearchCondition
 ): Promise<PageGifticonListResponseDto> => {
   const params = new URLSearchParams();
   if (pageable.page !== undefined) params.append('page', pageable.page.toString());
   if (pageable.size !== undefined) params.append('size', pageable.size.toString());
   if (pageable.sort) {
     pageable.sort.forEach(sort => params.append('sort', sort));
+  }
+
+  // 필터 조건 추가
+  if (condition) {
+    if (condition.expiringSoon !== undefined) {
+      params.append('expiringSoon', condition.expiringSoon.toString());
+    }
+    if (condition.excludeUsed !== undefined) {
+      params.append('excludeUsed', condition.excludeUsed.toString());
+    }
+    if (condition.categoryId !== undefined) {
+      params.append('categoryId', condition.categoryId.toString());
+    }
+    if (condition.latitude !== undefined) {
+      params.append('latitude', condition.latitude.toString());
+    }
+    if (condition.longitude !== undefined) {
+      params.append('longitude', condition.longitude.toString());
+    }
+    if (condition.radius !== undefined) {
+      params.append('radius', condition.radius.toString());
+    }
   }
 
   const response = await apiCall<PageGifticonListResponseDto>(

@@ -116,3 +116,12 @@ export interface PageGifticonListResponseDto {
   numberOfElements: number;
   empty: boolean;
 }
+
+export interface GifticonSearchCondition {
+  expiringSoon?: boolean;
+  excludeUsed?: boolean;
+  categoryId?: number;
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
+}

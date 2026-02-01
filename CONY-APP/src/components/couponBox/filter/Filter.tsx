@@ -64,17 +64,18 @@ interface FilterProps {
 }
 
 const Filter = ({
-  selectedSort: initialSort = 'period',
+  selectedSort: propSelectedSort = 'period',
   onSortChange,
   onSearch,
 }: FilterProps) => {
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSort, setSelectedSort] = useState<SortType>(initialSort);
+  const [selectedSort, setSelectedSort] = useState<SortType>(propSelectedSort);
 
   useEffect(() => {
-    setSelectedSort(initialSort);
-  }, [initialSort]);
+    console.log('[Filter] propSelectedSort 변경 감지:', propSelectedSort, '현재 selectedSort:', selectedSort);
+    setSelectedSort(propSelectedSort);
+  }, [propSelectedSort]);
 
   const handleSortClick = (sort: SortType) => {
     setSelectedSort(sort);
