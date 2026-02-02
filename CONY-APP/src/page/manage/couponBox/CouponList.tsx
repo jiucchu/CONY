@@ -9,7 +9,10 @@ import Filter, { SortType } from '@/components/couponBox/filter/Filter';
 import AvailableFilter, { AvailableType } from '@/components/couponBox/filter/AvailableFilter';
 import HorizontalGiftCard from '@/components/common/card/atomic/HorizontalGiftCard';
 import { getMyGifticons } from '@/api/gifticon/gifticonApi';
+import { getMyRooms, getRoomDetail, getGifticonsInRoom } from '@/api/room/roomApi';
 import { GifticonListResponseDto, GifticonSearchCondition } from '@/types/gifticon/gifticon';
+import { RoomResponseDto } from '@/types/room/room';
+import RoomDetailModal from '@/components/couponBox/RoomDetailModal';
 
 const styles = StyleSheet.create({
   sharedCouponContainer: {
@@ -42,21 +45,76 @@ const CouponList = () => {
   const [selectedSort, setSelectedSort] = useState<SortType>(routeParams?.initialSort || 'period');
   const [selectedType, setSelectedType] = useState<AvailableType>('available');
   const [expiringSoon, setExpiringSoon] = useState<boolean>(routeParams?.initialExpiringSoon || false);
-  const folders: FolderData[] = [
-    { id: '1', title: '쿠폰함', type: 'selected' },
-    { id: '2', title: '쿠폰함', type: 'unselected' },
-    { id: '3', title: '쿠폰함', type: 'unselected' },
-    { id: '4', title: '쿠폰함', type: 'unselected' },
-    { id: '5', title: '쿠폰함', type: 'unselected' },
-    { id: '6', title: '쿠폰함', type: 'unselected' },
-    { id: '7', title: '쿠폰함', type: 'unselected' },
-    { id: '8', title: '쿠폰함', type: 'unselected' },
-    { id: '9', title: '쿠폰함', type: 'unselected' },
-    { id: '10', title: '쿠폰함', type: 'unselected' },
-  ];
+  const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
+  const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
+  const [loadingRooms, setLoadingRooms] = useState(true);
+  const [roomDetailModalVisible, setRoomDetailModalVisible] = useState(false);
+  const [selectedRoomForDetail, setSelectedRoomForDetail] = useState<number | null>(null);
 
   const fetchCoupons = useCallback(async () => {
     try {
+      // Room이 선택된 경우 해당 Room의 쿠폰만 가져오기
+      if (selectedRoomId) {
+        // 정렬 설정
+        let sort: string[] = [];
+        if (selectedSort === 'period') {
+          sort = ['expiryDate,asc'];
+        } else if (selectedSort === 'registration') {
+          sort = ['id,desc'];
+        } else if (selectedSort === 'distance') {
+          sort = ['id,desc'];
+        }
+
+        // 상태 필터 설정
+        let status: 'ALL' | 'AVAILABLE' | 'USED' = 'ALL';
+        if (selectedType === 'available') {
+          status = 'AVAILABLE';
+        } else if (selectedType === 'used') {
+          status = 'USED';
+        }
+
+        const response = await getGifticonsInRoom(
+          selectedRoomId,
+          status,
+          undefined, // keyword
+          { page: 0, size: 50, sort }
+        );
+
+        let filteredCoupons: GifticonListResponseDto[] = [];
+        if (response && response.content && Array.isArray(response.content)) {
+          // GifticonRoomResponseDto를 GifticonListResponseDto 형식으로 변환
+          filteredCoupons = response.content.map(item => ({
+            gifticonId: item.gifticonId,
+            brandName: item.brandName,
+            productName: item.productName,
+            imageUrl: item.imageUrl,
+            expiryDate: item.expiryDate,
+            dDay: item.dDay,
+            status: item.status,
+            originalPrice: 0, // Room API에서는 가격 정보가 없음
+            currentBalance: 0,
+            type: 'PRODUCT' as const, // 기본값
+          }));
+        }
+
+        // 만료 임박 필터 (클라이언트에서 필터링)
+        if (expiringSoon) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          filteredCoupons = filteredCoupons.filter(coupon => {
+            const expiryDate = new Date(coupon.expiryDate);
+            expiryDate.setHours(0, 0, 0, 0);
+            const daysDiff = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            return daysDiff >= 0 && daysDiff <= 7;
+          });
+        }
+
+        setCoupons(filteredCoupons);
+        console.log('[CouponList] Room 쿠폰 목록 설정 완료:', filteredCoupons.length, '개');
+        return;
+      }
+
+      // Room이 선택되지 않은 경우 전체 쿠폰 가져오기
       // 정렬 설정
       let sort: string[] = [];
       if (selectedSort === 'period') {
@@ -121,7 +179,7 @@ const CouponList = () => {
       // 에러 발생 시 빈 배열로 설정하여 앱이 크래시되지 않도록 함
       setCoupons([]);
     }
-  }, [selectedSort, selectedType, expiringSoon]);
+  }, [selectedSort, selectedType, expiringSoon, selectedRoomId]);
 
   // route params 변경 감지 및 상태 업데이트
   // route.params를 JSON.stringify로 비교하여 변경 감지
@@ -195,6 +253,51 @@ const CouponList = () => {
     }, [])
   );
 
+  // Room 목록 가져오기
+  const fetchRooms = useCallback(async () => {
+    try {
+      setLoadingRooms(true);
+      const roomList = await getMyRooms();
+      setRooms(roomList);
+      // 첫 번째 Room을 기본 선택
+      if (roomList.length > 0 && !selectedRoomId) {
+        setSelectedRoomId(roomList[0].roomId);
+      }
+    } catch (error) {
+      console.error('[CouponList] Room 목록 조회 실패:', error);
+    } finally {
+      setLoadingRooms(false);
+    }
+  }, [selectedRoomId]);
+
+  // Room 선택 핸들러
+  const handleFolderClick = useCallback((folderId: string) => {
+    const roomId = parseInt(folderId, 10);
+    if (!isNaN(roomId)) {
+      setSelectedRoomId(roomId);
+    }
+  }, []);
+
+  // Room 상세 정보 보기 (Long Press)
+  const handleFolderLongPress = useCallback((folderId: string) => {
+    const roomId = parseInt(folderId, 10);
+    if (!isNaN(roomId)) {
+      setSelectedRoomForDetail(roomId);
+      setRoomDetailModalVisible(true);
+    }
+  }, []);
+
+  // Room 목록을 FolderData 형식으로 변환
+  const folders: FolderData[] = rooms.map(room => ({
+    id: room.roomId.toString(),
+    title: room.name,
+    type: selectedRoomId === room.roomId ? 'selected' : 'unselected',
+  }));
+
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
   useEffect(() => {
     fetchCoupons();
   }, [fetchCoupons]);
@@ -203,7 +306,12 @@ const CouponList = () => {
     <ContentLayout headerTitle="내 쿠폰함">
       <ScrollView >
         <View style={styles.stickyHeader}>
-          <FolderList folders={folders} />
+          <FolderList 
+            folders={folders} 
+            onFolderClick={handleFolderClick}
+            onFolderLongPress={handleFolderLongPress}
+            onRoomCreated={fetchRooms}
+          />
         </View>
         <View style={styles.sharedCouponContainer}>
           <ShareCoupon />
@@ -227,6 +335,14 @@ const CouponList = () => {
           ))}
         </View>
       </ScrollView>
+      <RoomDetailModal
+        visible={roomDetailModalVisible}
+        roomId={selectedRoomForDetail}
+        onClose={() => {
+          setRoomDetailModalVisible(false);
+          setSelectedRoomForDetail(null);
+        }}
+      />
     </ContentLayout>
   );
 };

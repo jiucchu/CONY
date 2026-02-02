@@ -1,75 +1,73 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import styled from 'styled-components/native';
 import { COLORS } from '@/constants/colors';
 import { StyledText } from '@/utils/StyledText';
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-    width: 100,
-    aspectRatio: 1.4,
-  },
-  folderTab: (type: 'selected' | 'unselected') => ({
-    position: 'absolute',
-    top: -8,
-    width: 50,
-    height: 20,
-    backgroundColor: type === 'selected' ? COLORS.primary : COLORS.background.lightGray,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    zIndex: 0,
-  }),
-  folderBody: {
-    zIndex: 1,
-    width: '100%',
-    height: '100%',
-    paddingVertical: '10%',
-    paddingHorizontal: '15%',
-    borderRadius: 16,
-    alignItems: 'flex-end',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  folderText: {
-    alignItems: 'center',
-    gap: 4,
-  },
-});
+const Container = styled.TouchableOpacity`
+  position: relative;
+  width: 80px;
+  aspect-ratio: 1.4;
+`;
+
+const FolderTab = styled.View<{ type: 'selected' | 'unselected' }>`
+  position: absolute;
+  top: -8px;
+  width: 50px;
+  height: 20px;
+  background-color: ${(props) => 
+    props.type === 'selected' ? COLORS.primary : COLORS.background.lightGray};
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  z-index: 0;
+`;
+
+const FolderBody = styled.View<{ type: 'selected' | 'unselected' }>`
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  border-radius: 16px;
+  justify-content: flex-end;
+  background-color: ${(props) => 
+    props.type === 'selected' ? COLORS.primary : COLORS.background.gray};
+  shadow-color: #000;
+  shadow-offset: 0px 4px;
+  shadow-opacity: 0.1;
+  shadow-radius: 8px;
+  elevation: 3;
+`;
+
+const FolderText = styled.View`
+  align-items: center;
+  width: 60%;
+  gap: 4px;
+`;
 
 interface FolderProps {
   type?: 'selected' | 'unselected';
   title?: string;
   onPress?: () => void;
+  onLongPress?: () => void;
 }
 
-const Folder = ({ type = 'selected', title, onPress }: FolderProps) => {
+const Folder = ({ type = 'selected', title, onPress, onLongPress }: FolderProps) => {
+  const displayTitle = title && title.length > 7 ? `${title.substring(0, 7)}...` : title;
+  
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.9}>
-      <View style={styles.folderTab(type)} />
-      {type === 'selected' ? (
-        <View style={[styles.folderBody, { backgroundColor: COLORS.primary }]}>
-          <View style={styles.folderText}>
-            <StyledText fontSize={18} fontWeight={600} color={COLORS.text.white}>
-              {title}
-            </StyledText>
-          </View>
-        </View>
-      ) : (
-        <View style={[styles.folderBody, { backgroundColor: COLORS.background.gray }]}>
-          <View style={styles.folderText}>
-            <StyledText fontSize={18} fontWeight={600} color={COLORS.text.white}>
-              {title}
-            </StyledText>
-          </View>
-        </View>
-      )}
-    </TouchableOpacity>
+    <Container 
+      onPress={onPress} 
+      onLongPress={onLongPress}
+      activeOpacity={0.9}
+    >
+      <FolderTab type={type} />
+      <FolderBody type={type}>
+        <FolderText>
+          <StyledText fontSize={12} fontWeight={600} color={COLORS.text.white}>
+            {displayTitle}
+          </StyledText>
+        </FolderText>
+      </FolderBody>
+    </Container>
   );
 };
 
