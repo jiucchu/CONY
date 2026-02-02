@@ -38,8 +38,7 @@ WORKDIR /app
 # /app/build/libs/ 디렉토리에서 .jar 확장자를 가진 파일을 찾아 app.jar로 복사합니다.
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# Spring Boot 애플리케이션이 기본적으로 사용하는 8080 포트를 외부에 노출합니다.
-EXPOSE 8081
+EXPOSE 8082
 
 # 애플리케이션을 실행하는 명령어를 정의합니다.
 # java -jar app.jar 명령으로 Spring Boot 애플리케이션을 시작합니다.
