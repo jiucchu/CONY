@@ -27,6 +27,7 @@ import OAuthCallback from './src/page/auth/OAuthCallback';
 import OAuthWebView from './src/page/auth/OAuthWebView';
 import AlertPage from './src/page/mypage/AlertPage';
 import { COLORS } from './src/constants/colors';
+import { initializeFCM, setupFCMTokenRefresh } from './src/services/fcmService';
 
 const Stack = createStackNavigator();
 
@@ -110,7 +111,23 @@ function App() {
       }
     };
 
+    // FCM 초기화
+    const initFCM = async () => {
+      try {
+        // FCM 토큰 새로고침 리스너 설정
+        setupFCMTokenRefresh();
+        
+        // FCM 초기화 및 토큰 받기
+        setTimeout(async () => {
+          await initializeFCM();
+        }, 2000); // 앱이 완전히 로드된 후 초기화
+      } catch (error) {
+        console.error('[App] FCM 초기화 오류:', error);
+      }
+    };
+
     checkAuth();
+    initFCM();
   }, []);
 
   if (isLoading) {

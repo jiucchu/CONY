@@ -38,6 +38,9 @@ public class User extends BaseTimeEntity {
 
     private String profileImageUrl;
     private Long pointBalance;
+    
+    @Column(name = "fcm_token", length = 500)
+    private String fcmToken;
 
     @Builder
     public User(String name, String email, String profileImageUrl, Role role, OAuthProvider oauthProvider, String oauthId) {
@@ -64,5 +67,12 @@ public class User extends BaseTimeEntity {
 
     public String getRoleKey() {
         return this.role.name();
+    }
+
+    /**
+     * FCM 토큰 업데이트
+     */
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
     }
 }
