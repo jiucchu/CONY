@@ -6,14 +6,20 @@ import com.cony.payment.global.error.ErrorCode;
 import com.cony.payment.infrastructure.manage.config.ManageServerProperties;
 import com.cony.payment.infrastructure.manage.dto.AutoSaleTargetResponse;
 import com.cony.payment.infrastructure.manage.dto.GifticonResponse;
+import com.cony.payment.infrastructure.manage.dto.NearbyStoreIdsResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Collections;
 import java.util.List;
@@ -187,5 +193,75 @@ public class ManageClient {
         } catch (Exception e) {
             log.error("자동판매 처리 완료 표시 실패: gifticonId={}", gifticonId, e);
         }
+    }
+
+    /**
+     * 현재 위치 기반 거리별 매장 ID 목록 조회
+     * @param latitude 위도
+     * @param longitude 경도
+     * @return 거리 구간별(200m, 500m, 1000m) 매장 ID 리스트
+     */
+    public NearbyStoreIdsResponse getNearbyStoreIds(double latitude, double longitude) {
+        String baseUrl = manageServerProperties.getUrl() + "/v1/stores/nearby";
+        String url = UriComponentsBuilder.fromHttpUrl(baseUrl)
+                .queryParam("latitude", latitude)
+                .queryParam("longitude", longitude)
+                .toUriString();
+
+        log.info("Manage 서버 주변 매장 ID 조회 요청: lat={}, lon={}, url={}", latitude, longitude, url);
+
+        try {
+            ResponseEntity<ApiResponse<NearbyStoreIdsResponse>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    createHttpEntity(),
+                    new ParameterizedTypeReference<ApiResponse<NearbyStoreIdsResponse>>() {}
+            );
+
+            if(response.getBody() != null && response.getBody().getStatus() != null && response.getBody().getStatus() == "SUCCESS" && response.getBody().getData() != null) {
+                NearbyStoreIdsResponse data = response.getBody().getData();
+                log.info("주변 매장 조회 성공: 200m({}개), 500m({}개), 1km({}개)",
+                        data.getWithin200().size(),
+                        data.getWithin500().size(),
+                        data.getWithin1000().size());
+
+                return data;
+            }
+
+            // 데이터가 없으면 빈 객체 반환 (Null Pointer 방지)
+            return new NearbyStoreIdsResponse(
+                    Collections.emptyList(),
+                    Collections.emptyList(),
+                    Collections.emptyList()
+            );
+        } catch (Exception e) {
+            log.error("주변 매장 ID 조회 실패: lat={}, lon={}", latitude, longitude, e);
+            // 비즈니스 로직에 따라 빈 리스트를 줄지, 예외를 던질지 결정 (여기선 빈 리스트 반환으로 처리)
+            return new NearbyStoreIdsResponse(
+                    Collections.emptyList(),
+                    Collections.emptyList(),
+                    Collections.emptyList()
+            );
+        }
+    }
+
+
+    /**
+     * 현재 요청의 Authorization 헤더를 포함한 HttpEntity 생성
+     */
+    private HttpEntity<?> createHttpEntity() {
+        HttpHeaders headers = new HttpHeaders();
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                String authHeader = attributes.getRequest().getHeader("Authorization");
+                if (authHeader != null && !authHeader.isEmpty()) {
+                    headers.set("Authorization", authHeader);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Authorization 헤더 전파 중 오류 발생 (무시하고 진행): {}", e.getMessage());
+        }
+        return new HttpEntity<>(headers);
     }
 }
