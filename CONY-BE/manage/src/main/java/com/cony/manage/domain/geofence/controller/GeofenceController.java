@@ -3,6 +3,7 @@ package com.cony.manage.domain.geofence.controller;
 import com.cony.manage.domain.geofence.controller.docs.GeofenceControllerDocs;
 import com.cony.manage.domain.geofence.dto.GeofenceDto;
 import com.cony.manage.domain.geofence.service.GeofenceService;
+import com.cony.manage.global.auth.annotation.AuthUser;
 import com.cony.manage.global.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +19,17 @@ public class GeofenceController implements GeofenceControllerDocs {
 
     @Override
     @PostMapping("/nearby")
-    public ApiResponse<GeofenceDto.Response> getNearbyStores(@Valid @RequestBody GeofenceDto.Request request) {
+    public ApiResponse<GeofenceDto.Response> getNearbyStores(
+            @AuthUser Long userId,
+            @Valid @RequestBody GeofenceDto.Request request) {
 
         // 1. 로그: 요청 들어온 좌표 확인 (디버깅용)
-        log.info(">>>> Geofence Request: lat={}, lon={}, radius={}", request.getLat(), request.getLon(),
+        log.info(">>>> Geofence Request: user={}, lat={}, lon={}, radius={}", userId, request.getLat(),
+                request.getLon(),
                 request.getRadius());
 
         // 2. 서비스 호출 (Redis 조회 + 클러스터링 로직)
-        GeofenceDto.Response response = geofenceService.getNearbyStores(request);
+        GeofenceDto.Response response = geofenceService.getNearbyStores(userId, request);
 
         // 3. 응답 반환
         return ApiResponse.success(response);
@@ -37,7 +41,7 @@ public class GeofenceController implements GeofenceControllerDocs {
      */
     @PostMapping("/entry")
     public ApiResponse<Void> handleEntryEvent(
-            @com.cony.manage.global.auth.annotation.AuthUser Long userId,
+            @AuthUser Long userId,
             @RequestBody @Valid GeofenceDto.EntryRequest request) {
 
         log.info(">>>> Geofence Entry Event: user={}, geofenceId={}, lat={}, lon={}",

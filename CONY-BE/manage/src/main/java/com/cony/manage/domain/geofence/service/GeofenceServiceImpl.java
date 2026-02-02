@@ -29,6 +29,7 @@ public class GeofenceServiceImpl implements GeofenceService {
     // --- Redis Keys ---
     private static final String GEO_KEY = "stores:geo"; // 좌표 데이터 (Sorted Set)
     private static final String INFO_KEY_PREFIX = "stores:info:"; // 상세 정보 (Hash)
+    private static final String COOLDOWN_KEY_PREFIX = "geofence:cooldown:"; // 쿨다운 키 (Value: "1", TTL: 12h)
 
     // --- Geofence Settings ---
     private static final int MACRO_REFRESH_RADIUS = 2000; // 2km: 재요청 기준 반경 (Client용)
@@ -42,7 +43,7 @@ public class GeofenceServiceImpl implements GeofenceService {
     private static final int CLUSTER_DISTANCE_THRESHOLD = 200;// 200m 내 매장들은 하나로 뭉침
 
     @Override
-    public GeofenceDto.Response getNearbyStores(GeofenceDto.Request request) {
+    public GeofenceDto.Response getNearbyStores(Long userId, GeofenceDto.Request request) {
 
         // 1. [Redis GEO] 사용자 위치 기준 N미터 반경 내 매장 ID 스캔
         // -> GEORADIUS 명령어를 사용하여 O(N+log(M)) 속도로 매우 빠르게 조회
@@ -71,6 +72,11 @@ public class GeofenceServiceImpl implements GeofenceService {
         // 4. [Optimization] 클러스터링 및 개수 제한 (Android 제약 해결)
         // -> 너무 많은 매장을 줄여서 "최정예 리스트"로 만듦
         List<MapPoint> optimizedPoints = optimizePoints(validStores);
+
+        // [Cooldown Filtering] 이미 알림을 받은 매장/클러스터는 제외
+        if (userId != null) {
+            optimizedPoints.removeIf(point -> isCooldown(userId, point.getId()));
+        }
 
         // 5. 최종 응답 생성
         return buildResponse(request, optimizedPoints);
@@ -280,6 +286,8 @@ public class GeofenceServiceImpl implements GeofenceService {
                 if (count > 0) {
                     // 알림 전송
                     fcmNotificationService.sendGeofenceNotification(userId, storeName, count);
+                    // 쿨다운 설정 (12시간)
+                    setCooldown(userId, String.valueOf(storeId));
                 }
             }
         } catch (NumberFormatException e) {
@@ -331,6 +339,8 @@ public class GeofenceServiceImpl implements GeofenceService {
                 // 대표 매장명 외 N곳
                 String titleName = centerInfo.get("name") + " 외 " + (storeNames.size() - 1) + "곳";
                 fcmNotificationService.sendGeofenceNotification(userId, titleName, totalCount);
+                // 쿨다운 설정 (대표 매장 ID만 - 12시간)
+                setCooldown(userId, representativeIdStr);
             }
 
         } catch (NumberFormatException e) {
@@ -353,5 +363,21 @@ public class GeofenceServiceImpl implements GeofenceService {
 
     // 내부 데이터 전송용 레코드
     private record GeoResultData(String storeId, double distance) {
+    }
+
+    // --- Cooldown Helpers ---
+
+    private boolean isCooldown(Long userId, String storeId) {
+        // "C_" 접두사가 있어도 제거하고 ID로 체크 (클러스터 대표 ID = Store ID)
+        String realId = storeId.startsWith("C_") ? storeId.substring(2) : storeId;
+        String key = COOLDOWN_KEY_PREFIX + userId + ":" + realId;
+        return redisUtilService.existData(key);
+    }
+
+    private void setCooldown(Long userId, String storeId) {
+        String realId = storeId.startsWith("C_") ? storeId.substring(2) : storeId;
+        String key = COOLDOWN_KEY_PREFIX + userId + ":" + realId;
+        // 12시간 = 12 * 60 * 60 * 1000 ms
+        redisUtilService.setData(key, "1", 12 * 60 * 60 * 1000L);
     }
 }
