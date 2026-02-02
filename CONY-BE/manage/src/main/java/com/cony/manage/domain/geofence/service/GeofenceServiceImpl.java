@@ -3,54 +3,54 @@ package com.cony.manage.domain.geofence.service;
 import com.cony.manage.domain.geofence.dto.GeofenceDto;
 import com.cony.manage.domain.geofence.dto.GeofenceDto.InternalStoreData;
 import com.cony.manage.domain.geofence.dto.GeofenceDto.MapPoint;
+import com.cony.manage.domain.gifticon.enums.GifticonStatus;
+import com.cony.manage.domain.gifticon.repository.GifticonRepository;
+import com.cony.manage.domain.user.service.FcmNotificationService;
 import com.cony.manage.global.util.RedisUtilService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.geo.GeoResult;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResults;
 import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.RedisCallback;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.domain.geo.GeoReference;
-import org.springframework.data.redis.domain.geo.Metrics;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class GeofenceServiceImpl implements GeofenceService {
     private final RedisUtilService redisUtilService;
+    private final FcmNotificationService fcmNotificationService;
+    private final GifticonRepository gifticonRepository;
 
     // --- Redis Keys ---
-    private static final String GEO_KEY = "stores:geo";             // 좌표 데이터 (Sorted Set)
-    private static final String INFO_KEY_PREFIX = "stores:info:";    // 상세 정보 (Hash)
+    private static final String GEO_KEY = "stores:geo"; // 좌표 데이터 (Sorted Set)
+    private static final String INFO_KEY_PREFIX = "stores:info:"; // 상세 정보 (Hash)
 
     // --- Geofence Settings ---
-    private static final int MACRO_REFRESH_RADIUS = 2000;     // 2km: 재요청 기준 반경 (Client용)
-    private static final int SEARCH_RADIUS_BUFFER = 2500;     // 2.5km: 실제 DB 검색 반경 (여유분)
+    private static final int MACRO_REFRESH_RADIUS = 2000; // 2km: 재요청 기준 반경 (Client용)
+    private static final int SEARCH_RADIUS_BUFFER = 2500; // 2.5km: 실제 DB 검색 반경 (여유분)
 
-    private static final int MICRO_STORE_RADIUS = 100;        // 100m: 개별 매장 알림 반경
-    private static final int MICRO_CLUSTER_RADIUS = 300;      // 300m: 클러스터(묶음) 알림 반경
+    private static final int MICRO_STORE_RADIUS = 100; // 100m: 개별 매장 알림 반경
+    private static final int MICRO_CLUSTER_RADIUS = 300; // 300m: 클러스터(묶음) 알림 반경
 
     // --- Optimization Settings ---
-    private static final int ANDROID_GEOFENCE_LIMIT = 50;     // 안드로이드 제한 고려 (안전하게 50개)
+    private static final int ANDROID_GEOFENCE_LIMIT = 50; // 안드로이드 제한 고려 (안전하게 50개)
     private static final int CLUSTER_DISTANCE_THRESHOLD = 200;// 200m 내 매장들은 하나로 뭉침
 
     @Override
     public GeofenceDto.Response getNearbyStores(GeofenceDto.Request request) {
 
         // 1. [Redis GEO] 사용자 위치 기준 N미터 반경 내 매장 ID 스캔
-        //    -> GEORADIUS 명령어를 사용하여 O(N+log(M)) 속도로 매우 빠르게 조회
+        // -> GEORADIUS 명령어를 사용하여 O(N+log(M)) 속도로 매우 빠르게 조회
         GeoResults<RedisGeoCommands.GeoLocation<Object>> radiusResults = redisUtilService.getGeoRadius(
                 GEO_KEY,
                 request.getLat(),
                 request.getLon(),
-                SEARCH_RADIUS_BUFFER
-        );
+                SEARCH_RADIUS_BUFFER);
 
         // 검색 결과가 없으면 빈 리스트 반환
         if (radiusResults == null || radiusResults.getContent().isEmpty()) {
@@ -61,15 +61,15 @@ public class GeofenceServiceImpl implements GeofenceService {
         List<GeoResultData> geoDataList = radiusResults.getContent().stream()
                 .map(geoResult -> new GeoResultData(
                         geoResult.getContent().getName().toString(), // Store ID
-                        geoResult.getDistance().getValue()           // 거리 (m)
+                        geoResult.getDistance().getValue() // 거리 (m)
                 )).toList();
 
         // 3. [Redis Pipeline] 매장 상세 정보(Hash) 일괄 조회
-        //    -> 수십 개의 HGETALL 명령을 네트워크 1회 왕복으로 처리하여 성능 극대화
+        // -> 수십 개의 HGETALL 명령을 네트워크 1회 왕복으로 처리하여 성능 극대화
         List<InternalStoreData> validStores = fetchAndFilterStores(geoDataList, request.getBrandIds());
 
         // 4. [Optimization] 클러스터링 및 개수 제한 (Android 제약 해결)
-        //    -> 너무 많은 매장을 줄여서 "최정예 리스트"로 만듦
+        // -> 너무 많은 매장을 줄여서 "최정예 리스트"로 만듦
         List<MapPoint> optimizedPoints = optimizePoints(validStores);
 
         // 5. 최종 응답 생성
@@ -102,7 +102,8 @@ public class GeofenceServiceImpl implements GeofenceService {
             @SuppressWarnings("unchecked")
             Map<String, String> storeInfo = (Map<String, String>) pipelineResults.get(i);
 
-            if (storeInfo == null || storeInfo.isEmpty()) continue;
+            if (storeInfo == null || storeInfo.isEmpty())
+                continue;
 
             try {
                 Long brandId = Long.parseLong(storeInfo.get("brandId"));
@@ -160,7 +161,8 @@ public class GeofenceServiceImpl implements GeofenceService {
             while (it.hasNext()) {
                 InternalStoreData candidate = it.next();
                 // 두 매장 사이의 거리 계산 (Haversine Formula)
-                double dist = calculateDistance(center.getLat(), center.getLon(), candidate.getLat(), candidate.getLon());
+                double dist = calculateDistance(center.getLat(), center.getLon(), candidate.getLat(),
+                        candidate.getLon());
 
                 if (dist <= CLUSTER_DISTANCE_THRESHOLD) {
                     neighbors.add(candidate);
@@ -209,8 +211,8 @@ public class GeofenceServiceImpl implements GeofenceService {
                         .id(String.valueOf(store.getStoreId()))
                         .name(store.getStoreName())
                         .brandId(store.getBrandId()) // 프론트에서 브랜드 로고 찍어주려면 필요
-                        .lat(store.getLat())         // 개별 좌표 포함!
-                        .lon(store.getLon())         // 개별 좌표 포함!
+                        .lat(store.getLat()) // 개별 좌표 포함!
+                        .lon(store.getLon()) // 개별 좌표 포함!
                         .build())
                 .toList();
 
@@ -249,6 +251,107 @@ public class GeofenceServiceImpl implements GeofenceService {
         return dist;
     }
 
+    @Override
+    public void handleEntryEvent(Long userId, GeofenceDto.EntryRequest request) {
+        String geofenceId = request.getGeofenceId();
+
+        // 1. 클러스터 여부 확인
+        if (geofenceId.startsWith("C_")) {
+            handleClusterEntry(userId, geofenceId);
+        } else {
+            handleStoreEntry(userId, geofenceId);
+        }
+    }
+
+    private void handleStoreEntry(Long userId, String storeIdStr) {
+        // 단일 매장: ID로 매장 정보 조회 -> 브랜드 확인 -> 기프티콘 확인
+        try {
+            Long storeId = Long.parseLong(storeIdStr);
+            Map<String, String> storeInfo = getStoreInfo(storeId);
+
+            if (storeInfo != null && !storeInfo.isEmpty()) {
+                Long brandId = Long.parseLong(storeInfo.get("brandId"));
+                String storeName = storeInfo.get("name");
+
+                // 해당 브랜드의 사용 가능한 기프티콘 개수 확인
+                int count = gifticonRepository.countByUserIdAndBrandIdAndStatus(userId, brandId,
+                        GifticonStatus.NOT_USED);
+
+                if (count > 0) {
+                    // 알림 전송
+                    fcmNotificationService.sendGeofenceNotification(userId, storeName, count);
+                }
+            }
+        } catch (NumberFormatException e) {
+            log.error("Invalid Store ID format: {}", storeIdStr);
+        }
+    }
+
+    private void handleClusterEntry(Long userId, String clusterId) {
+        // 클러스터: 대표 ID 추출 -> 주변 매장 검색 -> 포함된 모든 브랜드 수집 -> 기프티콘 확인
+        String representativeIdStr = clusterId.substring(2); // "C_" 제거
+        try {
+            Long centerStoreId = Long.parseLong(representativeIdStr);
+            Map<String, String> centerInfo = getStoreInfo(centerStoreId);
+
+            if (centerInfo == null || centerInfo.isEmpty())
+                return;
+
+            double centerLat = Double.parseDouble(centerInfo.get("lat"));
+            double centerLon = Double.parseDouble(centerInfo.get("lon"));
+
+            // 클러스터 반경 내 매장 검색 (300m + 버퍼)
+            GeoResults<RedisGeoCommands.GeoLocation<Object>> radiusResults = redisUtilService.getGeoRadius(
+                    GEO_KEY, centerLat, centerLon, MICRO_CLUSTER_RADIUS + 50);
+
+            if (radiusResults == null || radiusResults.getContent().isEmpty())
+                return;
+
+            // 검색된 매장들의 브랜드 ID 수집
+            Set<Long> brandIds = new HashSet<>();
+            List<String> storeNames = new ArrayList<>();
+
+            for (GeoResult<RedisGeoCommands.GeoLocation<Object>> geoResult : radiusResults.getContent()) {
+                String foundStoreIdStr = geoResult.getContent().getName().toString();
+                Map<String, String> info = getStoreInfo(Long.parseLong(foundStoreIdStr));
+                if (info != null) {
+                    brandIds.add(Long.parseLong(info.get("brandId")));
+                    storeNames.add(info.get("name"));
+                }
+            }
+
+            // 브랜드들 중 기프티콘이 있는 것 확인
+            int totalCount = 0;
+            if (!brandIds.isEmpty()) {
+                totalCount = gifticonRepository.countByUserIdAndBrandIdInAndStatus(userId, brandIds,
+                        GifticonStatus.NOT_USED);
+            }
+
+            if (totalCount > 0) {
+                // 대표 매장명 외 N곳
+                String titleName = centerInfo.get("name") + " 외 " + (storeNames.size() - 1) + "곳";
+                fcmNotificationService.sendGeofenceNotification(userId, titleName, totalCount);
+            }
+
+        } catch (NumberFormatException e) {
+            log.error("Invalid Cluster ID format: {}", clusterId);
+        }
+    }
+
+    private Map<String, String> getStoreInfo(Long storeId) {
+        String key = INFO_KEY_PREFIX + storeId;
+        Map<Object, Object> rawMap = redisUtilService.getTemplate().opsForHash().entries(key);
+        if (rawMap == null)
+            return Collections.emptyMap();
+
+        Map<String, String> result = new HashMap<>();
+        for (Map.Entry<Object, Object> entry : rawMap.entrySet()) {
+            result.put(entry.getKey().toString(), entry.getValue().toString());
+        }
+        return result;
+    }
+
     // 내부 데이터 전송용 레코드
-    private record GeoResultData(String storeId, double distance) {}
+    private record GeoResultData(String storeId, double distance) {
+    }
 }
