@@ -66,7 +66,7 @@ class GeofenceEntryNotificationTest {
                 when(hashOperations.entries("stores:info:" + storeId)).thenReturn(storeInfo);
 
                 // Repository Mocking (기프티콘 개수)
-                when(gifticonRepository.countByUserIdAndBrandIdAndStatus(eq(userId), eq(1L),
+                when(gifticonRepository.countByUserIdAndBrandIdAndStatus(eq(userId), eq(1),
                                 eq(GifticonStatus.NOT_USED)))
                                 .thenReturn(3);
 

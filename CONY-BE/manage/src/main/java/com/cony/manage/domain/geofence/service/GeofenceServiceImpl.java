@@ -276,7 +276,7 @@ public class GeofenceServiceImpl implements GeofenceService {
             Map<String, String> storeInfo = getStoreInfo(storeId);
 
             if (storeInfo != null && !storeInfo.isEmpty()) {
-                Long brandId = Long.parseLong(storeInfo.get("brandId"));
+                Integer brandId = Integer.parseInt(storeInfo.get("brandId"));
                 String storeName = storeInfo.get("name");
 
                 // 해당 브랜드의 사용 가능한 기프티콘 개수 확인

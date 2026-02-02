@@ -64,7 +64,7 @@ public interface GifticonRepository extends JpaRepository<Gifticon, Long>, JpaSp
         // --- 알림 관련 메서드 ---
 
         // 특정 브랜드의 사용 가능한 기프티콘 개수
-        int countByUserIdAndBrandIdAndStatus(Long userId, Long brandId, GifticonStatus status);
+        int countByUserIdAndBrandIdAndStatus(Long userId, Integer brandId, GifticonStatus status);
 
         // 여러 브랜드 중 사용 가능한 기프티콘 개수 (클러스터용)
         int countByUserIdAndBrandIdInAndStatus(Long userId, java.util.Collection<Long> brandIds, GifticonStatus status);
