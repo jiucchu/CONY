@@ -7,6 +7,8 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
+import com.cony.manage.domain.gifticon.service.GifticonService;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Component;
 public class BatchJobScheduler {
     private final JobLauncher jobLauncher;
     private final Job storeCacheJob;
+    private final GifticonService gifticonService;
 
     // 애플리케이션 시작이 완료되면 실행
     @Async
@@ -43,6 +46,20 @@ public class BatchJobScheduler {
             }
         } catch (Exception e) {
             log.error(">>>> [Batch Exception] Failed to execute cache warm-up job", e);
+        }
+    }
+
+    /**
+     * 매일 오전 10시에 기프티콘 유효기간 만료 임박 알림 전송
+     * - 대상: 유효기간이 2주 or 1달 남은 기프티콘
+     */
+    @Scheduled(cron = "0 0 10 * * *")
+    public void scheduleGifticonExpirationCheck() {
+        log.info(">>>> [Scheduled Task] Gifticon Expiration Notification Check Started <<<<");
+        try {
+            gifticonService.sendExpirationNotifications();
+        } catch (Exception e) {
+            log.error(">>>> [Scheduled Task ERROR] Failed to send expiration notifications", e);
         }
     }
 }
