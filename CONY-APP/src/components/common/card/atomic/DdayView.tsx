@@ -10,11 +10,10 @@ interface DdayViewProps {
 }
 
 const CommonContainer = styled.View<{ isExpired: boolean; height: number }>`
+  height: ${(props: { isExpired: boolean; height: number }) => props.height}px;
   background-color: ${(props: { isExpired: boolean; height: number }) => props.isExpired ? COLORS.text.secondary : COLORS.primary};
   border-bottom-left-radius: ${(props: { isExpired: boolean; height: number }) => props.height / 2}px;
-  height: ${(props: { isExpired: boolean; height: number }) => props.height}px;
-  padding-horizontal: 8px;
-  padding-vertical: 6px;
+  padding: 6px 10px;
   justify-content: center;
   align-items: center;
 `;
@@ -41,9 +40,9 @@ const DdayView: React.FC<DdayViewProps> = ({ type, dday, size }) => {
   const validDday = isNaN(dday) || !isFinite(dday) ? 0 : dday;
   const isExpired = validDday <= 0;
   const displayText = isExpired ? '기간 만료' : `D-${validDday}`;
-  const fontSize = size === 'Small' ? 8 : size === 'Medium' ? 10 : 12;
+  const fontSize = size === 'Small' ? 10 : size === 'Medium' ? 12 : 14;
   const containerSize = size === 'Small' ? 40 : size === 'Medium' ? 50 : 60;
-  const height = containerSize * 0.45;
+  const height = containerSize * 0.65;
 
   if (type === 'common') {
     return (

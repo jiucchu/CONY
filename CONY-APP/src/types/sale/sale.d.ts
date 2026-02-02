@@ -19,7 +19,9 @@ export interface SaleListResponseDto {
 
 export interface SaleRequestDto {
   gifticonId: number;
+  originalPrice: number;
   salePrice: number;
+  scheduledSaleDate?: string; // ISO date string (YYYY-MM-DD)
 }
 
 export interface SaleUpdateRequestDto {

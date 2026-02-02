@@ -116,6 +116,10 @@ interface InfoModifyCardProps {
   type?: 'product' | 'amount';
   price?: number;
   expirationDate?: string;
+  // 자동 판매 설정
+  isAutoSellEnabled?: boolean;
+  scheduledSaleDate?: string;
+  plannedSalePrice?: number;
   onImageEdit?: () => void;
   onGiftCardNameChange?: (value: string) => void;
   onBarcodeChange?: (value: string) => void;
@@ -124,6 +128,9 @@ interface InfoModifyCardProps {
   onTypeChange?: (type: 'product' | 'amount') => void;
   onPriceChange?: (value: number) => void;
   onExpirationDateChange?: (value: string) => void;
+  onAutoSellToggle?: (enabled: boolean) => void;
+  onSaleDateChange?: (date: string) => void;
+  onSaleAmountChange?: (amount: number) => void;
 }
 
 const InfoModifyCard = ({
@@ -135,6 +142,9 @@ const InfoModifyCard = ({
   type = 'product',
   price = 0,
   expirationDate = '',
+  isAutoSellEnabled = false,
+  scheduledSaleDate = '',
+  plannedSalePrice = 0,
   onImageEdit,
   onGiftCardNameChange,
   onBarcodeChange,
@@ -143,6 +153,9 @@ const InfoModifyCard = ({
   onTypeChange,
   onPriceChange,
   onExpirationDateChange,
+  onAutoSellToggle,
+  onSaleDateChange,
+  onSaleAmountChange,
 }: InfoModifyCardProps) => {
   const [localImageUrl, setLocalImageUrl] = useState(imageUrl);
   const [localGiftCardName, setLocalGiftCardName] = useState(giftCardName);
@@ -375,7 +388,14 @@ const InfoModifyCard = ({
           />
         </View>
 
-        <AutoSellInfo />
+        <AutoSellInfo
+          isAutoSellEnabled={isAutoSellEnabled}
+          saleDate={scheduledSaleDate}
+          saleAmount={plannedSalePrice}
+          onAutoSellToggle={onAutoSellToggle}
+          onSaleDateChange={onSaleDateChange}
+          onSaleAmountChange={onSaleAmountChange}
+        />
       </View>
     </View>
   );

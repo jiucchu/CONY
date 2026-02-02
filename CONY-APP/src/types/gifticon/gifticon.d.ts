@@ -28,6 +28,9 @@ export interface GifticonRegisterRequestDto {
   originalPrice: number;
   type: GifticonType;
   imageUrl: string;
+  // 자동 판매 설정
+  scheduledSaleDate?: string; // ISO date string (YYYY-MM-DD)
+  plannedSalePrice?: number;
 }
 
 export interface GifticonUpdateRequestDto {
@@ -69,9 +72,12 @@ export interface GifticonDetailResponseDto {
   categoryName?: string;
   gifticonType: GifticonType;
   histories: GifticonUsageLogResponseDto[];
-  // 프론트엔드 전용 필드
-  autoSellDate?: string;
-  autoSellAmount?: number;
+  // 자동 판매 설정 (백엔드 필드명)
+  scheduledSaleDate?: string;
+  plannedSalePrice?: number;
+  // 프론트엔드 전용 필드 (하위 호환성을 위해 유지)
+  autoSellDate?: string; // scheduledSaleDate의 별칭
+  autoSellAmount?: number; // plannedSalePrice의 별칭
   isUsed?: boolean;
   isExpired?: boolean;
   isDeleted?: boolean;
