@@ -17,6 +17,9 @@ public class RoomResponseDto {
     @Schema(description = "방 이름", example = "친구 모임")
     private String name;
 
+    @Schema(description = "방 참여 코드", example = "a1b2c3d4")
+    private String roomCode;
+
     @Schema(description = "멤버 수", example = "5")
     private int memberCount;
 
@@ -27,6 +30,7 @@ public class RoomResponseDto {
         return RoomResponseDto.builder()
                 .roomId(room.getId())
                 .name(room.getName())
+                .roomCode(room.getRoomCode())
                 .memberCount(memberCount)
                 .thumbnailUrls(thumbnailUrls)
                 .build();
