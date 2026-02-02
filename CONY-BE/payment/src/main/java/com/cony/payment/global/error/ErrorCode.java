@@ -51,7 +51,10 @@ public enum ErrorCode {
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "신고 정보를 찾을 수 없습니다."),
     ALREADY_REPORTED(HttpStatus.BAD_REQUEST, "R002", "이미 신고한 판매글입니다."),
     CANNOT_REPORT_OWN_SALE(HttpStatus.BAD_REQUEST, "R003", "본인의 판매글은 신고할 수 없습니다."),
-    REPORT_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "R004", "이미 처리된 신고입니다.");
+    REPORT_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "R004", "이미 처리된 신고입니다."),
+
+    // Forbidden
+    FORBIDDEN_USER(HttpStatus.FORBIDDEN, "F001", "접근 권한이 없습니다.");
 
     private final HttpStatus status;
     private final String code;          // 에러 분기용 코드

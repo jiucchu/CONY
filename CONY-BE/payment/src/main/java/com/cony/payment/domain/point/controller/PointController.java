@@ -4,6 +4,7 @@ import com.cony.payment.domain.point.controller.docs.PointControllerDocs;
 import com.cony.payment.domain.point.dto.PointChargeRequest;
 import com.cony.payment.domain.point.dto.PointResponse;
 import com.cony.payment.domain.point.service.PointService;
+import com.cony.payment.global.auth.annotation.AuthUser;
 import com.cony.payment.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,14 +22,13 @@ public class PointController implements PointControllerDocs {
 
     @Override
     @GetMapping
-    public ApiResponse<PointResponse> getPointBalance() {
-        Long testUserId = 1L;
-        log.info("포인트 잔액 조회 (테스트): userId={}", testUserId);
+    public ApiResponse<PointResponse> getPointBalance(@AuthUser Long userId) {
+        log.info("포인트 잔액 조회: userId={}", userId);
 
-        Long balance = pointService.getPointBalance(testUserId);
+        Long balance = pointService.getPointBalance(userId);
 
         PointResponse response = PointResponse.builder()
-                .userId(testUserId)
+                .userId(userId)
                 .pointBalance(balance)
                 .build();
 

@@ -24,4 +24,7 @@ public interface GifticonService {
     List<AutoSaleTargetResponseDto> getAutoSaleTargetsWithoutNotification();
     List<AutoSaleTargetResponseDto> getAutoSaleTargetsWithNotification();
     void markAutoSaleProcessed(Long gifticonId);
+
+    // 내부 호출용 (Batch)
+    List<GifticonResponseDto> getGifticonsByIds(List<Long> gifticonIds);
 }

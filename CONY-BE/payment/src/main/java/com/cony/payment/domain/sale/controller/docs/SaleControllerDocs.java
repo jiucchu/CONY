@@ -4,9 +4,11 @@ import com.cony.payment.domain.sale.dto.SaleListResponseDto;
 import com.cony.payment.domain.sale.dto.SaleRequestDto;
 import com.cony.payment.domain.sale.dto.SaleStatsDto;
 import com.cony.payment.domain.sale.dto.SaleUpdateRequestDto;
+import com.cony.payment.domain.sale.dto.SuggestionApproveRequestDto;
 import com.cony.payment.domain.sale.enums.SaleCategory;
 import com.cony.payment.domain.sale.enums.SaleSort;
 import com.cony.payment.domain.sale.enums.SaleStatus;
+import com.cony.payment.global.auth.annotation.AuthUser;
 import com.cony.payment.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -34,7 +36,8 @@ public interface SaleControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "기프티콘을 찾을 수 없음", content = @Content)
     })
     ApiResponse<Long> createSale(
-            @RequestBody(required = true) @Valid SaleRequestDto requestDto
+            @RequestBody(required = true) @Valid SaleRequestDto requestDto,
+            @AuthUser Long userId
     );
 
     @Operation(summary = "판매중 목록 조회 (장터)", description = "판매중(ON_SALE) 상태의 상품 목록을 조회합니다. 검색, 필터, 정렬을 지원합니다.")
@@ -74,7 +77,8 @@ public interface SaleControllerDocs {
     })
     ApiResponse<Void> updateSale(
             @Parameter(description = "판매글 ID", required = true) @PathVariable Long saleId,
-            @RequestBody(required = true) @Valid SaleUpdateRequestDto requestDto
+            @RequestBody(required = true) @Valid SaleUpdateRequestDto requestDto,
+            @AuthUser Long userId
     );
 
     @Operation(summary = "내 판매글 목록 조회", description = "내 판매글 목록을 조회합니다. 모든 상태(PENDING, ON_SALE, SOLD_OUT)를 조회할 수 있습니다.")
@@ -84,21 +88,23 @@ public interface SaleControllerDocs {
     ApiResponse<Page<SaleListResponseDto>> getMySales(
             @Parameter(description = "상태 필터", schema = @Schema(allowableValues = {"PENDING", "ON_SALE", "SOLD_OUT"})) @RequestParam(required = false) SaleStatus status,
             @Parameter(description = "검색어 (브랜드명/상품명)") @RequestParam(required = false) String keyword,
-            @ParameterObject Pageable pageable
+            @ParameterObject Pageable pageable,
+            @AuthUser Long userId
     );
 
     @Operation(summary = "내 판매 통계 조회", description = "내 판매글의 상태별 개수를 조회합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
-    ApiResponse<SaleStatsDto> getMySaleStats();
+    ApiResponse<SaleStatsDto> getMySaleStats(@AuthUser Long userId);
 
     @Operation(summary = "내 판매완료 목록 조회", description = "판매완료(SOLD_OUT) 상태의 내 판매글 목록을 조회합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
     ApiResponse<Page<SaleListResponseDto>> getMySoldSales(
-            @ParameterObject Pageable pageable
+            @ParameterObject Pageable pageable,
+            @AuthUser Long userId
     );
 
     @Operation(summary = "판매 취소", description = "판매글을 취소(삭제)합니다. PENDING, ON_SALE 상태에서만 취소 가능합니다.")
@@ -108,7 +114,8 @@ public interface SaleControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "취소 불가 상태 (SOLD_OUT)", content = @Content)
     })
     ApiResponse<Void> cancelSale(
-            @Parameter(description = "판매글 ID", required = true) @PathVariable Long saleId
+            @Parameter(description = "판매글 ID", required = true) @PathVariable Long saleId,
+            @AuthUser Long userId
     );
 
     @Operation(summary = "판매 시작", description = "PENDING 상태의 판매글을 수동으로 ON_SALE로 변경합니다.")
@@ -117,12 +124,24 @@ public interface SaleControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "PENDING 상태가 아님", content = @Content)
     })
     ApiResponse<Void> startSale(
-            @Parameter(description = "판매글 ID", required = true) @PathVariable Long saleId
+            @Parameter(description = "판매글 ID", required = true) @PathVariable Long saleId,
+            @AuthUser Long userId
     );
 
     @Operation(summary = "시스템 제안 목록 조회", description = "유효기간 1달 이내이면서 아직 판매 등록되지 않은 기프티콘 목록을 조회합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
-    ApiResponse<List<SaleListResponseDto>> getSaleSuggestions();
+    ApiResponse<List<SaleListResponseDto>> getSaleSuggestions(@AuthUser Long userId);
+
+    @Operation(summary = "시스템 제안 승인", description = "유효기간 임박 기프티콘 판매를 승인하여 즉시 판매 등록합니다. 판매가격을 지정하지 않으면 기본 20% 할인이 적용됩니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "등록 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 판매 등록된 기프티콘", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "기프티콘을 찾을 수 없음", content = @Content)
+    })
+    ApiResponse<Long> approveSuggestion(
+            @RequestBody(required = true) @Valid SuggestionApproveRequestDto requestDto,
+            @AuthUser Long userId
+    );
 }

@@ -50,10 +50,17 @@ public class Sale extends BaseTimeEntity {
     @Column(name = "scheduled_sale_date")
     private LocalDate scheduledSaleDate;
 
+    // 조회 성능을 위한 필드 추가
+    @Column(name = "brand_id")
+    private Integer brandId;
+
+    @Column(name = "expiry_date")
+    private LocalDate expiryDate;
+
     @Builder
-    public Sale(Long sellerId, Long gifticonId, Integer brandId, LocalDate expiryDate,
-            Integer originalPrice, Integer salePrice,
-            SaleStatus status, LocalDate scheduledSaleDate) {
+    public Sale(Long sellerId, Long gifticonId, Integer originalPrice, Integer salePrice,
+                SaleStatus status, LocalDate scheduledSaleDate,
+                Integer brandId, LocalDate expiryDate) {
         this.sellerId = sellerId;
         this.gifticonId = gifticonId;
         this.brandId = brandId; // 브랜드 ID 저장
@@ -62,6 +69,8 @@ public class Sale extends BaseTimeEntity {
         this.salePrice = salePrice;
         this.discountRate = calculateDiscountRate(originalPrice, salePrice);
         this.scheduledSaleDate = scheduledSaleDate;
+        this.brandId = brandId;
+        this.expiryDate = expiryDate;
 
         // scheduledSaleDate가 있으면 PENDING, 없으면 ON_SALE
         if (scheduledSaleDate != null && scheduledSaleDate.isAfter(LocalDate.now())) {

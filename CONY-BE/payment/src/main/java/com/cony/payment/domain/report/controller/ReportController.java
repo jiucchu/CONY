@@ -3,6 +3,7 @@ package com.cony.payment.domain.report.controller;
 import com.cony.payment.domain.report.controller.docs.ReportControllerDocs;
 import com.cony.payment.domain.report.dto.ReportRequestDto;
 import com.cony.payment.domain.report.service.ReportService;
+import com.cony.payment.global.auth.annotation.AuthUser;
 import com.cony.payment.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +18,9 @@ public class ReportController implements ReportControllerDocs {
     @Override
     @PostMapping
     public ApiResponse<Long> createReport(
-            @RequestBody ReportRequestDto request) {
-        Long testUserId = 1L;
-        Long reportId = reportService.createReport(testUserId, request);
+            @RequestBody ReportRequestDto request,
+            @AuthUser Long userId) {
+        Long reportId = reportService.createReport(userId, request);
         return ApiResponse.success("신고가 접수되었습니다.", reportId);
     }
 

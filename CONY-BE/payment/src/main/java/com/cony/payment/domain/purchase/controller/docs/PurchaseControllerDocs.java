@@ -1,6 +1,7 @@
 package com.cony.payment.domain.purchase.controller.docs;
 
 import com.cony.payment.domain.purchase.dto.PurchaseResponseDto;
+import com.cony.payment.global.auth.annotation.AuthUser;
 import com.cony.payment.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -21,9 +22,10 @@ public interface PurchaseControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "포인트 부족 / 본인 상품 구매 / 판매 불가 상태", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "판매글을 찾을 수 없음", content = @Content)
     })
-    
+
     ApiResponse<Void> purchaseGifticon(
-            @Parameter(description = "구매할 판매글 ID", required = true) @PathVariable Long saleId
+            @Parameter(description = "구매할 판매글 ID", required = true) @PathVariable Long saleId,
+            @AuthUser Long userId
     );
 
     @Operation(summary = "내 구매 목록 조회", description = "내 구매 내역을 페이징하여 조회합니다.")
@@ -31,6 +33,7 @@ public interface PurchaseControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
     ApiResponse<Page<PurchaseResponseDto>> getMyPurchases(
-            @ParameterObject Pageable pageable
+            @ParameterObject Pageable pageable,
+            @AuthUser Long userId
     );
 }

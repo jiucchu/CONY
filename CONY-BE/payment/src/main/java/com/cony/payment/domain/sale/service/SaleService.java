@@ -9,6 +9,7 @@ import com.cony.payment.domain.sale.enums.SaleCategory;
 import com.cony.payment.domain.sale.enums.SaleSort;
 import com.cony.payment.domain.sale.enums.SaleStatus;
 import com.cony.payment.domain.sale.repository.SaleRepository;
+import com.cony.payment.domain.sale.repository.SaleSpecification;
 import com.cony.payment.domain.user.repository.UserRepository;
 import com.cony.payment.global.error.CustomException;
 import com.cony.payment.global.error.ErrorCode;
@@ -19,9 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResult;
 import org.springframework.data.geo.GeoResults;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -59,31 +62,25 @@ public class SaleService {
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
 
-        // 기프티콘 정보 조회 (Manage 서버 연동)
-        GifticonResponse gifticon = null;
-        try {
-            if (!manageClient.existsGifticon(request.getGifticonId())) {
-                throw new CustomException(ErrorCode.GIFTICON_NOT_FOUND);
-            }
-            // 기프티콘 상세 정보 가져오기 (brandId, expiryDate 확보 위해)
-            gifticon = manageClient.getGifticon(request.getGifticonId());
-        } catch (Exception e) {
-            log.warn("Manage 서버 연동 실패, 기프티콘 검증 스킵: gifticonId={}", request.getGifticonId());
-            // 필수 정보가 없으면 진행 불가할 수 있음. 혹은 null로 저장.
-            // 여기선 예외 발생보다는 null 처리를 하거나, throw를 던질 수 있음.
-            // 일단 기존 로직 유지하되, gifticon 객체가 없을 수 있음을 감안.
-        }
-
         // 이미 판매 등록된 기프티콘인지 확인 (중복 방지)
         if (saleRepository.existsByGifticonId(request.getGifticonId())) {
             throw new CustomException(ErrorCode.DUPLICATE_SALE);
         }
 
+        // 기프티콘 정보 조회 (Manage 서버 연동)
+        GifticonResponse gifticon;
+        try {
+            gifticon = manageClient.getGifticon(request.getGifticonId());
+        } catch (Exception e) {
+            log.warn("Manage 서버 연동 실패 또는 기프티콘 없음: gifticonId={}", request.getGifticonId());
+            throw new CustomException(ErrorCode.GIFTICON_NOT_FOUND);
+        }
+
         Sale sale = Sale.builder()
                 .sellerId(sellerId)
                 .gifticonId(request.getGifticonId())
-                .brandId(gifticon != null ? gifticon.getBrandId() : null) // 브랜드 ID 설정
-                .expiryDate(gifticon != null ? gifticon.getExpiryDate() : null) // 유효기간 설정
+                .brandId(gifticon.getBrandId()) // 브랜드 ID 저장
+                .expiryDate(gifticon.getExpiryDate()) // 유효기간 저장
                 .originalPrice(request.getOriginalPrice())
                 .salePrice(request.getSalePrice())
                 .scheduledSaleDate(request.getScheduledSaleDate())
@@ -105,13 +102,27 @@ public class SaleService {
      * 판매 목록 검색 (필터/정렬 포함)
      */
     public Page<SaleListResponseDto> searchSales(SaleSearchCondition condition, Pageable pageable) {
-        // 1. 판매중인 상품 전체 조회
-        Page<Sale> salePage = saleRepository.findByStatusOrderByCreatedAtDesc(SaleStatus.ON_SALE, pageable);
+        // 정렬 조건 처리 (최신순, 유효기간순)
+        // 거리순(DISTANCE)은 Redis가 필요하므로 별도 처리, 나머지는 DB 정렬
+        if (condition.getSort() != SaleSort.DISTANCE) {
+            Sort sort = Sort.by(Sort.Direction.DESC, "createdAt"); // 기본 최신순
+            if (condition.getSort() == SaleSort.EXPIRY) {
+                sort = Sort.by(Sort.Direction.ASC, "expiryDate"); // 유효기간 임박순
+            }
+            pageable = org.springframework.data.domain.PageRequest.of(
+                    pageable.getPageNumber(), pageable.getPageSize(), sort);
+        }
+
+        // DB 쿼리 실행 (Specification 활용 - 상태, 브랜드ID, 판매자ID 등)
+        Specification<Sale> spec = SaleSpecification.search(condition);
+        Page<Sale> salePage = saleRepository.findAll(spec, pageable);
         List<Sale> sales = salePage.getContent();
 
         if (sales.isEmpty()) {
             return new PageImpl<>(Collections.emptyList(), pageable, 0);
         }
+
+        // --- 여기서부터는 DTO 변환 및 추가 정보 매핑 ---
 
         // 2. 기프티콘 ID 목록 추출
         List<Long> gifticonIds = sales.stream()
@@ -119,7 +130,7 @@ public class SaleService {
                 .distinct()
                 .collect(Collectors.toList());
 
-        // 3. Manage 서버에서 기프티콘 정보 조회
+        // 3. Manage 서버에서 기프티콘 정보 조회 (Batch)
         Map<Long, GifticonResponse> gifticonMap = fetchGifticonInfos(gifticonIds);
 
         // 4. Sale + Gifticon 정보로 DTO 변환
@@ -127,13 +138,44 @@ public class SaleService {
                 .map(sale -> SaleListResponseDto.of(sale, gifticonMap.get(sale.getGifticonId())))
                 .collect(Collectors.toList());
 
-        // 5. 필터링 적용
+        // 5. 메모리 필터링 (키워드, 카테고리, 브랜드 이름)
+        // -> 브랜드ID로 검색이 아니라 '브랜드 이름' 검색인 경우 여기서 처리해야 함 (현재 구조상 한계)
+        // -> DB 필터링으로 못한 부분만 여기서 수행
         dtoList = applyFilters(dtoList, condition);
 
-        // 6. 정렬 적용
-        dtoList = applySorting(dtoList, condition);
+        // 6. 거리순 정렬 (Redis Geo)
+        // -> 유효기간/최신순은 이미 DB에서 정렬해왔으므로 패스
+        if (condition.getSort() == SaleSort.DISTANCE) {
+            dtoList = applyDistanceSorting(dtoList, condition);
+        }
 
+        // 필터링 후 개수가 줄어들 수 있으므로 Page 객체 재생성 (TotalCount 부정확 주의)
+        // *주의*: 메모리 필터링이 들어가면 페이징 처리가 꼬일 수 있음.
+        // 완벽한 해결을 위해서는 Manage 서버의 브랜드 정보를 동기화하거나
+        // 검색 전용 인덱스(Elasticsearch 등)를 도입해야 함.
+        // 현재는 '조회된 페이지 내에서 필터링' 하는 방식으로 동작함.
         return new PageImpl<>(dtoList, pageable, salePage.getTotalElements());
+    }
+
+    /**
+     * 거리순 정렬 적용
+     */
+    private List<SaleListResponseDto> applyDistanceSorting(List<SaleListResponseDto> list, SaleSearchCondition condition) {
+        Map<String, Double> brandDistanceMap = Collections.emptyMap();
+        if (condition.getLatitude() != null && condition.getLongitude() != null) {
+            brandDistanceMap = getBrandMinDistances(condition.getLatitude(), condition.getLongitude());
+        }
+
+        if (brandDistanceMap.isEmpty()) {
+            return list;
+        }
+
+        Map<String, Double> finalBrandDistanceMap = brandDistanceMap;
+        return list.stream()
+                .sorted(Comparator.comparing(
+                        (SaleListResponseDto dto) -> finalBrandDistanceMap.getOrDefault(dto.getBrandName(), Double.MAX_VALUE)
+                ).thenComparing(SaleListResponseDto::getCreatedAt, Comparator.reverseOrder()))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -187,60 +229,6 @@ public class SaleService {
             return true;
         }
         return dto.getBrandName() != null && dto.getBrandName().equalsIgnoreCase(brand);
-    }
-
-    /**
-     * 정렬 적용
-     */
-    private List<SaleListResponseDto> applySorting(List<SaleListResponseDto> list, SaleSearchCondition condition) {
-        SaleSort sort = condition.getSort();
-        if (sort == null) {
-            sort = SaleSort.LATEST;
-        }
-
-        Comparator<SaleListResponseDto> comparator;
-
-        switch (sort) {
-            case EXPIRY:
-                // 유효기간 임박순 (D-day 오름차순)
-                comparator = Comparator.comparing(
-                        SaleListResponseDto::getDDay,
-                        Comparator.nullsLast(Comparator.naturalOrder()));
-                break;
-            case DISTANCE:
-                // 거리순: Redis GeoSearch 활용
-                Map<String, Double> brandDistanceMap = Collections.emptyMap();
-                if (condition.getLatitude() != null && condition.getLongitude() != null) {
-                    brandDistanceMap = getBrandMinDistances(condition.getLatitude(), condition.getLongitude());
-                }
-
-                if (brandDistanceMap.isEmpty()) {
-                    // 주변 매장 정보가 없으면 등록순(최신순)으로 대체하되, 로깅
-                    log.debug("거리순 정렬 요청왔으나 주변 매장 정보 없음 (또는 좌표 누락). fallback to LATEST");
-                    comparator = Comparator.comparing(
-                            SaleListResponseDto::getCreatedAt,
-                            Comparator.nullsLast(Comparator.reverseOrder()));
-                } else {
-                    Map<String, Double> finalBrandDistanceMap = brandDistanceMap;
-                    // 거리 오름차순. 거리가 없으면(주변 매장 없는 브랜드) 맨 뒤로(MAX_VALUE)
-                    comparator = Comparator.comparing(
-                            (SaleListResponseDto dto) -> finalBrandDistanceMap.getOrDefault(dto.getBrandName(),
-                                    Double.MAX_VALUE))
-                            .thenComparing(
-                                    SaleListResponseDto::getCreatedAt,
-                                    Comparator.nullsLast(Comparator.reverseOrder()));
-                }
-                break;
-            case LATEST:
-            default:
-                // 등록순 (최신순)
-                comparator = Comparator.comparing(
-                        SaleListResponseDto::getCreatedAt,
-                        Comparator.nullsLast(Comparator.reverseOrder()));
-                break;
-        }
-
-        return list.stream().sorted(comparator).collect(Collectors.toList());
     }
 
     /**
@@ -519,6 +507,49 @@ public class SaleService {
         }
         int defaultDiscountRate = 20;
         return originalPrice * (100 - defaultDiscountRate) / 100;
+    }
+
+    /**
+     * 시스템 제안 승인 (유효기간 임박 기프티콘 판매 등록)
+     * - 사용자가 제안을 승인하면 즉시 판매 등록
+     *
+     * @param userId 사용자 ID
+     * @param gifticonId 기프티콘 ID
+     * @param salePrice 판매가격 (null이면 기본 20% 할인 적용)
+     * @return 등록된 Sale ID
+     */
+    @Transactional
+    public Long approveSuggestion(Long userId, Long gifticonId, Integer salePrice) {
+        // 이미 판매 등록된 기프티콘인지 확인
+        if (saleRepository.existsByGifticonId(gifticonId)) {
+            throw new CustomException(ErrorCode.DUPLICATE_SALE);
+        }
+
+        // 기프티콘 정보 조회
+        GifticonResponse gifticon = manageClient.getGifticon(gifticonId);
+        if (gifticon == null) {
+            throw new CustomException(ErrorCode.GIFTICON_NOT_FOUND);
+        }
+
+        // 판매가격 계산 (파라미터로 받지 않으면 기본 20% 할인)
+        int finalSalePrice = salePrice != null ? salePrice : calculateDefaultSalePrice(gifticon.getOriginalPrice());
+
+        // Sale 등록 (ON_SALE - 즉시 판매)
+        Sale sale = Sale.builder()
+                .sellerId(userId)
+                .gifticonId(gifticonId)
+                .brandId(gifticon.getBrandId())
+                .expiryDate(gifticon.getExpiryDate())
+                .originalPrice(gifticon.getOriginalPrice())
+                .salePrice(finalSalePrice)
+                .build();
+
+        saleRepository.save(sale);
+
+        log.info("제안 승인 판매 등록: saleId={}, userId={}, gifticonId={}, salePrice={}",
+                sale.getId(), userId, gifticonId, finalSalePrice);
+
+        return sale.getId();
     }
 
     /**

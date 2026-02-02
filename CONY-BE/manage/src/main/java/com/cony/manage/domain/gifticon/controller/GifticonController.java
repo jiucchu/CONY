@@ -23,6 +23,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.Hidden;
+
 @Slf4j
 @RestController
 @RequestMapping("/v1/gifticons")
@@ -214,6 +216,7 @@ public class GifticonController implements GifticonControllerDocs {
      * - 사용자가 직접 자동판매 설정한 기프티콘 (판매일 도래)
      * - 바로 판매중(ON_SALE) 상태로 등록됨
      */
+    @Hidden
     @GetMapping("/auto-sale/without-notification")
     public ApiResponse<List<AutoSaleTargetResponseDto>> getAutoSaleTargetsWithoutNotification() {
         return ApiResponse.success(gifticonService.getAutoSaleTargetsWithoutNotification());
@@ -225,6 +228,7 @@ public class GifticonController implements GifticonControllerDocs {
      * - "유효기간 한달 남았습니다. 지금 파시겠습니까?" 알림 발송
      * - 판매대기(PENDING) 상태로 등록됨
      */
+    @Hidden
     @GetMapping("/auto-sale/with-notification")
     public ApiResponse<List<AutoSaleTargetResponseDto>> getAutoSaleTargetsWithNotification() {
         return ApiResponse.success(gifticonService.getAutoSaleTargetsWithNotification());
@@ -234,9 +238,21 @@ public class GifticonController implements GifticonControllerDocs {
      * 자동판매 처리 완료 표시 - 내부 서버 호출용
      * - 판매 등록 완료 후 자동판매 설정 초기화
      */
+    @Hidden
     @PostMapping("/{gifticonId}/auto-sale/processed")
     public ApiResponse<Void> markAutoSaleProcessed(@PathVariable Long gifticonId) {
         gifticonService.markAutoSaleProcessed(gifticonId);
         return ApiResponse.success("자동판매 처리가 완료되었습니다.");
+    }
+
+    /**
+     * 기프티콘 정보 일괄 조회 - 내부 서버 호출용 (Payment 서버에서 판매글 목록 조회 시 사용)
+     * - 인증 없이 ID 목록으로 조회 가능
+     * - 판매글에 표시할 기본 정보(이미지, 상품명 등) 반환
+     */
+    @Hidden
+    @GetMapping("/batch")
+    public ApiResponse<List<GifticonResponseDto>> getGifticonsForPayment(@RequestParam("ids") List<Long> gifticonIds) {
+        return ApiResponse.success(gifticonService.getGifticonsByIds(gifticonIds));
     }
 }

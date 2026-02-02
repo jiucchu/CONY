@@ -1,6 +1,7 @@
 package com.cony.payment.domain.report.controller.docs;
 
 import com.cony.payment.domain.report.dto.ReportRequestDto;
+import com.cony.payment.global.auth.annotation.AuthUser;
 import com.cony.payment.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,7 +21,8 @@ public interface ReportControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "판매글을 찾을 수 없음", content = @Content)
     })
     ApiResponse<Long> createReport(
-            @RequestBody ReportRequestDto request
+            @RequestBody ReportRequestDto request,
+            @AuthUser Long userId
     );
 
     @Operation(summary = "신고 승인 (관리자)", description = "신고를 승인하고 자동 처벌을 적용합니다. 1차: 7일 정지, 2차 이상: 영구 정지")

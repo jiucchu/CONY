@@ -1,6 +1,7 @@
 package com.cony.payment.domain.point.controller.docs;
 
 import com.cony.payment.domain.point.dto.PointResponse;
+import com.cony.payment.global.auth.annotation.AuthUser;
 import com.cony.payment.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -13,5 +14,5 @@ public interface PointControllerDocs {
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
-    ApiResponse<PointResponse> getPointBalance();
+    ApiResponse<PointResponse> getPointBalance(@AuthUser Long userId);
 }

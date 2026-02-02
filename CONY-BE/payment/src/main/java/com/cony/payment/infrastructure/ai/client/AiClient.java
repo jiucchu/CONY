@@ -42,9 +42,10 @@ public class AiClient {
      * @param request 분석 요청 데이터
      * @return 분석 결과
      */
+
     public Map<String, Object> analyze(Map<String, Object> request) {
         String url = aiServerProperties.getAnalyzeUrl();
-        log.info("AI 서버 분석 요청: url={}", url);
+        log.info("AI 서버 분석 요청: url={}, data={}", url, request); // 요청 데이터 로깅 추가
 
         try {
             HttpHeaders headers = new HttpHeaders();

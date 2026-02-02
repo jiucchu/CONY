@@ -2,6 +2,7 @@ package com.cony.payment.domain.transaction.controller.docs;
 
 import com.cony.payment.domain.transaction.dto.TransactionResponse;
 import com.cony.payment.domain.transaction.enums.TransactionType;
+import com.cony.payment.global.auth.annotation.AuthUser;
 import com.cony.payment.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -25,7 +26,8 @@ public interface TransactionControllerDocs {
     ApiResponse<Page<TransactionResponse>> getTransactions(
             @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "20") int size,
-            @Parameter(description = "거래 유형 필터", schema = @Schema(allowableValues = {"CHARGE", "PURCHASE", "SALE"})) @RequestParam(required = false) TransactionType type
+            @Parameter(description = "거래 유형 필터", schema = @Schema(allowableValues = {"CHARGE", "PURCHASE", "SALE"})) @RequestParam(required = false) TransactionType type,
+            @AuthUser Long userId
     );
 
     @Operation(summary = "거래 상세 조회", description = "특정 거래의 상세 정보를 조회합니다.")
@@ -41,5 +43,5 @@ public interface TransactionControllerDocs {
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
-    ApiResponse<List<TransactionResponse>> getRecentTransactions();
+    ApiResponse<List<TransactionResponse>> getRecentTransactions(@AuthUser Long userId);
 }
