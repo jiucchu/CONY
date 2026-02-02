@@ -120,9 +120,9 @@ const CommonCouponCard = ({
   const badgeText = isUsed ? '사용 완료' : isExpired ? '기간 만료' : '';
 
   // productName이 8글자 이상이면 말줄임 처리
-  const displayProductName = coupon.productName.length > 8
+  const displayProductName = coupon.productName && coupon.productName.length > 8
     ? `${coupon.productName.substring(0, 8)}...`
-    : coupon.productName;
+    : coupon.productName || '';
 
   // Presigned URL을 React Native에서 안정적으로 로드하기 위해 정규화
   const imageUri = coupon.imageUrl ? coupon.imageUrl.trim() : null;
@@ -184,7 +184,7 @@ const CommonCouponCard = ({
       </View>
       <View style={styles.infoContainer}>
         <StyledText fontSize={13} fontWeight={600} color={COLORS.text.secondary}>
-          {coupon.brandName}
+          {coupon.brandName || ''}
         </StyledText>
         <StyledText fontSize={16} fontWeight={800} color={COLORS.text.primary}>
           {displayProductName}

@@ -3,7 +3,7 @@
 // Android 에뮬레이터: 10.0.2.2 (localhost를 가리킴)
 // iOS 시뮬레이터: localhost
 // 실제 기기: 컴퓨터의 로컬 IP 주소 사용 (예: 192.168.x.x)
-const isLocalDev = __DEV__; // React Native의 개발 모드 플래그
+const isLocalDev = false; // 배포 서버 사용으로 강제 설정
 export const LOCAL_HOST = '10.0.2.2'; // Android 에뮬레이터용 (실제 기기나 iOS는 환경 변수로 변경 필요)
 export const LOCAL_MANAGE_PORT = '8080'; // Manage 서버 포트
 export const LOCAL_PAYMENT_PORT = '8081'; // Payment 서버 포트 (React Native가 8082 사용)
@@ -32,6 +32,10 @@ if (__DEV__) {
 export const API_ENDPOINTS = {
   // Auth
   AUTH_REISSUE: '/api/auth/reissue',
+  AUTH_OAUTH_GOOGLE: '/v1/auth/oauth/google',
+  AUTH_OAUTH_APPLE: '/v1/auth/oauth/apple',
+  AUTH_OAUTH_KAKAO: '/v1/auth/oauth/kakao',
+  AUTH_OAUTH_CALLBACK: '/v1/auth/oauth/callback',
   // Gifticon
   GIFTCONS: '/v1/gifticons',
   GIFTCON_DETAIL: (id: number) => `/v1/gifticons/${id}`,

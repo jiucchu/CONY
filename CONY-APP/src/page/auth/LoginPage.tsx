@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Linking, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { Svg, Path } from 'react-native-svg';
 import LoginButton from '@/components/common/atomic/LoginButton';
 import { COLORS } from '@/constants/colors';
 import { StyledText } from '@/utils/StyledText';
+import { getOAuthLoginUrl } from '@/api/auth/authApi';
 
 const googleIcon = require('@/assets/icons/google_icon.png');
 
@@ -42,16 +44,34 @@ const styles = StyleSheet.create({
 });
 
 const LoginPage = () => {
+  const navigation = useNavigation();
+
+  const handleOAuthLogin = async (provider: 'google' | 'apple' | 'kakao') => {
+    try {
+      const loginUrl = getOAuthLoginUrl(provider);
+      console.log(`[LoginPage] ${provider} 로그인 URL:`, loginUrl);
+      
+      // OAuth WebView 페이지로 이동
+      (navigation as any).navigate('OAuthWebView', {
+        url: loginUrl,
+        provider,
+      });
+    } catch (error) {
+      console.error(`[LoginPage] ${provider} 로그인 오류:`, error);
+      Alert.alert('로그인 오류', '로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
+  };
+
   const handleGoogleLogin = () => {
-    // 로그인 로직 추후 구현 예정
+    handleOAuthLogin('google');
   };
 
   const handleAppleLogin = () => {
-    // 로그인 로직 추후 구현 예정
+    handleOAuthLogin('apple');
   };
 
   const handleKakaoLogin = () => {
-    // 로그인 로직 추후 구현 예정
+    handleOAuthLogin('kakao');
   };
 
   return (

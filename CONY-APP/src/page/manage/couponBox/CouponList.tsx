@@ -88,7 +88,20 @@ const CouponList = () => {
         condition
       );
       
-      let filteredCoupons = response.content;
+      console.log('[CouponList] API 응답:', JSON.stringify(response, null, 2));
+      console.log('[CouponList] response.content:', response.content);
+      console.log('[CouponList] response.content 타입:', typeof response.content);
+      
+      // 응답 구조 확인 및 안전 처리
+      let filteredCoupons: GifticonListResponseDto[] = [];
+      if (response && response.content && Array.isArray(response.content)) {
+        filteredCoupons = response.content;
+      } else if (Array.isArray(response)) {
+        // 응답이 배열로 직접 오는 경우
+        filteredCoupons = response;
+      } else {
+        console.warn('[CouponList] 예상치 못한 응답 구조:', response);
+      }
       
       // 사용완료만 보기 필터 (백엔드에 status 필터가 없어서 클라이언트에서 필터링)
       if (selectedType === 'used') {
@@ -98,8 +111,15 @@ const CouponList = () => {
       }
 
       setCoupons(filteredCoupons);
+      console.log('[CouponList] 쿠폰 목록 설정 완료:', filteredCoupons.length, '개');
     } catch (err) {
-      console.error('기프티콘 목록 조회 실패:', err);
+      console.error('[CouponList] 기프티콘 목록 조회 실패:', err);
+      if (err instanceof Error) {
+        console.error('[CouponList] 에러 메시지:', err.message);
+        console.error('[CouponList] 에러 스택:', err.stack);
+      }
+      // 에러 발생 시 빈 배열로 설정하여 앱이 크래시되지 않도록 함
+      setCoupons([]);
     }
   }, [selectedSort, selectedType, expiringSoon]);
 
