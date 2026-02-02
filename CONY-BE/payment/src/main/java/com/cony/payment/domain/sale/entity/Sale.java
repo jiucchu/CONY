@@ -16,7 +16,8 @@ import java.time.LocalDate;
 @Table(name = "sale")
 public class Sale extends BaseTimeEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "sale_id")
     private Long id;
 
@@ -25,6 +26,12 @@ public class Sale extends BaseTimeEntity {
 
     @Column(nullable = false)
     private Long gifticonId;
+
+    @Column(name = "brand_id")
+    private Integer brandId; // 브랜드 ID (추천 서비스 조회용)
+
+    @Column(name = "expiry_date")
+    private LocalDate expiryDate; // 유효기간 (추천 정렬용)
 
     @Column(name = "original_price", nullable = false)
     private Integer originalPrice; // 정가
@@ -44,10 +51,13 @@ public class Sale extends BaseTimeEntity {
     private LocalDate scheduledSaleDate;
 
     @Builder
-    public Sale(Long sellerId, Long gifticonId, Integer originalPrice, Integer salePrice,
-                SaleStatus status, LocalDate scheduledSaleDate) {
+    public Sale(Long sellerId, Long gifticonId, Integer brandId, LocalDate expiryDate,
+            Integer originalPrice, Integer salePrice,
+            SaleStatus status, LocalDate scheduledSaleDate) {
         this.sellerId = sellerId;
         this.gifticonId = gifticonId;
+        this.brandId = brandId; // 브랜드 ID 저장
+        this.expiryDate = expiryDate; // 유효기간 저장
         this.originalPrice = originalPrice;
         this.salePrice = salePrice;
         this.discountRate = calculateDiscountRate(originalPrice, salePrice);
@@ -60,6 +70,7 @@ public class Sale extends BaseTimeEntity {
             this.status = (status != null) ? status : SaleStatus.ON_SALE;
         }
     }
+
     // 할인율 계산
     private Integer calculateDiscountRate(Integer originalPrice, Integer salePrice) {
         if (originalPrice == null || originalPrice <= 0) {

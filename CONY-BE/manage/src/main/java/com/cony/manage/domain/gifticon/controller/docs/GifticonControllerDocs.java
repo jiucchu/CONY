@@ -118,5 +118,5 @@ public interface GifticonControllerDocs {
         @ApiResponses(value = {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "브랜드 목록 반환")
         })
-        public ApiResponse<List<BrandResponseDto>> getBrandList(@AuthUser Long userId);
+        ApiResponse<List<BrandResponseDto>> getBrandList(@AuthUser Long userId);
 }

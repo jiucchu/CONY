@@ -59,13 +59,19 @@ public class SaleService {
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
 
-        // 기프티콘 존재 확인 (Manage 서버 연동)
+        // 기프티콘 정보 조회 (Manage 서버 연동)
+        GifticonResponse gifticon = null;
         try {
             if (!manageClient.existsGifticon(request.getGifticonId())) {
                 throw new CustomException(ErrorCode.GIFTICON_NOT_FOUND);
             }
+            // 기프티콘 상세 정보 가져오기 (brandId, expiryDate 확보 위해)
+            gifticon = manageClient.getGifticon(request.getGifticonId());
         } catch (Exception e) {
             log.warn("Manage 서버 연동 실패, 기프티콘 검증 스킵: gifticonId={}", request.getGifticonId());
+            // 필수 정보가 없으면 진행 불가할 수 있음. 혹은 null로 저장.
+            // 여기선 예외 발생보다는 null 처리를 하거나, throw를 던질 수 있음.
+            // 일단 기존 로직 유지하되, gifticon 객체가 없을 수 있음을 감안.
         }
 
         // 이미 판매 등록된 기프티콘인지 확인 (중복 방지)
@@ -76,6 +82,8 @@ public class SaleService {
         Sale sale = Sale.builder()
                 .sellerId(sellerId)
                 .gifticonId(request.getGifticonId())
+                .brandId(gifticon != null ? gifticon.getBrandId() : null) // 브랜드 ID 설정
+                .expiryDate(gifticon != null ? gifticon.getExpiryDate() : null) // 유효기간 설정
                 .originalPrice(request.getOriginalPrice())
                 .salePrice(request.getSalePrice())
                 .scheduledSaleDate(request.getScheduledSaleDate())
@@ -157,7 +165,8 @@ public class SaleService {
         }
         String lowerKeyword = keyword.toLowerCase();
         boolean matchBrand = dto.getBrandName() != null && dto.getBrandName().toLowerCase().contains(lowerKeyword);
-        boolean matchProduct = dto.getProductName() != null && dto.getProductName().toLowerCase().contains(lowerKeyword);
+        boolean matchProduct = dto.getProductName() != null
+                && dto.getProductName().toLowerCase().contains(lowerKeyword);
         return matchBrand || matchProduct;
     }
 
@@ -170,7 +179,7 @@ public class SaleService {
         }
         // 카테고리 매칭 (대소문자 무시)
         return dto.getCategoryName().equalsIgnoreCase(category.name()) ||
-               dto.getCategoryName().equalsIgnoreCase(category.getDescription());
+                dto.getCategoryName().equalsIgnoreCase(category.getDescription());
     }
 
     private boolean filterByBrand(SaleListResponseDto dto, String brand) {
@@ -196,8 +205,7 @@ public class SaleService {
                 // 유효기간 임박순 (D-day 오름차순)
                 comparator = Comparator.comparing(
                         SaleListResponseDto::getDDay,
-                        Comparator.nullsLast(Comparator.naturalOrder())
-                );
+                        Comparator.nullsLast(Comparator.naturalOrder()));
                 break;
             case DISTANCE:
                 // 거리순: Redis GeoSearch 활용
@@ -211,17 +219,16 @@ public class SaleService {
                     log.debug("거리순 정렬 요청왔으나 주변 매장 정보 없음 (또는 좌표 누락). fallback to LATEST");
                     comparator = Comparator.comparing(
                             SaleListResponseDto::getCreatedAt,
-                            Comparator.nullsLast(Comparator.reverseOrder())
-                    );
+                            Comparator.nullsLast(Comparator.reverseOrder()));
                 } else {
                     Map<String, Double> finalBrandDistanceMap = brandDistanceMap;
                     // 거리 오름차순. 거리가 없으면(주변 매장 없는 브랜드) 맨 뒤로(MAX_VALUE)
                     comparator = Comparator.comparing(
-                            (SaleListResponseDto dto) -> finalBrandDistanceMap.getOrDefault(dto.getBrandName(), Double.MAX_VALUE)
-                    ).thenComparing(
-                            SaleListResponseDto::getCreatedAt,
-                            Comparator.nullsLast(Comparator.reverseOrder())
-                    );
+                            (SaleListResponseDto dto) -> finalBrandDistanceMap.getOrDefault(dto.getBrandName(),
+                                    Double.MAX_VALUE))
+                            .thenComparing(
+                                    SaleListResponseDto::getCreatedAt,
+                                    Comparator.nullsLast(Comparator.reverseOrder()));
                 }
                 break;
             case LATEST:
@@ -229,8 +236,7 @@ public class SaleService {
                 // 등록순 (최신순)
                 comparator = Comparator.comparing(
                         SaleListResponseDto::getCreatedAt,
-                        Comparator.nullsLast(Comparator.reverseOrder())
-                );
+                        Comparator.nullsLast(Comparator.reverseOrder()));
                 break;
         }
 
@@ -254,7 +260,7 @@ public class SaleService {
         }
 
         List<GeoResult<RedisGeoCommands.GeoLocation<String>>> results = geoResults.getContent();
-        
+
         // 2. Pipeline을 통해 각 storeId에 대한 brandName 조회
         List<Object> brandNames = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
             RedisSerializer<String> serializer = redisTemplate.getStringSerializer();
@@ -271,7 +277,8 @@ public class SaleService {
         Map<String, Double> brandMinDistanceMap = new HashMap<>();
         for (int i = 0; i < results.size(); i++) {
             Object brandNameObj = brandNames.get(i);
-            if (brandNameObj == null) continue;
+            if (brandNameObj == null)
+                continue;
 
             String brandName = (String) brandNameObj;
             double distance = results.get(i).getDistance().getValue(); // km 단위 (Metrics.KILOMETERS 기준이면)
@@ -293,7 +300,8 @@ public class SaleService {
      * 판매중인 브랜드 목록 조회
      */
     public List<String> getSaleBrands() {
-        List<Sale> sales = saleRepository.findByStatusOrderByCreatedAtDesc(SaleStatus.ON_SALE, Pageable.unpaged()).getContent();
+        List<Sale> sales = saleRepository.findByStatusOrderByCreatedAtDesc(SaleStatus.ON_SALE, Pageable.unpaged())
+                .getContent();
 
         if (sales.isEmpty()) {
             return Collections.emptyList();
@@ -335,7 +343,8 @@ public class SaleService {
     /**
      * 내 판매글 목록 조회 (상태별 필터 + 검색 + 기프티콘 정보 포함)
      */
-    public Page<SaleListResponseDto> getMySalesWithGifticon(Long sellerId, SaleStatus status, String keyword, Pageable pageable) {
+    public Page<SaleListResponseDto> getMySalesWithGifticon(Long sellerId, SaleStatus status, String keyword,
+            Pageable pageable) {
         Page<Sale> salePage;
 
         if (status != null) {
@@ -369,8 +378,10 @@ public class SaleService {
             String lowerKeyword = keyword.toLowerCase();
             dtoList = dtoList.stream()
                     .filter(dto -> {
-                        boolean matchBrand = dto.getBrandName() != null && dto.getBrandName().toLowerCase().contains(lowerKeyword);
-                        boolean matchProduct = dto.getProductName() != null && dto.getProductName().toLowerCase().contains(lowerKeyword);
+                        boolean matchBrand = dto.getBrandName() != null
+                                && dto.getBrandName().toLowerCase().contains(lowerKeyword);
+                        boolean matchProduct = dto.getProductName() != null
+                                && dto.getProductName().toLowerCase().contains(lowerKeyword);
                         return matchBrand || matchProduct;
                     })
                     .collect(Collectors.toList());
@@ -478,8 +489,8 @@ public class SaleService {
                 .filter(s -> s.getUserId().equals(userId))
                 .filter(s -> !saleRepository.existsByGifticonId(s.getGifticonId()))
                 .map(s -> {
-                    Integer salePrice = s.getPlannedSalePrice() != null ? s.getPlannedSalePrice() :
-                            calculateDefaultSalePrice(s.getOriginalPrice());
+                    Integer salePrice = s.getPlannedSalePrice() != null ? s.getPlannedSalePrice()
+                            : calculateDefaultSalePrice(s.getOriginalPrice());
                     Integer discountRate = calculateDiscountRate(s.getOriginalPrice(), salePrice);
 
                     return SaleListResponseDto.builder()
@@ -492,9 +503,8 @@ public class SaleService {
                             .productName(s.getProductName())
                             .imageUrl(s.getImageUrl())
                             .expiryDate(s.getExpiryDate())
-                            .dDay(s.getExpiryDate() != null ?
-                                    (int) java.time.temporal.ChronoUnit.DAYS.between(
-                                            java.time.LocalDate.now(), s.getExpiryDate()) : 0)
+                            .dDay(s.getExpiryDate() != null ? (int) java.time.temporal.ChronoUnit.DAYS.between(
+                                    java.time.LocalDate.now(), s.getExpiryDate()) : 0)
                             .build();
                 })
                 .collect(Collectors.toList());
