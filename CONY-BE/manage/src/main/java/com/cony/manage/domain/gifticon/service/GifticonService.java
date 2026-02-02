@@ -20,8 +20,11 @@ public interface GifticonService {
     void cancelUseGifticon(Long logId, Long userId, boolean isProduct);
     void updateUsageLog(Long logId, Long userId, GifticonLogUpdateRequestDto request);
 
-    // 자동판매 관련
-    List<AutoSaleTargetResponseDto> getAutoSaleTargetsWithoutNotification();
-    List<AutoSaleTargetResponseDto> getAutoSaleTargetsWithNotification();
-    void markAutoSaleProcessed(Long gifticonId);
+        // 자동판매 관련
+        List<AutoSaleTargetResponseDto> getAutoSaleTargetsWithoutNotification();
+        List<AutoSaleTargetResponseDto> getAutoSaleTargetsWithNotification();
+        void markAutoSaleProcessed(Long gifticonId);
+
+        // 알림 관련
+        void sendExpirationNotifications();
 }

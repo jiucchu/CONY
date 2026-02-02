@@ -8,11 +8,13 @@ import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Slf4j
+@Async
 @Service
 @RequiredArgsConstructor
 public class FcmNotificationService {
@@ -40,7 +42,7 @@ public class FcmNotificationService {
      */
     public void sendNotificationToUsers(List<Long> userIds, String title, String body) {
         List<User> users = userRepository.findAllById(userIds);
-        
+
         for (User user : users) {
             if (user.getFcmToken() != null && !user.getFcmToken().isEmpty()) {
                 sendNotification(user.getFcmToken(), title, body);
@@ -72,9 +74,17 @@ public class FcmNotificationService {
     /**
      * 지오펜스 알림 전송 (매장 근처 접근 시)
      */
-    public void sendGeofenceNotification(Long userId, String storeName) {
-        String title = "근처 매장 발견";
-        String body = String.format("%s 근처에 있습니다. 쿠폰을 확인해보세요!", storeName);
+    public void sendGeofenceNotification(Long userId, String storeName, int count) {
+        String title = "근처 매장 쿠폰 알림";
+        String body = String.format("%s 근처에 사용 가능한 쿠폰이 %d개 있습니다!", storeName, count);
         sendNotificationToUser(userId, title, body);
+    }
+
+    /**
+     * 기프티콘 만료 알림 전송
+     */
+    public void sendGifticonExpiryNotification(Long userId, String summary) {
+        String title = "기프티콘 만료 예정 알림";
+        sendNotificationToUser(userId, title, summary);
     }
 }
