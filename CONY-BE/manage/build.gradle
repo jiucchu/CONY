@@ -53,6 +53,9 @@ dependencies {
 	// 7. Batch
 	implementation 'org.springframework.boot:spring-boot-starter-batch'
 	testImplementation 'org.springframework.batch:spring-batch-test'
+	
+	// 8. Firebase Admin SDK (FCM)
+	implementation 'com.google.firebase:firebase-admin:9.3.0'
 
 	// 0. Utils
 	compileOnly 'org.projectlombok:lombok'

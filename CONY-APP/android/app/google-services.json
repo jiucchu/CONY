@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "693166055063",
+    "project_id": "cony-a9af1",
+    "storage_bucket": "cony-a9af1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:693166055063:android:1d3a433353200e379a93d2",
+        "android_client_info": {
+          "package_name": "com.conyapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHDbg0pL8shKjkDF3CRQfW8Ej_IeMSFxc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

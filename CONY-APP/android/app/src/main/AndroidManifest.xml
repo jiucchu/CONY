@@ -3,6 +3,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- FCM 알림 권한 (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- 위치 권한 (백그라운드 지오펜스 알림용) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -40,5 +42,15 @@
             <data android:scheme="conyapp" android:host="oauth" android:pathPrefix="/callback" />
         </intent-filter>
       </activity>
+      
+      <!-- FCM 기본 채널 설정 -->
+      <meta-data
+        android:name="com.google.firebase.messaging.default_notification_channel_id"
+        android:value="default_channel" />
+      
+      <!-- FCM 기본 알림 아이콘 -->
+      <meta-data
+        android:name="com.google.firebase.messaging.default_notification_icon"
+        android:resource="@mipmap/ic_launcher" />
     </application>
 </manifest>
