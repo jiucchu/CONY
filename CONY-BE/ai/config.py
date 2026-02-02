@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     GMS_MODEL: str | None = None
     EMBEDDING_MODEL: str | None = None
     PAYMENT_SERVICE_URL: str | None = None
+    RUN_EMBEDDING_INTEGRATION: int = 0
 
 @lru_cache
 def get_settings() -> Settings:
