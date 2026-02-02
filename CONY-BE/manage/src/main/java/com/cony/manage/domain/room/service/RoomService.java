@@ -28,6 +28,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -45,14 +46,26 @@ public class RoomService {
     public List<RoomResponseDto> getMyRooms(Long userId) {
         List<RoomMember> members = roomMemberRepository.findAllByUserId(userId);
 
+        if (members.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> roomIds = members.stream()
+                .map(rm -> rm.getRoom().getId())
+                .collect(Collectors.toList());
+
+        Map<Long, Integer> memberCountMap = roomMemberRepository.countMembersByRoomIds(roomIds).stream()
+                .collect(Collectors.toMap(
+                        result -> (Long) result[0],
+                        result -> ((Long) result[1]).intValue()));
+
         // 정렬: 최신순 (생성일 기준 내림차순)
         return members.stream()
                 .sorted(Comparator.comparing((RoomMember rm) -> rm.getRoom().getCreatedAt()).reversed())
                 .map(rm -> {
                     Room room = rm.getRoom();
-                    // 현재는 멤버 수를 하드코딩하거나 별도 쿼리가 필요함
-                    // MVP 최적화를 위해 추후 구현 예정
-                    return RoomResponseDto.of(room, 1, List.of());
+                    int count = memberCountMap.getOrDefault(room.getId(), 0);
+                    return RoomResponseDto.of(room, count, List.of());
                 })
                 .collect(Collectors.toList());
     }

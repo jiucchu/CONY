@@ -1,5 +1,6 @@
 package com.cony.manage.domain.room.controller;
 
+import com.cony.manage.domain.room.controller.docs.RoomControllerDocs;
 import com.cony.manage.domain.room.dto.request.RoomCreateRequestDto;
 import com.cony.manage.domain.room.dto.response.GifticonRoomResponseDto;
 import com.cony.manage.domain.room.dto.response.RoomResponseDto;
@@ -19,7 +20,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/v1/rooms")
-public class RoomController {
+public class RoomController implements RoomControllerDocs {
 
     private final RoomService roomService;
 
