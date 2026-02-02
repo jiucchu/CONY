@@ -220,27 +220,54 @@ const CouponCreate = () => {
           name: originalImage.filename || `image_${Date.now()}.jpg`,
         };
 
+        console.log('원본 이미지 선택 완료:', imageFile);
+
         // 썸네일 생성: 같은 이미지를 작은 크기로 크롭
-        const thumbnailImage = await ImagePicker.openCropper({
-          path: originalImage.path,
-          width: 400,
-          height: 400,
-          cropping: true,
-          cropperToolbarTitle: '썸네일 영역 선택',
-          compressImageQuality: 0.7,
-          mediaType: 'photo',
-        });
+        let thumbnailFile = undefined;
+        try {
+          const thumbnailImage = await ImagePicker.openCropper({
+            path: originalImage.path,
+            width: 400,
+            height: 400,
+            cropping: true,
+            cropperToolbarTitle: '썸네일 영역 선택',
+            compressImageQuality: 0.7,
+            mediaType: 'photo',
+          });
 
-        const thumbnailFile = {
-          uri: thumbnailImage.path,
-          type: thumbnailImage.mime || 'image/jpeg',
-          name: `thumbnail_${originalImage.filename || `image_${Date.now()}.jpg`}`,
-        };
+          thumbnailFile = {
+            uri: thumbnailImage.path,
+            type: thumbnailImage.mime || 'image/jpeg',
+            name: `thumbnail_${originalImage.filename || `image_${Date.now()}.jpg`}`,
+          };
 
-        console.log('원본 이미지 (전체):', imageFile);
-        console.log('썸네일 이미지 (크롭):', thumbnailFile);
+          console.log('썸네일 이미지 크롭 완료:', thumbnailFile);
+        } catch (cropError: any) {
+          // 썸네일 크롭 실패 시 에러 처리
+          const errorMessage = cropError?.message || cropError?.toString() || '알 수 없는 오류';
+          const errorCode = cropError?.code || '';
+          
+          console.warn('썸네일 크롭 실패:', {
+            message: errorMessage,
+            code: errorCode,
+            error: cropError
+          });
 
-        // 두 필드를 한 번에 업데이트
+          // 사용자가 취소한 경우가 아니면 경고 표시
+          if (errorMessage !== 'User cancelled image selection' && 
+              errorCode !== 'E_PICKER_CANCELLED' &&
+              !errorMessage.includes('cancelled')) {
+            Alert.alert(
+              '썸네일 크롭 실패', 
+              '썸네일 크롭에 실패했습니다. 원본 이미지만 저장됩니다.\n' + errorMessage
+            );
+          } else {
+            console.log('사용자가 썸네일 크롭을 취소했습니다.');
+          }
+          // 썸네일이 없어도 원본 이미지는 저장되도록 계속 진행
+        }
+
+        // 원본 이미지는 항상 저장, 썸네일은 성공한 경우만 저장
         setCoupons(prevCoupons => 
           prevCoupons.map(coupon => 
             coupon.id === couponId 
@@ -254,11 +281,22 @@ const CouponCreate = () => {
           )
         );
         
-        console.log('이미지 및 썸네일 업데이트 완료');
+        console.log('이미지 업데이트 완료 (원본:', !!imageFile, ', 썸네일:', !!thumbnailFile, ')');
       } catch (error: any) {
-        if (error.message !== 'User cancelled image selection') {
-          console.error('이미지 선택 오류:', error);
-          Alert.alert('오류', `이미지 선택 중 오류가 발생했습니다: ${error.message || '알 수 없는 오류'}`);
+        // 원본 이미지 선택 실패 시
+        const errorMessage = error?.message || error?.toString() || '알 수 없는 오류';
+        const errorCode = error?.code || '';
+        
+        console.error('이미지 선택 오류:', {
+          message: errorMessage,
+          code: errorCode,
+          error: error
+        });
+
+        if (errorMessage !== 'User cancelled image selection' && 
+            errorCode !== 'E_PICKER_CANCELLED' &&
+            !errorMessage.includes('cancelled')) {
+          Alert.alert('오류', `이미지 선택 중 오류가 발생했습니다: ${errorMessage}`);
         } else {
           console.log('사용자가 이미지 선택을 취소했습니다.');
         }

@@ -28,12 +28,17 @@ async function apiCall<T>(
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+    console.log(`[Gifticon API] 토큰 존재: ${token.substring(0, 20)}... (전체 길이: ${token.length})`);
+  } else {
+    console.warn(`[Gifticon API] ⚠️ 토큰이 없습니다!`);
   }
 
   try {
     const url = `${API_BASE_URL}${endpoint}`;
     console.log(`[Gifticon API] ${options.method || 'GET'} ${url}`);
     console.log(`[Gifticon API] API_BASE_URL: ${API_BASE_URL}`);
+    console.log(`[Gifticon API] Request headers:`, JSON.stringify(headers, null, 2));
+    console.log(`[Gifticon API] Authorization 헤더 존재:`, !!headers['Authorization']);
     console.log(`[Gifticon API] Request body:`, options.body);
     const response = await fetch(url, {
       ...options,
