@@ -6,6 +6,7 @@ import ConnectAccount from '@/components/mypage/ConnectAccount';
 import CouponStatTable from '@/components/mypage/CouponStatTable';
 import WithdrawButton from '@/components/mypage/WithdrawButton';
 import CouponList from '@/components/common/card/CouponList';
+import GeofenceTestCard from '@/components/mypage/GeofenceTestCard';
 import { COLORS } from '@/constants/colors';
 import { getMyGifticons } from '@/api/gifticon/gifticonApi';
 import { GifticonListResponseDto } from '@/types/gifticon/gifticon';
@@ -50,6 +51,7 @@ const Mypage = () => {
           <View style={styles.divider}>
             <CouponList coupons={sellingCoupons} title="판매 중인 기프티콘" />
           </View>
+          <GeofenceTestCard />
           <ConnectAccount />
           <WithdrawButton />
         </View>

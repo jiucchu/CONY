@@ -92,13 +92,10 @@ async function apiCall<T>(
 export const getNearbyStores = async (
   request: GeofenceRequestDto
 ): Promise<GeofenceResponseDto> => {
-  // 유효성 검증
-  if (request.lat < 33 || request.lat > 43) {
-    throw new Error('위도는 33-43 범위 내여야 합니다.');
-  }
-  if (request.lon < 124 || request.lon > 132) {
-    throw new Error('경도는 124-132 범위 내여야 합니다.');
-  }
+  // GPS 검증 제거 (에뮬레이터에서 GPS가 이상하게 동작할 수 있음)
+  // 서버에서 검증하도록 함
+  
+  console.log('[getNearbyStores] 위치 요청:', { lat: request.lat, lon: request.lon });
 
   const response = await apiCall<GeofenceResponseDto>(
     API_ENDPOINTS.GEOFENCE_NEARBY,
