@@ -214,6 +214,56 @@ public class ManageClient {
     }
 
     /**
+     * 현재 위치 기반 거리별 매장 ID 목록 조회
+     * @param latitude 위도
+     * @param longitude 경도
+     * @return 거리 구간별(200m, 500m, 1000m) 매장 ID 리스트
+     */
+    public NearbyStoreIdsResponse getNearbyStoreIds(double latitude, double longitude) {
+        String baseUrl = manageServerProperties.getUrl() + "/v1/stores/nearby";
+        String url = UriComponentsBuilder.fromHttpUrl(baseUrl)
+                .queryParam("latitude", latitude)
+                .queryParam("longitude", longitude)
+                .toUriString();
+
+        log.info("Manage 서버 주변 매장 ID 조회 요청: lat={}, lon={}, url={}", latitude, longitude, url);
+
+        try {
+            ResponseEntity<ApiResponse<NearbyStoreIdsResponse>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    createHttpEntity(),
+                    new ParameterizedTypeReference<ApiResponse<NearbyStoreIdsResponse>>() {}
+            );
+
+            if(response.getBody() != null && response.getBody().getData() != null) {
+                NearbyStoreIdsResponse data = response.getBody().getData();
+                log.info("주변 매장 조회 성공: 200m({}개), 500m({}개), 1km({}개)",
+                        data.getWithin200().size(),
+                        data.getWithin500().size(),
+                        data.getWithin1000().size());
+
+                return data;
+            }
+
+            // 데이터가 없으면 빈 객체 반환 (Null Pointer 방지)
+            return new NearbyStoreIdsResponse(
+                    Collections.emptyList(),
+                    Collections.emptyList(),
+                    Collections.emptyList()
+            );
+        } catch (Exception e) {
+            log.error("주변 매장 ID 조회 실패: lat={}, lon={}", latitude, longitude, e);
+            // 비즈니스 로직에 따라 빈 리스트를 줄지, 예외를 던질지 결정 (여기선 빈 리스트 반환으로 처리)
+            return new NearbyStoreIdsResponse(
+                    Collections.emptyList(),
+                    Collections.emptyList(),
+                    Collections.emptyList()
+            );
+        }
+    }
+
+    /**
      * 현재 요청의 Authorization 헤더를 포함한 HttpEntity 생성
      */
     private HttpEntity<?> createHttpEntity() {
