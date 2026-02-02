@@ -10,6 +10,7 @@ import { DefaultButton } from '@/components/common/atomic/Button';
 import ContentLayout from '@/components/layout/ContentLayout';
 import { showConfirm } from '@/utils/utils';
 import { registerGifticons, registerGifticonsWithImage } from '@/api/gifticon/gifticonApi';
+import { getMyRooms } from '@/api/room/roomApi';
 import { StyledText } from '@/utils/StyledText';
 import { Svg, Line, Circle } from 'react-native-svg';
 
@@ -120,6 +121,8 @@ interface CouponFormData {
   isAutoSellEnabled?: boolean;
   scheduledSaleDate?: string; // YYYY-MM-DD 형식
   plannedSalePrice?: number;
+  // Room(폴더) 설정
+  roomId?: number;
 }
 
 const CouponCreate = () => {
@@ -138,7 +141,34 @@ const CouponCreate = () => {
     isAutoSellEnabled: false,
     scheduledSaleDate: undefined,
     plannedSalePrice: undefined,
+    roomId: undefined,
   }]);
+  const [rooms, setRooms] = useState<any[]>([]);
+  const [selectedRoomId, setSelectedRoomId] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const roomList = await getMyRooms();
+        setRooms(roomList);
+        // 첫 번째 Room을 기본 선택
+        if (roomList.length > 0) {
+          setSelectedRoomId(roomList[0].roomId);
+          // 모든 쿠폰에 기본 Room 설정
+          setCoupons(prevCoupons => 
+            prevCoupons.map(coupon => ({
+              ...coupon,
+              roomId: roomList[0].roomId,
+            }))
+          );
+        }
+      } catch (error) {
+        console.error('Room 목록 조회 실패:', error);
+      }
+    };
+
+    fetchRooms();
+  }, []);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -328,6 +358,7 @@ const CouponCreate = () => {
       isAutoSellEnabled: false,
       scheduledSaleDate: undefined,
       plannedSalePrice: undefined,
+      roomId: selectedRoomId,
     };
     setCoupons(prevCoupons => [...prevCoupons, newCoupon]);
     // 새 쿠폰으로 스크롤
@@ -545,6 +576,7 @@ const CouponCreate = () => {
                   isAutoSellEnabled={coupon.isAutoSellEnabled}
                   scheduledSaleDate={coupon.scheduledSaleDate}
                   plannedSalePrice={coupon.plannedSalePrice}
+                  selectedRoomId={coupon.roomId}
                   onImageEdit={() => handleImageSelect(coupon.id)}
                   onGiftCardNameChange={(value) => updateCoupon(coupon.id, 'giftCardName', value)}
                   onBarcodeChange={(value) => updateCoupon(coupon.id, 'barcode', value)}
@@ -555,6 +587,7 @@ const CouponCreate = () => {
                   onAutoSellToggle={(enabled) => updateCoupon(coupon.id, 'isAutoSellEnabled', enabled)}
                   onSaleDateChange={(date) => updateCoupon(coupon.id, 'scheduledSaleDate', date)}
                   onSaleAmountChange={(amount) => updateCoupon(coupon.id, 'plannedSalePrice', amount)}
+                  onRoomSelect={(roomId) => updateCoupon(coupon.id, 'roomId', roomId)}
                 />
               </View>
             ))}

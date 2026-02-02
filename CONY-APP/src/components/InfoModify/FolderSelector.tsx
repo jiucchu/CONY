@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
 import { COLORS } from '@/constants/colors';
 import { StyledText } from '@/utils/StyledText';
 import { FolderData } from '@/types/coupon/coupon';
+import { createRoom } from '@/api/room/roomApi';
 import { Svg, Path, Polyline } from 'react-native-svg';
 
 const styles = StyleSheet.create({
@@ -69,6 +70,49 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
+  createRoomModal: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 24,
+    width: '80%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  roomNameInput: {
+    borderWidth: 1,
+    borderColor: COLORS.background.lightGray,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    fontSize: 14,
+    color: COLORS.text.primary,
+    marginBottom: 20,
+  },
+  createRoomButtonGroup: {
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'flex-end',
+  },
+  createRoomButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: COLORS.background.lightGray,
+  },
+  confirmButton: {
+    backgroundColor: COLORS.primary,
+  },
 });
 
 const FolderIcon = () => (
@@ -98,6 +142,7 @@ interface FolderSelectorProps {
   folders: FolderData[];
   selectedFolderId?: string;
   onSelect?: (folderId: string) => void;
+  onRoomCreated?: () => void; // 공유방 생성 후 목록 새로고침 콜백
   placeholder?: string;
 }
 
@@ -105,9 +150,12 @@ const FolderSelector = ({
   folders,
   selectedFolderId,
   onSelect,
+  onRoomCreated,
   placeholder = '기본 폴더',
 }: FolderSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newRoomName, setNewRoomName] = useState('');
 
   const selectedFolder = folders.find(f => f.id === selectedFolderId) || folders[0];
   const displayText = selectedFolder?.title || placeholder;
@@ -115,6 +163,31 @@ const FolderSelector = ({
   const handleSelect = (folderId: string) => {
     onSelect?.(folderId);
     setIsOpen(false);
+  };
+
+  const handleCreateRoom = async () => {
+    if (!newRoomName.trim()) {
+      Alert.alert('알림', '공유방 이름을 입력해주세요.');
+      return;
+    }
+
+    try {
+      await createRoom({ name: newRoomName.trim() });
+      Alert.alert('알림', '공유방이 생성되었습니다.', [
+        {
+          text: '확인',
+          onPress: () => {
+            setIsCreateModalOpen(false);
+            setNewRoomName('');
+            setIsOpen(false);
+            onRoomCreated?.(); // 목록 새로고침
+          },
+        },
+      ]);
+    } catch (error: any) {
+      console.error('공유방 생성 실패:', error);
+      Alert.alert('오류', `공유방 생성에 실패했습니다.\n${error?.message || '알 수 없는 오류가 발생했습니다.'}`);
+    }
   };
 
   return (
@@ -165,6 +238,78 @@ const FolderSelector = ({
                 </View>
               </TouchableOpacity>
             ))}
+            {/* 새 공유방 만들기 버튼 */}
+            <TouchableOpacity
+              style={[styles.dropdownItem, { borderTopWidth: 1, borderTopColor: COLORS.background.lightGray }]}
+              onPress={() => {
+                setIsOpen(false);
+                setIsCreateModalOpen(true);
+              }}
+            >
+              <View style={styles.folderIconWrapper}>
+                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={COLORS.primary} strokeWidth={2}>
+                  <Path d="M12 5v14M5 12h14" />
+                </Svg>
+              </View>
+              <View style={styles.textContainer}>
+                <StyledText fontSize={14} fontWeight={600} color={COLORS.primary}>
+                  새 공유방 만들기
+                </StyledText>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* 공유방 생성 모달 */}
+      <Modal
+        visible={isCreateModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsCreateModalOpen(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsCreateModalOpen(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.createRoomModal}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <StyledText fontSize={18} fontWeight={700} color={COLORS.text.primary} style={{ marginBottom: 16 }}>
+              새 공유방 만들기
+            </StyledText>
+            <TextInput
+              style={styles.roomNameInput}
+              value={newRoomName}
+              onChangeText={setNewRoomName}
+              placeholder="공유방 이름을 입력하세요"
+              placeholderTextColor={COLORS.text.secondary}
+              autoFocus
+            />
+            <View style={styles.createRoomButtonGroup}>
+              <TouchableOpacity
+                style={[styles.createRoomButton, styles.cancelButton]}
+                onPress={() => {
+                  setIsCreateModalOpen(false);
+                  setNewRoomName('');
+                }}
+              >
+                <StyledText fontSize={14} fontWeight={600} color={COLORS.text.primary}>
+                  취소
+                </StyledText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.createRoomButton, styles.confirmButton]}
+                onPress={handleCreateRoom}
+              >
+                <StyledText fontSize={14} fontWeight={600} color={COLORS.white}>
+                  생성
+                </StyledText>
+              </TouchableOpacity>
+            </View>
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>

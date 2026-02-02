@@ -5,6 +5,8 @@ import { StyledText } from '@/utils/StyledText';
 import AutoSellInfo from './atomic/AutoSellInfo';
 import FolderSelector from './FolderSelector';
 import { FolderData } from '@/types/coupon/coupon';
+import { RoomResponseDto } from '@/types/room/room';
+import { getMyRooms } from '@/api/room/roomApi';
 import DatePicker from '@/components/common/atomic/DatePicker';
 import { Svg, Path } from 'react-native-svg';
 
@@ -120,6 +122,8 @@ interface InfoModifyCardProps {
   isAutoSellEnabled?: boolean;
   scheduledSaleDate?: string;
   plannedSalePrice?: number;
+  // Room(폴더) 설정
+  selectedRoomId?: number;
   onImageEdit?: () => void;
   onGiftCardNameChange?: (value: string) => void;
   onBarcodeChange?: (value: string) => void;
@@ -131,6 +135,7 @@ interface InfoModifyCardProps {
   onAutoSellToggle?: (enabled: boolean) => void;
   onSaleDateChange?: (date: string) => void;
   onSaleAmountChange?: (amount: number) => void;
+  onRoomSelect?: (roomId: number) => void;
 }
 
 const InfoModifyCard = ({
@@ -145,6 +150,7 @@ const InfoModifyCard = ({
   isAutoSellEnabled = false,
   scheduledSaleDate = '',
   plannedSalePrice = 0,
+  selectedRoomId,
   onImageEdit,
   onGiftCardNameChange,
   onBarcodeChange,
@@ -156,6 +162,7 @@ const InfoModifyCard = ({
   onAutoSellToggle,
   onSaleDateChange,
   onSaleAmountChange,
+  onRoomSelect,
 }: InfoModifyCardProps) => {
   const [localImageUrl, setLocalImageUrl] = useState(imageUrl);
   const [localGiftCardName, setLocalGiftCardName] = useState(giftCardName);
@@ -247,16 +254,73 @@ const InfoModifyCard = ({
     return numValue ? parseInt(numValue).toLocaleString('ko-KR') : '';
   };
 
-  const handleFolderSelect = (folderId: string) => {
-    console.log(folderId);
+  const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
+  const [loadingRooms, setLoadingRooms] = useState(true);
+
+  const fetchRooms = async () => {
+    try {
+      setLoadingRooms(true);
+      const roomList = await getMyRooms();
+      setRooms(roomList);
+      // Room 목록이 있고 선택된 Room이 없으면 첫 번째 Room 선택
+      if (roomList.length > 0 && !selectedRoomId) {
+        onRoomSelect?.(roomList[0].roomId);
+      }
+    } catch (error) {
+      console.error('Room 목록 조회 실패:', error);
+    } finally {
+      setLoadingRooms(false);
+    }
   };
 
-  const folders: FolderData[] = [
-    { id: '1', title: '폴더1', type: 'selected' },
-    { id: '2', title: '폴더2', type: 'selected' },
-    { id: '3', title: '폴더3', type: 'selected' },
-  ];
-  const selectedFolderId = '1';
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  const handleFolderSelect = (folderId: string) => {
+    const roomId = parseInt(folderId, 10);
+    if (!isNaN(roomId)) {
+      onRoomSelect?.(roomId);
+    }
+  };
+
+  // Room 목록을 FolderData 형식으로 변환
+  const folders: FolderData[] = rooms.map(room => ({
+    id: room.roomId.toString(),
+    title: room.name,
+    type: selectedRoomId === room.roomId ? 'selected' : 'unselected',
+  }));
+
+  const selectedFolderId = selectedRoomId?.toString();
+
+  // Room이 없을 때 기본 폴더 표시
+  if (loadingRooms) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.imageSection}>
+          <View style={styles.imageCard}>
+            {localImageUrl ? (
+              <Image source={{ uri: localImageUrl }} style={styles.productImage} />
+            ) : (
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <StyledText fontSize={12} fontWeight={400} color={COLORS.text.secondary}>
+                  이미지 없음
+                </StyledText>
+              </View>
+            )}
+            <TouchableOpacity style={styles.editButton} onPress={onImageEdit}>
+              <EditIcon />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={{ padding: 20, alignItems: 'center' }}>
+          <StyledText fontSize={14} fontWeight={400} color={COLORS.text.secondary}>
+            폴더 목록 로딩 중...
+          </StyledText>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -276,7 +340,12 @@ const InfoModifyCard = ({
           </TouchableOpacity>
         </View>
       </View>
-      <FolderSelector folders={folders} selectedFolderId={selectedFolderId} onSelect={handleFolderSelect} />
+      <FolderSelector 
+        folders={folders} 
+        selectedFolderId={selectedFolderId} 
+        onSelect={handleFolderSelect}
+        onRoomCreated={fetchRooms}
+      />
       <View style={styles.formSection}>
         <View style={styles.formField}>
           <StyledText fontSize={14} fontWeight={600} color={COLORS.text.primary}>
