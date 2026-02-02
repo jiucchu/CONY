@@ -20,7 +20,19 @@ pipeline {
                     script {
                         echo "🚀 Backend 변경 감지! 배포 시작..."
 
-                        // 1. Jenkins Credential에서 값 가져오기
+                        // Firebase 키 파일 주입
+                        // Jenkins에 저장된 파일을 꺼내서 실제 소스 코드 경로로 복사
+                        withCredentials([file(credentialsId: 'FIREBASE_KEY_FILE', variable: 'FIREBASE_KEY_PATH')]) {
+                            // manage 서버의 리소스 폴더로 복사
+                            sh "cp \$FIREBASE_KEY_PATH ./manage/src/main/resources/firebase-service-account.json"
+                            
+                            // 권한 부여
+                            sh "chmod 644 ./manage/src/main/resources/firebase-service-account.json"
+                            
+                            echo "🔑 Firebase Key file injected successfully."
+                        }
+
+                        // Jenkins Credential에서 값 가져오기
                         withCredentials([
                             string(credentialsId: 'SPRING_DATASOURCE_URL', variable: 'SPRING_DATASOURCE_URL'),
                             string(credentialsId: 'SPRING_DATASOURCE_USERNAME', variable: 'SPRING_DATASOURCE_USERNAME'),
@@ -36,7 +48,8 @@ pipeline {
                             string(credentialsId: 'KAKAO_CLIENT_ID', variable: 'KAKAO_CLIENT_ID'),
                             string(credentialsId: 'KAKAO_CLIENT_SECRET', variable: 'KAKAO_CLIENT_SECRET'),
                         ]) {
-                            // 2. .env 파일 생성
+
+                            // .env 파일 생성
                             sh """
                                 echo "SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}" > .env
                                 echo "SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}" >> .env
@@ -54,7 +67,7 @@ pipeline {
                             """
                         }
 
-                        // 3. Docker Compose 실행
+                        // Docker Compose 실행
                         sh 'docker compose up -d --build'
                     }
                 }
