@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { geofenceNotificationService } from '@/services/geofenceNotificationService';
+import type { GeofenceEvent, GeofenceEventHandler } from '@/services/geofenceNotificationService';
 
 /**
  * 백그라운드 Geofence 알림을 관리하는 커스텀 훅 (React Native)
@@ -106,6 +107,13 @@ export const useGeofenceNotification = () => {
     geofenceNotificationService.resetNotifications();
   }, []);
 
+  /**
+   * 지오펜싱 이벤트 리스너 등록
+   */
+  const addEventListener = useCallback((handler: GeofenceEventHandler): (() => void) => {
+    return geofenceNotificationService.addEventListener(handler);
+  }, []);
+
   return {
     isEnabled,
     hasPermission,
@@ -115,5 +123,6 @@ export const useGeofenceNotification = () => {
     stop,
     requestPermission,
     resetNotifications,
+    addEventListener,
   };
 };
