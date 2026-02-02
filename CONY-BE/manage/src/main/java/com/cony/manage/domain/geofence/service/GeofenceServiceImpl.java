@@ -316,14 +316,14 @@ public class GeofenceServiceImpl implements GeofenceService {
                 return;
 
             // 검색된 매장들의 브랜드 ID 수집
-            Set<Long> brandIds = new HashSet<>();
+            Set<Integer> brandIds = new HashSet<>();
             List<String> storeNames = new ArrayList<>();
 
             for (GeoResult<RedisGeoCommands.GeoLocation<Object>> geoResult : radiusResults.getContent()) {
                 String foundStoreIdStr = geoResult.getContent().getName().toString();
                 Map<String, String> info = getStoreInfo(Long.parseLong(foundStoreIdStr));
                 if (info != null) {
-                    brandIds.add(Long.parseLong(info.get("brandId")));
+                    brandIds.add(Integer.parseInt(info.get("brandId")));
                     storeNames.add(info.get("name"));
                 }
             }

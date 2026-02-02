@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -67,11 +68,11 @@ public interface GifticonRepository extends JpaRepository<Gifticon, Long>, JpaSp
         int countByUserIdAndBrandIdAndStatus(Long userId, Integer brandId, GifticonStatus status);
 
         // 여러 브랜드 중 사용 가능한 기프티콘 개수 (클러스터용)
-        int countByUserIdAndBrandIdInAndStatus(Long userId, java.util.Collection<Long> brandIds, GifticonStatus status);
+        int countByUserIdAndBrandIdInAndStatus(Long userId, Collection<Integer> brandIds, GifticonStatus status);
 
         // 유효기간 만료일이 특정 날짜들에 포함되는 기프티콘 조회 (사용자 정보 Fetch Join)
         @Query("SELECT g FROM Gifticon g JOIN FETCH g.user WHERE g.expiryDate IN :dates AND g.status = :status")
-        List<Gifticon> findByExpiryDateInAndStatus(@Param("dates") java.util.Collection<LocalDate> dates,
+        List<Gifticon> findByExpiryDateInAndStatus(@Param("dates") Collection<LocalDate> dates,
                         @Param("status") GifticonStatus status);
 
         // 유효기간 만료일이 특정 기간 내인 기프티콘 조회 (사용자 정보 Fetch Join)
