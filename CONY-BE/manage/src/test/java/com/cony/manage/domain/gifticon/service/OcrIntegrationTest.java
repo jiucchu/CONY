@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 
 @SpringBootTest
@@ -62,17 +63,19 @@ public class OcrIntegrationTest {
         // given
         // 테스트용 가짜 파일 생성
         MockMultipartFile mockFile = new MockMultipartFile(
-                "images", "test.jpg", "image/jpeg", "fake-image-content".getBytes()
-        );
+                "images", "test.jpg", "image/jpeg", "fake-image-content".getBytes());
 
         // 파일 업로더는 단순히 로컬 URL을 리턴하도록 모킹 (AI 서버가 접근 가능한 URL이어야 함)
         // ★ 실제 테스트를 위해선, 프로젝트 내에 있는 진짜 이미지 경로를 주거나
-        //   웹에서 접근 가능한 외부 이미지 URL(예: 구글 로고 등)을 잠시 넣어서 테스트하는 게 좋습니다.
-        String testImageUrl = "https://raw.githubusercontent.com/tesseract-ocr/tessdata/main/eng.traineddata"; // 혹은 실제 동작하는 이미지 URL
+        // 웹에서 접근 가능한 외부 이미지 URL(예: 구글 로고 등)을 잠시 넣어서 테스트하는 게 좋습니다.
+        String testImageUrl = "https://raw.githubusercontent.com/tesseract-ocr/tessdata/main/eng.traineddata"; // 혹은 실제
+                                                                                                               // 동작하는
+                                                                                                               // 이미지
+                                                                                                               // URL
         // 만약 로컬 서버 설정을 마쳤다면 아래처럼 실제 업로드 경로를 리턴해도 됩니다.
         // String testImageUrl = "http://localhost:8080/uploads/temp/test.jpg";
 
-        given(fileUploader.uploadTemp(any(MultipartFile.class))).willReturn(testImageUrl);
+        given(fileUploader.upload(any(MultipartFile.class), eq(null))).willReturn(testImageUrl);
 
         // when
         System.out.println(">>> AI 서버로 요청을 보냅니다... URL: " + testImageUrl);

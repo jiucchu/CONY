@@ -9,13 +9,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
@@ -38,7 +38,7 @@ class GifticonControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private GifticonService gifticonService;
 
     @Autowired
@@ -75,7 +75,7 @@ class GifticonControllerTest {
         // Assuming validation passes or mocking validation
         
         List<Long> responseIds = List.of(1L, 2L);
-        given(gifticonService.registerGifticon(any(), eq(1L))).willReturn(responseIds);
+        given(gifticonService.registerGifticon(any(), eq(1L), null, null)).willReturn(responseIds);
 
         // when & then
         mockMvc.perform(post("/v1/gifticons")
@@ -99,7 +99,7 @@ class GifticonControllerTest {
                 .build();
         Page<GifticonListResponseDto> page = new PageImpl<>(List.of(dto));
 
-        given(gifticonService.getMyGifticons(eq(1L), any(Pageable.class))).willReturn(page);
+        given(gifticonService.getMyGifticons(eq(1L), null, any(Pageable.class))).willReturn(page);
 
         // when & then
         mockMvc.perform(get("/v1/gifticons")
@@ -150,7 +150,7 @@ class GifticonControllerTest {
         // Workaround: Mock validation or populate DTO.
         // Let's assume fields are populated via Jackson from JSON.
         
-        given(gifticonService.updateGifticon(eq(1L), eq(1L), any())).willReturn(1L);
+        given(gifticonService.updateGifticon(eq(1L), eq(1L), any(), null, null)).willReturn(1L);
 
         // when & then
         mockMvc.perform(put("/v1/gifticons/1")
@@ -186,7 +186,7 @@ class GifticonControllerTest {
     @DisplayName("기프티콘 사용 취소")
     void cancelUseGifticon() throws Exception {
         // given
-        doNothing().when(gifticonService).cancelUseGifticon(10L, 1L);
+        doNothing().when(gifticonService).cancelUseGifticon(10L, 1L, false);
 
         // when & then
         mockMvc.perform(post("/v1/gifticons/log/10/cancel")

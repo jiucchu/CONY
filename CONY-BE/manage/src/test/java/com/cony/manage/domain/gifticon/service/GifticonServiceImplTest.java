@@ -125,7 +125,7 @@ class GifticonServiceImplTest {
         });
 
         // when
-        List<Long> result = gifticonService.registerGifticon(List.of(request), userId);
+        List<Long> result = gifticonService.registerGifticon(List.of(request), userId, null, null);
 
         // then
         assertThat(result).hasSize(1);
@@ -147,7 +147,7 @@ class GifticonServiceImplTest {
         given(gifticonRepository.existsByBarcodeNumber(any())).willReturn(true);
 
         // when & then
-        assertThatThrownBy(() -> gifticonService.registerGifticon(List.of(request), userId))
+        assertThatThrownBy(() -> gifticonService.registerGifticon(List.of(request), userId, null, null))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_GIFTICON);
     }
@@ -171,11 +171,10 @@ class GifticonServiceImplTest {
                         .gifticon(gifticon)
                         .imageUrl("image.jpg")
                         .imageType(ImageType.THUMBNAIL)
-                        .build()
-        ));
+                        .build()));
 
         // when
-        Page<GifticonListResponseDto> result = gifticonService.getMyGifticons(userId, pageable);
+        Page<GifticonListResponseDto> result = gifticonService.getMyGifticons(userId, null, pageable);
 
         // then
         assertThat(result.getContent()).hasSize(1);
@@ -270,7 +269,7 @@ class GifticonServiceImplTest {
         Category category = createCategory();
         Brand brand = createBrand(category);
         Gifticon gifticon = createGifticon(user, brand, category);
-        
+
         // Use normal numbers (outside cache) to verify object equality fix
         ReflectionTestUtils.setField(gifticon, "originalPrice", 4500);
         ReflectionTestUtils.setField(gifticon, "currentBalance", 0);
@@ -286,7 +285,7 @@ class GifticonServiceImplTest {
         given(gifticonUsageLogRepository.findById(100L)).willReturn(Optional.of(log));
 
         // when
-        gifticonService.cancelUseGifticon(100L, userId);
+        gifticonService.cancelUseGifticon(100L, userId, false);
 
         // then
         assertThat(log.isCanceled()).isTrue();
@@ -299,7 +298,7 @@ class GifticonServiceImplTest {
     void analyzeGifticon_Success() {
         // given
         MultipartFile image = org.mockito.Mockito.mock(MultipartFile.class);
-        given(fileUploader.uploadTemp(any())).willReturn("temp_url");
+        given(fileUploader.upload(any(), any())).willReturn("temp_url");
 
         // when
         List<GifticonAnalysisResponseDto> result = gifticonService.analyzeGifticon(List.of(image));
@@ -329,7 +328,7 @@ class GifticonServiceImplTest {
         given(brandRepository.findByName("Starbucks")).willReturn(Optional.of(brand));
 
         // when
-        Long resultId = gifticonService.updateGifticon(1L, userId, request);
+        Long resultId = gifticonService.updateGifticon(1L, userId, request, null, null);
 
         // then
         assertThat(resultId).isEqualTo(1L);
@@ -359,7 +358,8 @@ class GifticonServiceImplTest {
         ReflectionTestUtils.setField(log, "id", 100L);
 
         GifticonLogUpdateRequestDto request = new GifticonLogUpdateRequestDto();
-        ReflectionTestUtils.setField(request, "newAmount", 4000); // 5000 -> 4000 used. Balance should recover 1000 -> 6000.
+        ReflectionTestUtils.setField(request, "newAmount", 4000); // 5000 -> 4000 used. Balance should recover 1000 ->
+                                                                  // 6000.
 
         given(gifticonUsageLogRepository.findById(100L)).willReturn(Optional.of(log));
 
