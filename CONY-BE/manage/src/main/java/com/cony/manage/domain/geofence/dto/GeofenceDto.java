@@ -4,8 +4,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -60,17 +62,17 @@ public class GeofenceDto {
     @Schema(description = "지도 마커 포인트")
     public static class MapPoint {
         @Schema(description = "마커 타입 (STORE: 단일 매장, CLUSTER: 매장 뭉침)", example = "STORE")
-        private String type;         // "STORE" (단일 매장) 또는 "CLUSTER" (매장 묶음)
+        private String type; // "STORE" (단일 매장) 또는 "CLUSTER" (매장 묶음)
         @Schema(description = "매장 ID 또는 대표 ID", example = "101")
-        private String id;           // 지오펜스 등록 ID (Client 식별용)
+        private String id; // 지오펜스 등록 ID (Client 식별용)
         @Schema(description = "마커 표시 이름 (예: 스타벅스 강남점 or 스타벅스 외 2곳)", example = "스타벅스 강남점")
-        private String name;         // "스타벅스 강남점" 또는 "스타벅스 외 4건"
+        private String name; // "스타벅스 강남점" 또는 "스타벅스 외 4건"
         @Schema(description = "위도")
         private double lat;
         @Schema(description = "경도")
         private double lon;
         @Schema(description = "지오펜싱 트리거 반경 (m) - 클러스터면 더 넓게 잡힘", example = "100")
-        private int triggerRadius;   // 지오펜스 감지 반경 (STORE=100m, CLUSTER=300m 등)
+        private int triggerRadius; // 지오펜스 감지 반경 (STORE=100m, CLUSTER=300m 등)
 
         // 클러스터일 경우 포함된 매장들의 상세 정보 (선택적)
         // private List<String> includedStoreNames;
@@ -80,11 +82,11 @@ public class GeofenceDto {
     @Builder
     @Getter
     public static class StoreSummary {
-        private String id;       // 매장 ID
-        private String name;     // 매장 이름
-        private Long brandId;    // 브랜드 ID (로고 표시용)
-        private double lat;      // 개별 매장 위도
-        private double lon;      // 개별 매장 경도
+        private String id; // 매장 ID
+        private String name; // 매장 이름
+        private Long brandId; // 브랜드 ID (로고 표시용)
+        private double lat; // 개별 매장 위도
+        private double lon; // 개별 매장 경도
     }
 
     // 내부 연산용 데이터 홀더 (서비스 로직 내에서만 사용)
@@ -100,6 +102,9 @@ public class GeofenceDto {
     }
 
     @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Schema(description = "지오펜스 진입 이벤트 요청")
     public static class EntryRequest {
         @Schema(description = "지오펜스 ID (단일 매장: '101', 클러스터: 'C_101')", example = "C_101")
