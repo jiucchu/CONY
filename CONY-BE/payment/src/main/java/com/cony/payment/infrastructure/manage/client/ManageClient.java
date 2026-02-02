@@ -23,6 +23,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Manage 서버 API 호출 클라이언트
@@ -49,7 +51,7 @@ public class ManageClient {
             ResponseEntity<ApiResponse<GifticonResponse>> response = restTemplate.exchange(
                     url,
                     HttpMethod.GET,
-                    null,
+                    createHttpEntity(),
                     new ParameterizedTypeReference<ApiResponse<GifticonResponse>>() {}
             );
 
@@ -92,29 +94,45 @@ public class ManageClient {
     }
 
     /**
-     * 기프티콘 다건 조회 (ID 목록으로)
+     * 기프티콘 다건 조회 (ID 목록으로) - 배치 API 사용
      * @param gifticonIds 기프티콘 ID 목록
      * @return 기프티콘 정보 맵 (gifticonId -> GifticonResponse)
      */
-    public java.util.Map<Long, GifticonResponse> getGifticons(java.util.List<Long> gifticonIds) {
+    public Map<Long, GifticonResponse> getGifticons(List<Long> gifticonIds) {
         if (gifticonIds == null || gifticonIds.isEmpty()) {
-            return java.util.Collections.emptyMap();
+            return Collections.emptyMap();
         }
 
-        java.util.Map<Long, GifticonResponse> result = new java.util.HashMap<>();
+        String url = UriComponentsBuilder.fromHttpUrl(manageServerProperties.getUrl())
+                .path("/v1/gifticons/batch")
+                .queryParam("ids", gifticonIds.stream().map(String::valueOf).collect(Collectors.joining(",")))
+                .build()
+                .toUriString();
+                
+        log.info("Manage 서버 기프티콘 일괄 조회 요청: count={}, url={}", gifticonIds.size(), url);
 
-        // TODO: 배치 API가 생기면 한 번에 조회하도록 변경
-        for (Long gifticonId : gifticonIds) {
-            try {
-                GifticonResponse gifticon = getGifticon(gifticonId);
-                result.put(gifticonId, gifticon);
-            } catch (CustomException e) {
-                log.warn("기프티콘 조회 실패: gifticonId={}", gifticonId);
-                // 실패한 건은 스킵
+        try {
+            ResponseEntity<ApiResponse<List<GifticonResponse>>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    createHttpEntity(), // 헤더 포함 (필수는 아니지만 일관성 유지)
+                    new ParameterizedTypeReference<ApiResponse<List<GifticonResponse>>>() {}
+            );
+
+            if (response.getBody() != null && response.getBody().getData() != null) {
+                List<GifticonResponse> list = response.getBody().getData();
+                log.info("Manage 서버 기프티콘 일괄 조회 성공: received={}", list.size());
+                
+                return list.stream()
+                        .collect(Collectors.toMap(GifticonResponse::getGifticonId, g -> g));
             }
-        }
+            
+            return Collections.emptyMap();
 
-        return result;
+        } catch (Exception e) {
+            log.error("Manage 서버 기프티콘 일괄 조회 실패", e);
+            return Collections.emptyMap();
+        }
     }
 
     /**
@@ -130,7 +148,7 @@ public class ManageClient {
             ResponseEntity<ApiResponse<List<AutoSaleTargetResponse>>> response = restTemplate.exchange(
                     url,
                     HttpMethod.GET,
-                    null,
+                    createHttpEntity(),
                     new ParameterizedTypeReference<ApiResponse<List<AutoSaleTargetResponse>>>() {}
             );
 
@@ -160,7 +178,7 @@ public class ManageClient {
             ResponseEntity<ApiResponse<List<AutoSaleTargetResponse>>> response = restTemplate.exchange(
                     url,
                     HttpMethod.GET,
-                    null,
+                    createHttpEntity(),
                     new ParameterizedTypeReference<ApiResponse<List<AutoSaleTargetResponse>>>() {}
             );
 
@@ -187,64 +205,13 @@ public class ManageClient {
         log.info("Manage 서버 자동판매 처리 완료 표시: gifticonId={}, url={}", gifticonId, url);
 
         try {
-            restTemplate.postForEntity(url, null, ApiResponse.class);
+            restTemplate.postForEntity(url, createHttpEntity(), ApiResponse.class);
             log.info("자동판매 처리 완료 표시 성공: gifticonId={}", gifticonId);
 
         } catch (Exception e) {
             log.error("자동판매 처리 완료 표시 실패: gifticonId={}", gifticonId, e);
         }
     }
-
-    /**
-     * 현재 위치 기반 거리별 매장 ID 목록 조회
-     * @param latitude 위도
-     * @param longitude 경도
-     * @return 거리 구간별(200m, 500m, 1000m) 매장 ID 리스트
-     */
-    public NearbyStoreIdsResponse getNearbyStoreIds(double latitude, double longitude) {
-        String baseUrl = manageServerProperties.getUrl() + "/v1/stores/nearby";
-        String url = UriComponentsBuilder.fromHttpUrl(baseUrl)
-                .queryParam("latitude", latitude)
-                .queryParam("longitude", longitude)
-                .toUriString();
-
-        log.info("Manage 서버 주변 매장 ID 조회 요청: lat={}, lon={}, url={}", latitude, longitude, url);
-
-        try {
-            ResponseEntity<ApiResponse<NearbyStoreIdsResponse>> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    createHttpEntity(),
-                    new ParameterizedTypeReference<ApiResponse<NearbyStoreIdsResponse>>() {}
-            );
-
-            if(response.getBody() != null && response.getBody().getStatus() != null && response.getBody().getStatus() == "SUCCESS" && response.getBody().getData() != null) {
-                NearbyStoreIdsResponse data = response.getBody().getData();
-                log.info("주변 매장 조회 성공: 200m({}개), 500m({}개), 1km({}개)",
-                        data.getWithin200().size(),
-                        data.getWithin500().size(),
-                        data.getWithin1000().size());
-
-                return data;
-            }
-
-            // 데이터가 없으면 빈 객체 반환 (Null Pointer 방지)
-            return new NearbyStoreIdsResponse(
-                    Collections.emptyList(),
-                    Collections.emptyList(),
-                    Collections.emptyList()
-            );
-        } catch (Exception e) {
-            log.error("주변 매장 ID 조회 실패: lat={}, lon={}", latitude, longitude, e);
-            // 비즈니스 로직에 따라 빈 리스트를 줄지, 예외를 던질지 결정 (여기선 빈 리스트 반환으로 처리)
-            return new NearbyStoreIdsResponse(
-                    Collections.emptyList(),
-                    Collections.emptyList(),
-                    Collections.emptyList()
-            );
-        }
-    }
-
 
     /**
      * 현재 요청의 Authorization 헤더를 포함한 HttpEntity 생성

@@ -15,7 +15,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-public interface SaleRepository extends JpaRepository<Sale, Long> {
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+public interface SaleRepository extends JpaRepository<Sale, Long>, JpaSpecificationExecutor<Sale> {
 
        /**
         * 비관적 락을 사용한 Sale 조회 (동시 구매 방지)

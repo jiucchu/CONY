@@ -7,6 +7,7 @@ import com.cony.payment.domain.transaction.enums.TransactionType;
 import com.cony.payment.domain.transaction.service.TransactionService;
 import com.cony.payment.domain.user.entity.User;
 import com.cony.payment.domain.user.repository.UserRepository;
+import com.cony.payment.global.auth.annotation.AuthUser;
 import com.cony.payment.global.common.ApiResponse;
 import com.cony.payment.global.error.CustomException;
 import com.cony.payment.global.error.ErrorCode;
@@ -34,12 +35,12 @@ public class TransactionController implements TransactionControllerDocs {
     public ApiResponse<Page<TransactionResponse>> getTransactions(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) TransactionType type) {
+            @RequestParam(required = false) TransactionType type,
+            @AuthUser Long userId) {
 
-        Long testUserId = 1L;
-        log.info("거래 내역 조회 (테스트): userId={}, page={}, size={}, type={}", testUserId, page, size, type);
+        log.info("거래 내역 조회: userId={}, page={}, size={}, type={}", userId, page, size, type);
 
-        User user = userRepository.findById(testUserId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         Pageable pageable = PageRequest.of(page, size);
@@ -69,11 +70,10 @@ public class TransactionController implements TransactionControllerDocs {
 
     @Override
     @GetMapping("/recent")
-    public ApiResponse<List<TransactionResponse>> getRecentTransactions() {
-        Long testUserId = 1L;
-        log.info("최근 거래 내역 조회 (테스트): userId={}", testUserId);
+    public ApiResponse<List<TransactionResponse>> getRecentTransactions(@AuthUser Long userId) {
+        log.info("최근 거래 내역 조회: userId={}", userId);
 
-        User user = userRepository.findById(testUserId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         List<Transaction> transactions = transactionService.getRecentTransactions(user);

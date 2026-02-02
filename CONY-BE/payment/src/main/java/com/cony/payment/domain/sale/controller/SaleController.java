@@ -6,10 +6,12 @@ import com.cony.payment.domain.sale.dto.SaleRequestDto;
 import com.cony.payment.domain.sale.dto.SaleSearchCondition;
 import com.cony.payment.domain.sale.dto.SaleStatsDto;
 import com.cony.payment.domain.sale.dto.SaleUpdateRequestDto;
+import com.cony.payment.domain.sale.dto.SuggestionApproveRequestDto;
 import com.cony.payment.domain.sale.enums.SaleCategory;
 import com.cony.payment.domain.sale.enums.SaleSort;
 import com.cony.payment.domain.sale.enums.SaleStatus;
 import com.cony.payment.domain.sale.service.SaleService;
+import com.cony.payment.global.auth.annotation.AuthUser;
 import com.cony.payment.global.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,10 +32,10 @@ public class SaleController implements SaleControllerDocs {
     @Override
     @PostMapping
     public ApiResponse<Long> createSale(
-            @RequestBody @Valid SaleRequestDto requestDto
+            @RequestBody @Valid SaleRequestDto requestDto,
+            @AuthUser Long userId
     ) {
-        Long testUserId = 1L;
-        Long saleId = saleService.createSale(testUserId, requestDto);
+        Long saleId = saleService.createSale(userId, requestDto);
         return ApiResponse.success("판매글이 성공적으로 등록되었습니다.", saleId);
     }
 
@@ -79,10 +81,10 @@ public class SaleController implements SaleControllerDocs {
     @PutMapping("/{saleId}")
     public ApiResponse<Void> updateSale(
             @PathVariable Long saleId,
-            @RequestBody @Valid SaleUpdateRequestDto requestDto
+            @RequestBody @Valid SaleUpdateRequestDto requestDto,
+            @AuthUser Long userId
     ) {
-        Long testUserId = 1L;
-        saleService.updateSale(testUserId, saleId, requestDto.getSalePrice());
+        saleService.updateSale(userId, saleId, requestDto.getSalePrice());
         return ApiResponse.success("판매글이 수정되었습니다.");
     }
 
@@ -91,56 +93,67 @@ public class SaleController implements SaleControllerDocs {
     public ApiResponse<Page<SaleListResponseDto>> getMySales(
             @RequestParam(required = false) SaleStatus status,
             @RequestParam(required = false) String keyword,
-            @PageableDefault(size = 10) Pageable pageable
+            @PageableDefault(size = 10) Pageable pageable,
+            @AuthUser Long userId
     ) {
-        Long testUserId = 1L;
-        Page<SaleListResponseDto> sales = saleService.getMySalesWithGifticon(testUserId, status, keyword, pageable);
+        Page<SaleListResponseDto> sales = saleService.getMySalesWithGifticon(userId, status, keyword, pageable);
         return ApiResponse.success("내 판매글 목록을 조회했습니다.", sales);
     }
 
     @Override
     @GetMapping("/my/stats")
-    public ApiResponse<SaleStatsDto> getMySaleStats() {
-        Long testUserId = 1L;
-        SaleStatsDto stats = saleService.getMySaleStats(testUserId);
+    public ApiResponse<SaleStatsDto> getMySaleStats(@AuthUser Long userId) {
+        SaleStatsDto stats = saleService.getMySaleStats(userId);
         return ApiResponse.success("내 판매 통계를 조회했습니다.", stats);
     }
 
     @Override
     @GetMapping("/my/sold")
     public ApiResponse<Page<SaleListResponseDto>> getMySoldSales(
-            @PageableDefault(size = 10) Pageable pageable
+            @PageableDefault(size = 10) Pageable pageable,
+            @AuthUser Long userId
     ) {
-        Long testUserId = 1L;
-        Page<SaleListResponseDto> sales = saleService.getMySalesWithGifticon(testUserId, SaleStatus.SOLD_OUT, null, pageable);
+        Page<SaleListResponseDto> sales = saleService.getMySalesWithGifticon(userId, SaleStatus.SOLD_OUT, null, pageable);
         return ApiResponse.success("내 판매 완료 목록을 조회했습니다.", sales);
     }
 
     @Override
     @DeleteMapping("/{saleId}")
     public ApiResponse<Void> cancelSale(
-            @PathVariable Long saleId
+            @PathVariable Long saleId,
+            @AuthUser Long userId
     ) {
-        Long testUserId = 1L;
-        saleService.cancelSale(testUserId, saleId);
+        saleService.cancelSale(userId, saleId);
         return ApiResponse.success("판매가 취소되었습니다.");
     }
 
     @Override
     @PostMapping("/{saleId}/start")
     public ApiResponse<Void> startSale(
-            @PathVariable Long saleId
+            @PathVariable Long saleId,
+            @AuthUser Long userId
     ) {
-        Long testUserId = 1L;
-        saleService.startSale(testUserId, saleId);
+        saleService.startSale(userId, saleId);
         return ApiResponse.success("판매가 시작되었습니다.");
     }
 
     @Override
     @GetMapping("/suggestions")
-    public ApiResponse<List<SaleListResponseDto>> getSaleSuggestions() {
-        Long testUserId = 1L;
-        List<SaleListResponseDto> suggestions = saleService.getSaleSuggestions(testUserId);
+    public ApiResponse<List<SaleListResponseDto>> getSaleSuggestions(@AuthUser Long userId) {
+        List<SaleListResponseDto> suggestions = saleService.getSaleSuggestions(userId);
         return ApiResponse.success("시스템 제안 목록을 조회했습니다.", suggestions);
+    }
+
+    /**
+     * 시스템 제안 승인 (유효기간 임박 기프티콘 판매 등록)
+     */
+    @Override
+    @PostMapping("/suggestions/approve")
+    public ApiResponse<Long> approveSuggestion(
+            @RequestBody @Valid SuggestionApproveRequestDto requestDto,
+            @AuthUser Long userId
+    ) {
+        Long saleId = saleService.approveSuggestion(userId, requestDto.getGifticonId(), requestDto.getSalePrice());
+        return ApiResponse.success("판매가 등록되었습니다.", saleId);
     }
 }

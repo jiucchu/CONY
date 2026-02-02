@@ -18,6 +18,9 @@ public class AutoSaleTargetResponseDto {
     @Schema(description = "소유자 ID")
     private Long userId;
 
+    @Schema(description = "브랜드 ID")
+    private Integer brandId;
+
     @Schema(description = "브랜드명")
     private String brandName;
 
@@ -40,6 +43,7 @@ public class AutoSaleTargetResponseDto {
         return AutoSaleTargetResponseDto.builder()
                 .gifticonId(gifticon.getId())
                 .userId(gifticon.getUser().getId())
+                .brandId(gifticon.getBrand().getId())
                 .brandName(gifticon.getBrandName())
                 .productName(gifticon.getProductName())
                 .originalPrice(gifticon.getOriginalPrice())

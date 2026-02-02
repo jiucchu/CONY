@@ -18,6 +18,7 @@ public class AutoSaleTargetResponse {
 
     private Long gifticonId;
     private Long userId;
+    private Integer brandId; // 브랜드 ID 추가
     private String brandName;
     private String productName;
     private Integer originalPrice;

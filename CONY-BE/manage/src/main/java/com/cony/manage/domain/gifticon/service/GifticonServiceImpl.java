@@ -396,27 +396,13 @@ public class GifticonServiceImpl implements GifticonService {
                 .toList();
 
         // THUMBNAIL 이미지 먼저 조회
-        Map<Long, String> thumbnailMap = gifticonImageRepository.findAllByGifticonIdIn(gifticonIds, ImageType.THUMBNAIL).stream()
+        Map<Long, String> imageMap = gifticonImageRepository.findAllByGifticonIdIn(gifticonIds, ImageType.THUMBNAIL).stream()
                 .filter(img -> img.getS3Key() != null && !img.getS3Key().isEmpty())
                 .collect(Collectors.toMap(
                         img -> img.getGifticon().getId(),
                         img -> fileUploader.getPresignedUrl(img.getS3Key()),
                         (existing, replacement) -> existing
                 ));
-
-        // THUMBNAIL이 없는 경우 ORIGINAL 이미지 사용
-        Map<Long, String> originalMap = gifticonImageRepository.findAllByGifticonIdIn(gifticonIds, ImageType.ORIGINAL).stream()
-                .filter(img -> img.getS3Key() != null && !img.getS3Key().isEmpty())
-                .filter(img -> !thumbnailMap.containsKey(img.getGifticon().getId())) // THUMBNAIL이 없는 경우만
-                .collect(Collectors.toMap(
-                        img -> img.getGifticon().getId(),
-                        img -> fileUploader.getPresignedUrl(img.getS3Key()),
-                        (existing, replacement) -> existing
-                ));
-
-        // 두 맵을 합치기 (THUMBNAIL 우선)
-        Map<Long, String> imageMap = new HashMap<>(thumbnailMap);
-        imageMap.putAll(originalMap);
 
         return gifticonPage.map(g -> GifticonListResponseDto.builder()
                 .gifticonId(g.getId())
@@ -691,6 +677,48 @@ public class GifticonServiceImpl implements GifticonService {
                 .orElseThrow(() -> new CustomException(ErrorCode.GIFTICON_NOT_FOUND));
 
         gifticon.clearAutoSaleSetting();
+    }
+
+    /**
+     * 기프티콘 정보 일괄 조회 - 내부 서버 호출용
+     * - Payment 서버에서 판매글 목록 조회 시 사용
+     * - 인증/권한 체크 없이 ID 목록으로 조회
+     */
+    @Override
+    public List<GifticonResponseDto> getGifticonsByIds(List<Long> gifticonIds) {
+        if (gifticonIds == null || gifticonIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<Gifticon> gifticons = gifticonRepository.findAllById(gifticonIds);
+        
+        // 이미지 일괄 조회
+        // THUMBNAIL 이미지 먼저 조회
+        Map<Long, String> imageMap = gifticonImageRepository.findAllByGifticonIdIn(gifticonIds, ImageType.THUMBNAIL).stream()
+                .filter(img -> img.getS3Key() != null && !img.getS3Key().isEmpty())
+                .collect(Collectors.toMap(
+                        img -> img.getGifticon().getId(),
+                        img -> fileUploader.getPresignedUrl(img.getS3Key()),
+                        (existing, replacement) -> existing
+                ));
+
+        return gifticons.stream()
+                .map(g -> GifticonResponseDto.builder()
+                        .gifticonId(g.getId())
+                        .userId(g.getUser().getId())
+                        .brandId(g.getBrand().getId()) // 브랜드 ID 추가
+                        .brandName(g.getBrand().getName())
+                        .productName(g.getProductName())
+                        .barcodeNumber(g.getBarcodeNumber())
+                        .expiryDate(g.getExpiryDate())
+                        .status(g.getStatus())
+                        .imageUrl(imageMap.getOrDefault(g.getId(), null))
+                        .originalPrice(g.getOriginalPrice())
+                        .currentBalance(g.getCurrentBalance())
+                        .categoryName(g.getCategory().getName())
+                        .gifticonType(g.getGifticonType())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     private List<AutoSaleTargetResponseDto> convertToAutoSaleTargetDtos(List<Gifticon> gifticons) {

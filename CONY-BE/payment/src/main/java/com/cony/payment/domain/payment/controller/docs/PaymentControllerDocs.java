@@ -1,8 +1,10 @@
 package com.cony.payment.domain.payment.controller.docs;
 
 import com.cony.payment.domain.payment.dto.PaymentReadyRequest;
+import com.cony.payment.global.auth.annotation.AuthUser;
 import com.cony.payment.global.common.ApiResponse;
 import com.cony.payment.infrastructure.kakaopay.dto.KakaoPayReadyResponse;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -24,9 +26,11 @@ public interface PaymentControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "카카오페이 API 오류", content = @Content)
     })
     ApiResponse<KakaoPayReadyResponse> ready(
-            @RequestBody @Valid PaymentReadyRequest request
+            @RequestBody @Valid PaymentReadyRequest request,
+            @AuthUser Long userId
     );
 
+    @Hidden
     @Operation(summary = "결제 승인 (콜백)", description = "카카오페이 결제 완료 후 자동으로 호출됩니다. 포인트가 충전되고 프론트엔드로 리다이렉트됩니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "302", description = "프론트엔드로 리다이렉트")
@@ -37,6 +41,7 @@ public interface PaymentControllerDocs {
             HttpServletResponse response
     ) throws IOException;
 
+    @Hidden
     @Operation(summary = "결제 취소 (콜백)", description = "사용자가 결제를 취소한 경우 호출됩니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "302", description = "프론트엔드로 리다이렉트")
@@ -46,6 +51,7 @@ public interface PaymentControllerDocs {
             HttpServletResponse response
     ) throws IOException;
 
+    @Hidden
     @Operation(summary = "결제 실패 (콜백)", description = "결제가 실패한 경우 호출됩니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "302", description = "프론트엔드로 리다이렉트")

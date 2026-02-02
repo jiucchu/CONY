@@ -14,9 +14,9 @@ public class AiServerProperties {
     private String url;
 
     /**
-     * AI 분석 요청 URL
+     * AI 분석 요청 URL (OCR)
      */
     public String getAnalyzeUrl() {
-        return url + "/analyze";
+        return url + "/ocr";
     }
 }
