@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, BackHandler } from 'react-native';
+import { ScrollView, BackHandler } from 'react-native';
+import styled from 'styled-components/native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import InfoDetailCard from '@/components/InfoDetail/InfoDetailCard';
 import RemainMoneyCard from '@/components/InfoDetail/RemainMoneyCard';
@@ -7,41 +8,45 @@ import AutoSellInfoCard from '@/components/InfoDetail/atomic/AutoSellInfoCard';
 import { GifticonDetailResponseDto } from '@/types/gifticon/gifticon';
 import { COLORS } from '@/constants/colors';
 import { getGifticonDetail, useGifticon, cancelUseGifticon } from '@/api/gifticon/gifticonApi';
+import { createSale } from '@/api/sale/saleApi';
 import ContentLayout from '@/components/layout/ContentLayout';
 import { StyledText } from '@/utils/StyledText';
 import { DefaultButton } from '@/components/common/atomic/Button';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { calculateDaysUntilExpiration } from '@/utils/DayUtils';
 
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    padding: 20,
-    gap: 20,
-  },
-  buttonGroup: {
-    flexDirection: 'row',
-    width: '80%',
-    maxWidth: 500,
-    marginTop: 24,
-    justifyContent: 'space-between',
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: 6,
-  },
-  usedButton: {
-    backgroundColor: COLORS.primary,
-  },
-  sellButton: {
-    backgroundColor: COLORS.secondary,
-  },
-});
+const Container = styled.View`
+  align-items: center;
+  padding: 30px;
+  padding-bottom: 60px;
+  gap: 20px;
+`;
+
+const ButtonGroup = styled.View`
+  flex-direction: row;
+  width: 80%;
+  max-width: 500px;
+  margin-top: 24px;
+  justify-content: space-between;
+`;
+
+const ActionButton = styled.TouchableOpacity<{ variant: 'used' | 'sell' }>`
+  flex: 1;
+  padding-vertical: 14px;
+  padding-horizontal: 20px;
+  border-radius: 20px;
+  align-items: center;
+  justify-content: center;
+  margin-horizontal: 6px;
+  background-color: ${props => props.variant === 'used' ? COLORS.primary : COLORS.secondary};
+`;
+
+const DebugContainer = styled.View`
+  padding: 10px;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  margin-bottom: 10px;
+`;
 
 const CouponDetail = () => {
   const route = useRoute();
@@ -79,6 +84,11 @@ const CouponDetail = () => {
 
       try {
         const data = await getGifticonDetail(id);
+        console.log('[CouponDetail] 받아온 쿠폰 데이터:', JSON.stringify(data, null, 2));
+        console.log('[CouponDetail] scheduledSaleDate:', data.scheduledSaleDate);
+        console.log('[CouponDetail] plannedSalePrice:', data.plannedSalePrice);
+        console.log('[CouponDetail] autoSellDate:', data.autoSellDate);
+        console.log('[CouponDetail] autoSellAmount:', data.autoSellAmount);
         setCoupon(data);
       } catch (err: any) {
         setError(err.message || '쿠폰 정보를 불러오는데 실패했습니다.');
@@ -242,16 +252,111 @@ const CouponDetail = () => {
   };
 
   const handleSell = () => {
-    // 판매 로직
-    console.log('판매하기');
+    if (!coupon) return;
+
+    // 히스토리가 있으면 판매 불가
+    if (coupon.histories && coupon.histories.length > 0) {
+      Alert.alert(
+        '판매 불가',
+        '사용 내역이 있는 쿠폰은 판매할 수 없습니다.'
+      );
+      return;
+    }
+
+    // 기본 판매 가격 제안 (원래 가격의 80%)
+    const suggestedPrice = Math.floor(coupon.originalPrice * 0.8);
+    const minPrice = 100; // 최소 판매 가격
+    const defaultPrice = Math.max(suggestedPrice, minPrice);
+
+    // iOS는 Alert.prompt 사용, Android는 간단한 확인 다이얼로그
+    if (Platform.OS === 'ios') {
+      Alert.prompt(
+        '판매 가격 입력',
+        `판매할 가격을 입력해주세요.\n(원래 가격: ${coupon.originalPrice.toLocaleString('ko-KR')}원)`,
+        [
+          {
+            text: '취소',
+            style: 'cancel',
+          },
+          {
+            text: '확인',
+            onPress: async (priceText: string | undefined) => {
+              if (!priceText) {
+                Alert.alert('알림', '판매 가격을 입력해주세요.');
+                return;
+              }
+
+              const salePrice = parseInt(priceText.replace(/[^0-9]/g, ''), 10);
+              if (isNaN(salePrice) || salePrice < minPrice) {
+                Alert.alert('알림', `판매 가격은 최소 ${minPrice.toLocaleString('ko-KR')}원 이상이어야 합니다.`);
+                return;
+              }
+
+              if (salePrice > coupon.originalPrice) {
+                Alert.alert('알림', '판매 가격은 원래 가격보다 높을 수 없습니다.');
+                return;
+              }
+
+              await submitSale(salePrice);
+            },
+          },
+        ],
+        'plain-text',
+        defaultPrice.toString()
+      );
+    } else {
+      // Android는 확인 다이얼로그로 기본 가격 제안
+      Alert.alert(
+        '판매하기',
+        `이 쿠폰을 ${defaultPrice.toLocaleString('ko-KR')}원에 판매하시겠습니까?\n(원래 가격: ${coupon.originalPrice.toLocaleString('ko-KR')}원)`,
+        [
+          {
+            text: '취소',
+            style: 'cancel',
+          },
+          {
+            text: '확인',
+            onPress: () => submitSale(defaultPrice),
+          },
+        ]
+      );
+    }
+  };
+
+  const submitSale = async (salePrice: number) => {
+    if (!coupon || !id) return;
+
+    try {
+      await createSale({
+        gifticonId: id,
+        originalPrice: coupon.originalPrice,
+        salePrice: salePrice,
+      });
+
+      Alert.alert('알림', '판매글이 성공적으로 등록되었습니다.', [
+        {
+          text: '확인',
+          onPress: () => {
+            // 쿠폰 정보 다시 불러오기
+            handleUpdate();
+          },
+        },
+      ]);
+    } catch (error: any) {
+      console.error('판매 등록 실패:', error);
+      Alert.alert(
+        '오류',
+        `판매 등록에 실패했습니다.\n${error?.message || '알 수 없는 오류가 발생했습니다.'}`
+      );
+    }
   };
 
   if (loading) {
     return (
       <ContentLayout headerType="back" headerTitle="쿠폰 상세" onBack={handleBack}>
-        <View style={styles.container}>
+        <Container>
           <StyledText fontSize={16} fontWeight={600} color={COLORS.text.primary}>로딩 중...</StyledText>
-        </View>
+        </Container>
       </ContentLayout>
     );
   }
@@ -259,18 +364,29 @@ const CouponDetail = () => {
   if (error || !coupon) {
     return (
       <ContentLayout headerType="back" headerTitle="쿠폰 상세" onBack={handleBack}>
-        <View style={styles.container}>
+        <Container>
           <StyledText fontSize={16} fontWeight={600} color={COLORS.text.error}>{error || '쿠폰을 찾을 수 없습니다.'}</StyledText>
-        </View>
+        </Container>
       </ContentLayout>
     );
   }
 
-  // 자동 판매 정보 계산
-  const autoSellDate = coupon.autoSellDate || coupon.expiryDate;
-  const autoSellAmount = coupon.autoSellAmount || 0;
-  const daysLeftUntilAutoSell = calculateDaysUntilExpiration(autoSellDate);
-  const hasAutoSell = autoSellAmount > 0 && daysLeftUntilAutoSell >= 0;
+  // 자동 판매 정보 계산 (백엔드 필드명 우선, 하위 호환성 위해 autoSellDate/autoSellAmount도 지원)
+  const autoSellDate = coupon?.scheduledSaleDate || coupon?.autoSellDate || coupon?.expiryDate || '';
+  const autoSellAmount = coupon?.plannedSalePrice || coupon?.autoSellAmount || 0;
+  const daysLeftUntilAutoSell = autoSellDate ? calculateDaysUntilExpiration(autoSellDate) : 0;
+  // scheduledSaleDate가 있고, plannedSalePrice가 0보다 크면 자동 판매 설정이 있는 것으로 간주
+  const hasAutoSell = !!(coupon?.scheduledSaleDate || coupon?.autoSellDate) && autoSellAmount > 0 && daysLeftUntilAutoSell >= 0;
+  
+  if (coupon) {
+    console.log('[CouponDetail] 자동 판매 정보 계산:');
+    console.log('  - scheduledSaleDate:', coupon.scheduledSaleDate);
+    console.log('  - plannedSalePrice:', coupon.plannedSalePrice);
+    console.log('  - autoSellDate:', autoSellDate);
+    console.log('  - autoSellAmount:', autoSellAmount);
+    console.log('  - daysLeftUntilAutoSell:', daysLeftUntilAutoSell);
+    console.log('  - hasAutoSell:', hasAutoSell);
+  }
 
   const handleUpdate = async () => {
     try {
@@ -290,37 +406,49 @@ const CouponDetail = () => {
   return (
     <ContentLayout headerType="back" headerTitle="쿠폰 상세" onBack={handleBack}>
       <ScrollView>
-        <View style={styles.container}>
+        <Container>
           {/* 자동 판매 정보 카드 (자동 판매 설정이 있는 경우에만 표시) */}
-          {hasAutoSell && (
+          {hasAutoSell ? (
             <AutoSellInfoCard 
               daysLeft={daysLeftUntilAutoSell} 
               amount={autoSellAmount} 
             />
+          ) : (
+            __DEV__ && (
+              <DebugContainer>
+                <StyledText fontSize={12} color={COLORS.text.secondary}>
+                  [DEBUG] 자동 판매 정보 없음{'\n'}
+                  scheduledSaleDate: {coupon?.scheduledSaleDate || 'null'}{'\n'}
+                  plannedSalePrice: {coupon?.plannedSalePrice || 'null'}{'\n'}
+                  hasAutoSell: {String(hasAutoSell ?? false)}
+                </StyledText>
+              </DebugContainer>
+            )
           )}
 
           <InfoDetailCard coupon={coupon} onEdit={handleEdit} />
 
-          <View style={styles.buttonGroup}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.usedButton]}
+          <ButtonGroup>
+            <ActionButton
+              variant="used"
               onPress={handleUse}
             >
               <StyledText fontSize={16} fontWeight={600} color={COLORS.white}>
                 {coupon.status === 'USED' ? '사용 취소' : '사용 완료'}
               </StyledText>
-            </TouchableOpacity>
-            {coupon.status !== 'USED' && (
-              <TouchableOpacity
-                style={[styles.actionButton, styles.sellButton]}
+            </ActionButton>
+            {coupon.status !== 'USED' && 
+             (!coupon.histories || coupon.histories.length === 0) && (
+              <ActionButton
+                variant="sell"
                 onPress={handleSell}
               >
                 <StyledText fontSize={16} fontWeight={600} color={COLORS.white}>
                   판매하기
                 </StyledText>
-              </TouchableOpacity>
+              </ActionButton>
             )}
-          </View>
+          </ButtonGroup>
 
           {/* 정액권 남은 금액 카드 (PREPAID 타입일 때만 표시) */}
           {coupon.gifticonType === 'PREPAID' && (
@@ -330,7 +458,7 @@ const CouponDetail = () => {
               onUpdate={handleUpdate}
             />
           )}
-        </View>
+        </Container>
       </ScrollView>
     </ContentLayout>
   );

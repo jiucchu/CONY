@@ -116,6 +116,10 @@ interface CouponFormData {
   type: 'product' | 'amount';
   price: number;
   expirationDate: string;
+  // 자동 판매 설정
+  isAutoSellEnabled?: boolean;
+  scheduledSaleDate?: string; // YYYY-MM-DD 형식
+  plannedSalePrice?: number;
 }
 
 const CouponCreate = () => {
@@ -131,6 +135,9 @@ const CouponCreate = () => {
     type: 'product',
     price: 0,
     expirationDate: '',
+    isAutoSellEnabled: false,
+    scheduledSaleDate: undefined,
+    plannedSalePrice: undefined,
   }]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -318,18 +325,19 @@ const CouponCreate = () => {
       type: 'product',
       price: 0,
       expirationDate: '',
+      isAutoSellEnabled: false,
+      scheduledSaleDate: undefined,
+      plannedSalePrice: undefined,
     };
-    const newCoupons = [...coupons, newCoupon];
-    const newIndex = newCoupons.length - 1;
-    setCoupons(newCoupons);
-    // 새로 추가된 카드로 이동
+    setCoupons(prevCoupons => [...prevCoupons, newCoupon]);
+    // 새 쿠폰으로 스크롤
     setTimeout(() => {
       horizontalScrollRef.current?.scrollTo({
-        x: newIndex * SLIDE_WIDTH,
+        x: (coupons.length) * SLIDE_WIDTH,
         animated: true,
       });
-      setCurrentIndex(newIndex);
-    }, 300);
+      setCurrentIndex(coupons.length);
+    }, 100);
   };
 
   const handleDeleteCoupon = (id: string) => {
@@ -421,6 +429,14 @@ const CouponCreate = () => {
           throw new Error(`날짜 형식이 올바르지 않습니다: ${formattedDate}`);
         }
 
+        // 자동 판매 날짜 형식 변환 (YYYY/MM/DD -> YYYY-MM-DD)
+        let formattedSaleDate: string | undefined = undefined;
+        if (coupon.isAutoSellEnabled && coupon.scheduledSaleDate) {
+          formattedSaleDate = coupon.scheduledSaleDate.includes('/') 
+            ? coupon.scheduledSaleDate.replace(/\//g, '-')
+            : coupon.scheduledSaleDate;
+        }
+
         return {
           brandName: coupon.store.trim(),
           productName: coupon.giftCardName.trim(),
@@ -432,6 +448,9 @@ const CouponCreate = () => {
           imageUrl: hasImageFile ? '' : (coupon.imageUrl || ''),
           // categoryName은 optional이므로 빈 문자열이나 undefined로 전송
           // 백엔드에서 브랜드명으로 카테고리를 자동으로 찾아주므로 생략 가능
+          // 자동 판매 설정
+          scheduledSaleDate: formattedSaleDate,
+          plannedSalePrice: coupon.isAutoSellEnabled && coupon.plannedSalePrice ? coupon.plannedSalePrice : undefined,
         };
       });
 
@@ -523,6 +542,9 @@ const CouponCreate = () => {
                   type={coupon.type}
                   price={coupon.price}
                   expirationDate={coupon.expirationDate}
+                  isAutoSellEnabled={coupon.isAutoSellEnabled}
+                  scheduledSaleDate={coupon.scheduledSaleDate}
+                  plannedSalePrice={coupon.plannedSalePrice}
                   onImageEdit={() => handleImageSelect(coupon.id)}
                   onGiftCardNameChange={(value) => updateCoupon(coupon.id, 'giftCardName', value)}
                   onBarcodeChange={(value) => updateCoupon(coupon.id, 'barcode', value)}
@@ -530,6 +552,9 @@ const CouponCreate = () => {
                   onTypeChange={(type) => updateCoupon(coupon.id, 'type', type)}
                   onPriceChange={(value) => updateCoupon(coupon.id, 'price', value)}
                   onExpirationDateChange={(value) => updateCoupon(coupon.id, 'expirationDate', value)}
+                  onAutoSellToggle={(enabled) => updateCoupon(coupon.id, 'isAutoSellEnabled', enabled)}
+                  onSaleDateChange={(date) => updateCoupon(coupon.id, 'scheduledSaleDate', date)}
+                  onSaleAmountChange={(amount) => updateCoupon(coupon.id, 'plannedSalePrice', amount)}
                 />
               </View>
             ))}
