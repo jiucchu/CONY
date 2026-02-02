@@ -75,7 +75,7 @@ public class GeofenceDto {
         private int triggerRadius;   // 지오펜스 감지 반경 (STORE=100m, CLUSTER=300m 등)
 
         // 클러스터일 경우 포함된 매장들의 상세 정보 (선택적)
-//        private List<String> includedStoreNames;
+        // private List<String> includedStoreNames;
         private List<StoreSummary> includedStores;
     }
 
@@ -99,5 +99,19 @@ public class GeofenceDto {
         private double lat;
         private double lon;
         private double distance; // 사용자로부터의 거리
+    }
+
+    @Getter
+    @Schema(description = "지오펜스 진입 이벤트 요청")
+    public static class EntryRequest {
+        @Schema(description = "지오펜스 ID (단일 매장: '101', 클러스터: 'C_101')", example = "C_101")
+        @NotNull(message = "지오펜스 ID는 필수입니다.")
+        private String geofenceId;
+
+        @Schema(description = "사용자 현재 위도", example = "37.498095")
+        private double lat;
+
+        @Schema(description = "사용자 현재 경도", example = "127.027610")
+        private double lon;
     }
 }
