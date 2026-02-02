@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyledText } from '@/utils/StyledText';
 import { COLORS } from '@/constants/colors';
 import { API_BASE_URL } from '@/constants/api';
+import { registerFcmTokenToBackend } from '@/services/fcmService';
 
 const OAuthCallback = () => {
   const navigation = useNavigation();
@@ -25,6 +26,19 @@ const OAuthCallback = () => {
           if (refreshToken) {
             await AsyncStorage.setItem('refreshToken', refreshToken);
           }
+          
+          // 로그인 성공 후 FCM 토큰 등록 시도
+          try {
+            const fcmToken = await AsyncStorage.getItem('fcmToken');
+            if (fcmToken) {
+              console.log('[OAuthCallback] 로그인 후 FCM 토큰 등록 시도');
+              await registerFcmTokenToBackend(fcmToken);
+            }
+          } catch (error) {
+            console.error('[OAuthCallback] FCM 토큰 등록 오류:', error);
+            // FCM 토큰 등록 실패해도 로그인은 계속 진행
+          }
+          
           setStatus('success');
           // 메인 페이지로 이동
           setTimeout(() => {
@@ -49,6 +63,19 @@ const OAuthCallback = () => {
                 if (tokens.refreshToken) {
                   await AsyncStorage.setItem('refreshToken', tokens.refreshToken);
                 }
+                
+                // 로그인 성공 후 FCM 토큰 등록 시도
+                try {
+                  const fcmToken = await AsyncStorage.getItem('fcmToken');
+                  if (fcmToken) {
+                    console.log('[OAuthCallback] 로그인 후 FCM 토큰 등록 시도');
+                    await registerFcmTokenToBackend(fcmToken);
+                  }
+                } catch (error) {
+                  console.error('[OAuthCallback] FCM 토큰 등록 오류:', error);
+                  // FCM 토큰 등록 실패해도 로그인은 계속 진행
+                }
+                
                 setStatus('success');
                 setTimeout(() => {
                   (navigation as any).reset({

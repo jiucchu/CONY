@@ -6,7 +6,7 @@ import { Platform, PermissionsAndroid } from 'react-native';
 /**
  * FCM 토큰을 백엔드에 등록
  */
-async function registerFcmTokenToBackend(token: string): Promise<void> {
+export async function registerFcmTokenToBackend(token: string): Promise<void> {
   try {
     const accessToken = await AsyncStorage.getItem('accessToken');
     if (!accessToken) {
