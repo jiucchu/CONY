@@ -24,22 +24,29 @@ async function apiCall<T>(
   }
 
   try {
+    console.log(`[authApi] ${options.method || 'GET'} ${API_BASE_URL}${endpoint}`);
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers,
     });
 
+    console.log(`[authApi] 응답 상태: ${response.status} ${response.statusText}`);
+
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
       try {
         const errorText = await response.text();
+        console.error(`[authApi] 에러 응답 본문:`, errorText);
         if (errorText) {
           try {
             const errorJson = JSON.parse(errorText);
+            console.error(`[authApi] 에러 JSON:`, errorJson);
             if (errorJson.head?.retmsg) {
               errorMessage = errorJson.head.retmsg;
             } else if (errorJson.message) {
               errorMessage = errorJson.message;
+            } else if (errorJson.error) {
+              errorMessage = errorJson.error;
             }
           } catch {
             if (errorText.length < 200) {
@@ -101,6 +108,105 @@ async function apiCall<T>(
     throw error;
   }
 }
+
+/**
+ * OAuth 로그인 URL 가져오기
+ * Spring Security OAuth2의 기본 경로 사용
+ */
+export const getOAuthLoginUrl = (provider: 'google' | 'apple' | 'kakao'): string => {
+  // Spring Security OAuth2의 기본 authorization 엔드포인트 사용
+  // /oauth2/authorization/{provider} 형식
+  const providerName = provider.toLowerCase();
+  return `${API_BASE_URL}/oauth2/authorization/${providerName}`;
+};
+
+/**
+ * OAuth 콜백에서 토큰 처리
+ */
+export const handleOAuthCallback = async (code?: string, state?: string, accessToken?: string, refreshToken?: string): Promise<TokenResponseDto> => {
+  // URL에서 직접 토큰을 받은 경우
+  if (accessToken) {
+    const tokenData: TokenResponseDto = {
+      accessToken,
+      refreshToken: refreshToken || '',
+      tokenType: 'Bearer',
+      expiresIn: 3600,
+    };
+    
+    await AsyncStorage.setItem('accessToken', accessToken);
+    if (refreshToken) {
+      await AsyncStorage.setItem('refreshToken', refreshToken);
+    }
+    
+    return tokenData;
+  }
+
+  // 코드를 사용하여 서버에서 토큰 가져오기
+  if (!code) {
+    throw new Error('인증 코드가 없습니다.');
+  }
+
+  const params = new URLSearchParams();
+  params.append('code', code);
+  if (state) params.append('state', state);
+  // redirectUri도 함께 전달 (서버에서 필요할 수 있음)
+  const redirectUri = 'conyapp://oauth/callback';
+  params.append('redirectUri', redirectUri);
+
+  const callbackUrl = `${API_ENDPOINTS.AUTH_OAUTH_CALLBACK}?${params.toString()}`;
+  console.log('[handleOAuthCallback] 토큰 요청 URL:', callbackUrl);
+  console.log('[handleOAuthCallback] API_BASE_URL:', API_BASE_URL);
+  console.log('[handleOAuthCallback] 전체 URL:', `${API_BASE_URL}${callbackUrl}`);
+  console.log('[handleOAuthCallback] 파라미터:', { code, state, redirectUri });
+
+  try {
+    const response = await apiCall<TokenResponseDto>(
+      callbackUrl,
+      { method: 'GET' }
+    );
+
+    console.log('[handleOAuthCallback] 응답 전체:', JSON.stringify(response, null, 2));
+    console.log('[handleOAuthCallback] response.body:', response.body);
+
+    // 응답 형식 확인 및 처리
+    let tokenData: TokenResponseDto | null = null;
+
+    if (response.body) {
+      // body가 직접 TokenResponseDto인 경우
+      if (typeof response.body === 'object' && 'accessToken' in response.body) {
+        tokenData = response.body as TokenResponseDto;
+      } else if (typeof response.body === 'object' && 'data' in response.body) {
+        // body.data에 토큰이 있는 경우
+        tokenData = (response.body as any).data as TokenResponseDto;
+      }
+    }
+
+    if (!tokenData || !tokenData.accessToken) {
+      console.error('[handleOAuthCallback] 토큰 데이터 없음:', response);
+      throw new Error('토큰을 받을 수 없습니다. 서버 응답 형식을 확인해주세요.');
+    }
+
+    console.log('[handleOAuthCallback] 토큰 추출 성공:', { 
+      hasAccessToken: !!tokenData.accessToken, 
+      hasRefreshToken: !!tokenData.refreshToken 
+    });
+    
+    // 토큰 저장
+    await AsyncStorage.setItem('accessToken', tokenData.accessToken);
+    if (tokenData.refreshToken) {
+      await AsyncStorage.setItem('refreshToken', tokenData.refreshToken);
+    }
+
+    return tokenData;
+  } catch (error) {
+    console.error('[handleOAuthCallback] 에러 상세:', error);
+    if (error instanceof Error) {
+      console.error('[handleOAuthCallback] 에러 메시지:', error.message);
+      console.error('[handleOAuthCallback] 에러 스택:', error.stack);
+    }
+    throw error;
+  }
+};
 
 /**
  * 토큰 재발급

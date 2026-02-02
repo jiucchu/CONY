@@ -81,6 +81,7 @@ async function apiCall<T>(
     }
 
     const responseData: any = await response.json();
+    console.log('[apiCall] 원본 응답 데이터:', JSON.stringify(responseData, null, 2));
 
     // 두 가지 응답 형식 지원: { head, body } 또는 { status, message, data }
     if (responseData.head) {
@@ -90,6 +91,7 @@ async function apiCall<T>(
           responseData.head.retmsg || `API Error: ${responseData.head.retcode}`
         );
       }
+      console.log('[apiCall] head 형식 응답, body:', responseData.body);
       return responseData as ApiResponse<T>;
     } else if (responseData.status && responseData.data !== undefined) {
       // 새로운 형식: { status, message, data }
@@ -99,6 +101,7 @@ async function apiCall<T>(
         );
       }
       // ApiResponse 형식으로 변환
+      console.log('[apiCall] status 형식 응답, data:', responseData.data);
       return {
         head: {
           retcode: '200',
@@ -107,8 +110,19 @@ async function apiCall<T>(
         },
         body: responseData.data,
       } as ApiResponse<T>;
+    } else if (responseData.content !== undefined) {
+      // Spring Page 형식으로 직접 응답: { content: [...], totalElements: ... }
+      console.log('[apiCall] Spring Page 형식 직접 응답, content:', responseData.content);
+      return {
+        head: {
+          retcode: '200',
+          retmsg: 'Success',
+          timestamp: new Date().toISOString(),
+        },
+        body: responseData,
+      } as ApiResponse<T>;
     } else {
-      console.error('API 응답 형식 오류:', responseData);
+      console.error('[apiCall] API 응답 형식 오류:', responseData);
       throw new Error(
         `서버 응답 형식이 올바르지 않습니다.`
       );
@@ -139,9 +153,14 @@ async function apiCallFormData<T>(
   // FormData를 사용할 때는 Content-Type을 명시하지 않아야 합니다
   // 브라우저/React Native가 자동으로 multipart/form-data와 boundary를 설정합니다
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  if (!token) {
+    console.error('[apiCallFormData] 토큰이 없습니다!');
+    throw new Error('인증 토큰이 없습니다. 로그인이 필요합니다.');
   }
+  
+  headers['Authorization'] = `Bearer ${token}`;
+  console.log('[apiCallFormData] 토큰 존재:', token.substring(0, 20) + '...');
+  console.log('[apiCallFormData] 전체 토큰 길이:', token.length);
 
   const url = `${API_BASE_URL}${endpoint}`;
   console.log('[apiCallFormData] ====== Multipart 요청 시작 ======');
@@ -149,8 +168,17 @@ async function apiCallFormData<T>(
   console.log('[apiCallFormData] endpoint:', endpoint);
   console.log('[apiCallFormData] 최종 요청 URL:', url);
   console.log('[apiCallFormData] 헤더:', headers);
+  
+  // FormData 내용 로깅 (디버깅용)
+  if (__DEV__) {
+    console.log('[apiCallFormData] FormData 타입:', typeof formData);
+    // FormData의 내용을 직접 확인할 수는 없지만, 로깅은 가능
+  }
 
   try {
+    console.log('[apiCallFormData] 요청 전송 시작...');
+    console.log('[apiCallFormData] Authorization 헤더 존재:', !!headers['Authorization']);
+    
     const response = await fetch(url, {
       method: 'POST',
       body: formData,
@@ -158,26 +186,32 @@ async function apiCallFormData<T>(
     });
     
     console.log('[apiCallFormData] 응답 상태:', response.status, response.statusText);
+    console.log('[apiCallFormData] 응답 헤더:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
       try {
         const errorText = await response.text();
+        console.error('[apiCallFormData] 에러 응답 본문:', errorText);
         if (errorText) {
           try {
             const errorJson = JSON.parse(errorText);
+            console.error('[apiCallFormData] 에러 JSON:', errorJson);
             if (errorJson.head?.retmsg) {
               errorMessage = errorJson.head.retmsg;
             } else if (errorJson.message) {
               errorMessage = errorJson.message;
+            } else if (errorJson.error) {
+              errorMessage = errorJson.error;
             }
           } catch {
-            if (errorText.length < 200) {
+            if (errorText.length < 500) {
               errorMessage = errorText;
             }
           }
         }
-      } catch {
+      } catch (err) {
+        console.error('[apiCallFormData] 에러 텍스트 파싱 실패:', err);
         // 텍스트 파싱 실패 시 기본 메시지 사용
       }
       throw new Error(errorMessage);
@@ -288,6 +322,25 @@ export const getMyGifticons = async (
     { method: 'GET' }
   );
 
+  console.log('[getMyGifticons] API 응답 전체:', JSON.stringify(response, null, 2));
+  console.log('[getMyGifticons] response.body:', response.body);
+  
+  // 응답 body가 null이거나 undefined인 경우 처리
+  if (!response.body) {
+    console.warn('[getMyGifticons] response.body가 null입니다. 빈 페이지 응답 반환');
+    return {
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      size: pageable.size || 10,
+      number: pageable.page || 0,
+      first: true,
+      last: true,
+      numberOfElements: 0,
+      empty: true,
+    };
+  }
+
   return response.body as PageGifticonListResponseDto;
 };
 
@@ -320,17 +373,33 @@ export const registerGifticonsWithImage = async (
   const formData = new FormData();
   
   // JSON 데이터를 문자열로 변환하여 FormData에 추가
+  // 서버는 @RequestParam으로 문자열을 받거나 @RequestPart로 파일을 받을 수 있음
   const jsonString = JSON.stringify(gifticons);
   console.log('[registerGifticonsWithImage] JSON 데이터:', jsonString);
+  console.log('[registerGifticonsWithImage] JSON 데이터 길이:', jsonString.length);
   console.log('[registerGifticonsWithImage] 이미지 파일:', imageFile);
   console.log('[registerGifticonsWithImage] 썸네일 파일:', thumbnailFile);
   
+  // React Native FormData에서 문자열을 @RequestParam으로 보내는 방법
+  // 서버는 @RequestParam(value = "requests")로 문자열을 받을 수 있음
+  // React Native에서는 문자열을 직접 append하면 @RequestParam으로 전달됨
+  // 하지만 Blob 형식으로 보내면 @RequestPart로 받을 수도 있음
+  // 서버가 둘 다 지원하므로 문자열로 시도
   formData.append('requests', jsonString);
+  
+  // 참고: 웹에서는 Blob으로 보내지만, React Native에서는 문자열로 보내는 것이 더 안정적
   
   // 원본 이미지 파일이 있으면 추가
   if (imageFile) {
+    // React Native FormData 형식: { uri, type, name }
+    // file:// URI를 사용하는 경우 file:// 제거 필요할 수 있음
+    let imageUri = imageFile.uri;
+    if (imageUri.startsWith('file://')) {
+      // file://는 그대로 사용 (React Native가 처리)
+    }
+    
     const imageFormData = {
-      uri: imageFile.uri,
+      uri: imageUri,
       type: imageFile.type || 'image/jpeg',
       name: imageFile.name || 'image.jpg',
     };
@@ -340,8 +409,13 @@ export const registerGifticonsWithImage = async (
   
   // 썸네일 이미지 파일이 있으면 추가
   if (thumbnailFile) {
+    let thumbnailUri = thumbnailFile.uri;
+    if (thumbnailUri.startsWith('file://')) {
+      // file://는 그대로 사용
+    }
+    
     const thumbnailFormData = {
-      uri: thumbnailFile.uri,
+      uri: thumbnailUri,
       type: thumbnailFile.type || 'image/jpeg',
       name: thumbnailFile.name || 'thumbnail.jpg',
     };
@@ -350,6 +424,8 @@ export const registerGifticonsWithImage = async (
   }
   
   console.log('[registerGifticonsWithImage] API 호출:', `${API_BASE_URL}${API_ENDPOINTS.GIFTCONS}`);
+  console.log('[registerGifticonsWithImage] FormData 필드 수:', 
+    (jsonString ? 1 : 0) + (imageFile ? 1 : 0) + (thumbnailFile ? 1 : 0));
   
   const response = await apiCallFormData<number[]>(
     API_ENDPOINTS.GIFTCONS,
