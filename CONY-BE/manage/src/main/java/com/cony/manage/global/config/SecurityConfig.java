@@ -7,6 +7,7 @@ import com.cony.manage.global.auth.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -25,9 +26,13 @@ import java.util.List;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+    @Lazy
     private final CustomOAuth2UserService customOAuth2UserService;
+    @Lazy
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    @Lazy
     private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+    @Lazy
     private final JwtAuthenticationFilter jwtAuthenticationFilter; // jwt 사용시 추가
 
     @Bean
