@@ -2,6 +2,8 @@ export const COLORS = {
   primary: '#F45184',
   secondary: '#F5B844',
   white: '#FFFFFF',
+  success: '#4CAF50',
+  error: '#FF0000',
   background: {
     white: '#ffffff',
     black: '#000000',

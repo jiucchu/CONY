@@ -14,11 +14,11 @@ export interface CenterPoint {
 }
 
 export interface StoreSummary {
-  storeId: number;
-  brandName: string;
-  storeName: string;
-  address: string;
-  distance: number;
+  id: string; // 매장 ID
+  name: string; // 매장 이름
+  brandId: number; // 브랜드 ID (로고 표시용)
+  lat: number; // 개별 매장 위도
+  lon: number; // 개별 매장 경도
 }
 
 export interface MapPoint {

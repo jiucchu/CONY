@@ -189,27 +189,40 @@ class GeofenceNotificationService {
       return [];
     }
 
-    // 브랜드 이름으로 매칭 (실제로는 브랜드 ID로 매칭해야 함)
+    // 브랜드 이름으로 매칭 (GifticonListResponseDto에 brandId가 없으므로 이름으로 매칭)
     const userBrandNames = new Set(
-      this.userCoupons.map(coupon => coupon.brandName.toLowerCase())
+      this.userCoupons
+        .map(coupon => coupon.brandName?.toLowerCase())
+        .filter((name): name is string => !!name)
     );
 
     return points.filter(point => {
-      // STORE 타입인 경우
-      if (point.type === 'STORE' && point.includedStores) {
-        return point.includedStores.some(store => 
-          userBrandNames.has(store.brandName.toLowerCase())
-        );
-      }
-      
-      // CLUSTER 타입인 경우
-      if (point.type === 'CLUSTER' && point.includedStores) {
-        return point.includedStores.some(store => 
-          userBrandNames.has(store.brandName.toLowerCase())
-        );
+      if (!point.includedStores || point.includedStores.length === 0) {
+        return false;
       }
 
-      return false;
+      // 브랜드 ID로 매칭 시도 (서버에서 brandId를 제공하는 경우)
+      const userBrandIds = new Set(
+        this.userCoupons
+          .map(coupon => (coupon as any).brandId)
+          .filter((id): id is number => id !== undefined && id !== null)
+      );
+
+      if (userBrandIds.size > 0) {
+        const hasMatchingBrandId = point.includedStores.some(store => 
+          store.brandId && userBrandIds.has(store.brandId)
+        );
+        if (hasMatchingBrandId) {
+          return true;
+        }
+      }
+
+      // 브랜드 이름으로 매칭 (fallback)
+      const hasMatchingBrandName = point.includedStores.some(store => 
+        store.name && userBrandNames.has(store.name.toLowerCase())
+      );
+
+      return hasMatchingBrandName;
     });
   }
 
@@ -233,7 +246,7 @@ class GeofenceNotificationService {
       return;
     }
 
-    const brandName = store.includedStores?.[0]?.brandName || store.name;
+    const brandName = store.includedStores?.[0]?.name || store.name;
     const distanceText = distance < 1000 
       ? `${Math.round(distance)}m` 
       : `${(distance / 1000).toFixed(1)}km`;
@@ -258,7 +271,8 @@ class GeofenceNotificationService {
         pressAction: {
           id: 'default',
         },
-        smallIcon: 'ic_notification',
+        // smallIcon을 지정하지 않으면 기본 아이콘 사용
+        // 또는 ic_launcher를 사용하려면: smallIcon: 'ic_launcher',
       },
       ios: {
         sound: 'default',
@@ -360,19 +374,18 @@ class GeofenceNotificationService {
       }
     );
 
-    // 주기적 체크 (앱이 백그라운드에 있을 때를 대비)
-    // AppState를 사용하여 앱이 활성화되어 있을 때만 체크
+    // 주기적 체크 (백그라운드에서도 동작하도록)
+    // React Native의 watchPosition은 백그라운드에서도 동작하지만,
+    // 추가로 주기적 체크를 수행하여 더 정확한 감지
     this.checkInterval = setInterval(async () => {
-      // 앱이 백그라운드에 있으면 체크 스킵 (배터리 절약)
-      if (AppState.currentState !== 'active') {
-        return;
-      }
-
       try {
         const position = await this.getCurrentPosition();
         await this.checkNearbyStores(position.lat, position.lon);
       } catch (error) {
-        console.error('주기적 위치 체크 실패:', error);
+        // 백그라운드에서는 위치 권한이 제한될 수 있으므로 에러는 무시
+        if (AppState.currentState === 'active') {
+          console.error('주기적 위치 체크 실패:', error);
+        }
       }
     }, this.checkIntervalMs);
 
