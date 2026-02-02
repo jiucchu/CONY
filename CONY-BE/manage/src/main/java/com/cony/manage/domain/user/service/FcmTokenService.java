@@ -2,6 +2,8 @@ package com.cony.manage.domain.user.service;
 
 import com.cony.manage.domain.user.entity.User;
 import com.cony.manage.domain.user.repository.UserRepository;
+import com.cony.manage.global.error.CustomException;
+import com.cony.manage.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +28,7 @@ public class FcmTokenService {
     @Transactional
     public void updateFcmToken(Long userId, String fcmToken) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         user.updateFcmToken(fcmToken);
     }
 }
