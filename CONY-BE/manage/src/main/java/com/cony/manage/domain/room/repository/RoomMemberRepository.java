@@ -16,4 +16,7 @@ public interface RoomMemberRepository extends JpaRepository<RoomMember, Long> {
     boolean existsByRoomIdAndUserId(Long roomId, Long userId);
 
     Optional<RoomMember> findByRoomIdAndUserId(Long roomId, Long userId);
+
+    @Query("SELECT rm.room.id, COUNT(rm) FROM RoomMember rm WHERE rm.room.id IN :roomIds GROUP BY rm.room.id")
+    List<Object[]> countMembersByRoomIds(@Param("roomIds") List<Long> roomIds);
 }
