@@ -18,7 +18,7 @@ public class GifticonSpecification {
             // WHERE user_id = ?
             predicates.add(criteriaBuilder.equal(root.get("user").get("id"), userId));
 
-            if(Boolean.TRUE.equals(condition.getExpiringSoon())) {
+            if (Boolean.TRUE.equals(condition.getExpiringSoon())) {
                 LocalDate today = LocalDate.now();
                 LocalDate oneMonthLater = today.plusMonths(1);
 
@@ -26,19 +26,31 @@ public class GifticonSpecification {
                 predicates.add(criteriaBuilder.between(root.get("expiryDate"), today, oneMonthLater));
             }
 
-            if(Boolean.TRUE.equals(condition.getExcludeUsed())) {
+            if (Boolean.TRUE.equals(condition.getExcludeUsed())) {
                 // AND status <> 'USED' AND expiry_date >= 오늘 (만료되지 않은 것만)
                 predicates.add(criteriaBuilder.notEqual(root.get("status"), GifticonStatus.USED));
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("expiryDate"), LocalDate.now()));
             }
 
-            if(condition.getCategoryId() != null) {
+            if (condition.getCategoryId() != null) {
                 // AND category_id = ?
                 predicates.add(criteriaBuilder.equal(root.get("category").get("id"), condition.getCategoryId()));
             }
 
-            if(condition.getNearbyBrandIds() != null) {
-                if(condition.getNearbyBrandIds().isEmpty()) {
+            if (condition.getBrandName() != null && !condition.getBrandName().trim().isEmpty()) {
+                // AND brand.name LIKE %brandName%
+                predicates.add(criteriaBuilder.like(root.get("brand").get("name"),
+                        "%" + condition.getBrandName().trim() + "%"));
+            }
+
+            if (condition.getProductName() != null && !condition.getProductName().trim().isEmpty()) {
+                // AND productName LIKE %productName%
+                predicates.add(
+                        criteriaBuilder.like(root.get("productName"), "%" + condition.getProductName().trim() + "%"));
+            }
+
+            if (condition.getNearbyBrandIds() != null) {
+                if (condition.getNearbyBrandIds().isEmpty()) {
                     // 근처에 매장이 하나도 없다면 결과가 0건이어야함.
                     // => 항상 거짓인 조건 추가
                     predicates.add(criteriaBuilder.disjunction());

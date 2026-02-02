@@ -21,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -165,7 +166,9 @@ class GifticonServiceImplTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<Gifticon> gifticonPage = new PageImpl<>(List.of(gifticon), pageable, 1);
 
-        given(gifticonRepository.findByUserId(userId, pageable)).willReturn(gifticonPage);
+        // findAll로 변경 (findByUserId 대신)
+        given(gifticonRepository.findAll(any(Specification.class),
+                any(Pageable.class))).willReturn(gifticonPage);
         given(gifticonImageRepository.findAllByGifticonIdIn(any(), any())).willReturn(List.of(
                 GifticonImage.builder()
                         .gifticon(gifticon)
@@ -174,11 +177,51 @@ class GifticonServiceImplTest {
                         .build()));
 
         // when
-        Page<GifticonListResponseDto> result = gifticonService.getMyGifticons(userId, null, pageable);
+        Page<GifticonListResponseDto> result = gifticonService.getMyGifticons(userId, new GifticonSearchCondition(),
+                pageable);
 
         // then
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().get(0).getBrandName()).isEqualTo("Starbucks");
+    }
+
+    @Test
+    @DisplayName("나의 기프티콘 목록 조회 - 브랜드명 검색")
+    void getMyGifticons_SearchByBrand() {
+        // given
+        Long userId = 1L;
+        User user = createUser(userId);
+        Category category = createCategory();
+        Brand brand = createBrand(category);
+        Gifticon gifticon = createGifticon(user, brand, category);
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Gifticon> gifticonPage = new PageImpl<>(List.of(gifticon), pageable, 1);
+
+        // findAll Mocking
+        given(gifticonRepository.findAll(any(Specification.class),
+                any(Pageable.class))).willReturn(gifticonPage);
+        given(gifticonImageRepository.findAllByGifticonIdIn(any(), any())).willReturn(List.of(
+                GifticonImage.builder()
+                        .gifticon(gifticon)
+                        .imageUrl("image.jpg")
+                        .imageType(ImageType.THUMBNAIL)
+                        .build()));
+
+        GifticonSearchCondition condition = new GifticonSearchCondition();
+        condition.setBrandName("Starbucks");
+
+        // when
+        Page<GifticonListResponseDto> result = gifticonService.getMyGifticons(userId, condition, pageable);
+
+        // then
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getBrandName()).isEqualTo("Starbucks");
+        // verify that findAll was called (we cannot easily verify the spec content with
+        // just Mockito here without captor, but verifying the call exists is a good
+        // start)
+        verify(gifticonRepository).findAll(any(Specification.class),
+                any(Pageable.class));
     }
 
     @Test
