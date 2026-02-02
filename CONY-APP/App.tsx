@@ -26,6 +26,7 @@ import LoginPage from './src/page/auth/LoginPage';
 import OAuthCallback from './src/page/auth/OAuthCallback';
 import OAuthWebView from './src/page/auth/OAuthWebView';
 import AlertPage from './src/page/mypage/AlertPage';
+import MySalesPage from './src/page/sale/MySalesPage';
 import { COLORS } from './src/constants/colors';
 import { initializeFCM, setupFCMTokenRefresh } from './src/services/fcmService';
 
@@ -163,6 +164,7 @@ function App() {
           <Stack.Screen name="OAuthCallback" component={OAuthCallback} />
           <Stack.Screen name="OAuthWebView" component={OAuthWebView} />
           <Stack.Screen name="AlertPage" component={AlertPage} />
+          <Stack.Screen name="MySalesPage" component={MySalesPage} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

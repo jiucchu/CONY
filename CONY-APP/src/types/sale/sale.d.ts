@@ -1,6 +1,6 @@
 export type SaleCategory = 'FOOD' | 'CAFE' | 'RETAIL' | 'ENTERTAINMENT' | 'ETC';
 export type SaleSort = 'LATEST' | 'PRICE_LOW' | 'PRICE_HIGH' | 'EXPIRY_SOON';
-export type SaleStatus = 'ON_SALE' | 'SOLD_OUT' | 'CANCELLED';
+export type SaleStatus = 'PENDING' | 'ON_SALE' | 'SOLD_OUT' | 'CANCELLED';
 
 export interface SaleListResponseDto {
   saleId: number;
@@ -38,10 +38,10 @@ export interface SaleSearchCondition {
 }
 
 export interface SaleStatsDto {
-  totalSales: number;
-  onSaleCount: number;
-  soldOutCount: number;
-  totalRevenue: number;
+  pendingCount: number; // 판매 대기 개수
+  onSaleCount: number; // 판매 중 개수
+  soldOutCount: number; // 판매 완료 개수
+  totalCount?: number; // 전체 개수 (pendingCount + onSaleCount + soldOutCount)
 }
 
 export interface PageSaleListResponseDto {

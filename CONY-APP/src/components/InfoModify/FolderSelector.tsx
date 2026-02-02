@@ -1,119 +1,123 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
+import { Modal, TextInput, Alert } from 'react-native';
+import styled from 'styled-components/native';
 import { COLORS } from '@/constants/colors';
 import { StyledText } from '@/utils/StyledText';
 import { FolderData } from '@/types/coupon/coupon';
 import { createRoom } from '@/api/room/roomApi';
 import { Svg, Path, Polyline } from 'react-native-svg';
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-    width: '20%',
-    minWidth: 120,
-  },
-  selectorButton: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.background.lightGray,
-    borderRadius: 24,
-  },
-  folderIconWrapper: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  textContainer: {
-    flex: 1,
-    alignItems: 'flex-start',
-  },
-  chevronIcon: {
-    width: 16,
-    height: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dropdownMenu: {
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.background.lightGray,
-    borderRadius: 12,
-    maxHeight: 300,
-    width: '80%',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  dropdownItem: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  createRoomModal: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 24,
-    width: '80%',
-    maxWidth: 400,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  roomNameInput: {
-    borderWidth: 1,
-    borderColor: COLORS.background.lightGray,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    fontSize: 14,
-    color: COLORS.text.primary,
-    marginBottom: 20,
-  },
-  createRoomButtonGroup: {
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'flex-end',
-  },
-  createRoomButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    minWidth: 80,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: COLORS.background.lightGray,
-  },
-  confirmButton: {
-    backgroundColor: COLORS.primary,
-  },
-});
+const Container = styled.View`
+  position: relative;
+  width: 70%;
+  min-width: 120px;
+`;
+
+const SelectorButton = styled.TouchableOpacity`
+  width: 100%;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding-vertical: 8px;
+  padding-horizontal: 10px;
+  background-color: ${COLORS.white};
+  border-width: 1px;
+  border-color: ${COLORS.background.lightGray};
+  border-radius: 24px;
+`;
+
+const FolderIconWrapper = styled.View`
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+`;
+
+const TextContainer = styled.View`
+  flex: 1;
+  align-items: flex-start;
+`;
+
+const ChevronIcon = styled.View`
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+`;
+
+const ModalOverlay = styled.TouchableOpacity`
+  flex: 1;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+`;
+
+const DropdownMenu = styled.TouchableOpacity`
+  background-color: ${COLORS.white};
+  border-width: 1px;
+  border-color: ${COLORS.background.lightGray};
+  border-radius: 12px;
+  max-height: 300px;
+  width: 80%;
+  shadow-color: #000;
+  shadow-offset: 0px 4px;
+  shadow-opacity: 0.1;
+  shadow-radius: 12px;
+  elevation: 5;
+`;
+
+const DropdownItem = styled.TouchableOpacity<{ hasBorder?: boolean }>`
+  width: 100%;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding-vertical: 12px;
+  padding-horizontal: 16px;
+  ${(props) => props.hasBorder && `
+    border-top-width: 1px;
+    border-top-color: ${COLORS.background.lightGray};
+  `}
+`;
+
+const CreateRoomModal = styled.TouchableOpacity`
+  background-color: ${COLORS.white};
+  border-radius: 12px;
+  padding: 24px;
+  width: 80%;
+  max-width: 400px;
+  shadow-color: #000;
+  shadow-offset: 0px 4px;
+  shadow-opacity: 0.1;
+  shadow-radius: 12px;
+  elevation: 5;
+`;
+
+const RoomNameInput = styled.TextInput`
+  border-width: 1px;
+  border-color: ${COLORS.background.lightGray};
+  border-radius: 8px;
+  padding-vertical: 12px;
+  padding-horizontal: 16px;
+  font-size: 14px;
+  color: ${COLORS.text.primary};
+  margin-bottom: 20px;
+`;
+
+const CreateRoomButtonGroup = styled.View`
+  flex-direction: row;
+  gap: 12px;
+  justify-content: flex-end;
+`;
+
+const CreateRoomButton = styled.TouchableOpacity<{ variant?: 'cancel' | 'confirm' }>`
+  padding-vertical: 10px;
+  padding-horizontal: 20px;
+  border-radius: 8px;
+  min-width: 80px;
+  align-items: center;
+  background-color: ${(props) => 
+    props.variant === 'confirm' ? COLORS.primary : COLORS.background.lightGray};
+`;
 
 const FolderIcon = () => (
   <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
@@ -191,20 +195,20 @@ const FolderSelector = ({
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.selectorButton} onPress={() => setIsOpen(true)}>
-        <View style={styles.folderIconWrapper}>
+    <Container>
+      <SelectorButton onPress={() => setIsOpen(true)}>
+        <FolderIconWrapper>
           <FolderIcon />
-        </View>
-        <View style={styles.textContainer}>
+        </FolderIconWrapper>
+        <TextContainer>
           <StyledText fontSize={14} fontWeight={400} color={COLORS.text.primary}>
             {displayText}
           </StyledText>
-        </View>
-        <View style={styles.chevronIcon}>
+        </TextContainer>
+        <ChevronIcon>
           <ChevronDown isOpen={isOpen} />
-        </View>
-      </TouchableOpacity>
+        </ChevronIcon>
+      </SelectorButton>
 
       <Modal
         visible={isOpen}
@@ -212,53 +216,50 @@ const FolderSelector = ({
         animationType="fade"
         onRequestClose={() => setIsOpen(false)}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
+        <ModalOverlay
           activeOpacity={1}
           onPress={() => setIsOpen(false)}
         >
-          <TouchableOpacity
+          <DropdownMenu
             activeOpacity={1}
-            style={styles.dropdownMenu}
             onPress={(e) => e.stopPropagation()}
           >
             {folders.map((folder) => (
-              <TouchableOpacity
+              <DropdownItem
                 key={folder.id}
-                style={styles.dropdownItem}
                 onPress={() => handleSelect(folder.id)}
               >
-                <View style={styles.folderIconWrapper}>
+                <FolderIconWrapper>
                   <FolderIcon />
-                </View>
-                <View style={styles.textContainer}>
+                </FolderIconWrapper>
+                <TextContainer>
                   <StyledText fontSize={14} fontWeight={400} color={COLORS.text.primary}>
                     {folder.title}
                   </StyledText>
-                </View>
-              </TouchableOpacity>
+                </TextContainer>
+              </DropdownItem>
             ))}
             {/* 새 공유방 만들기 버튼 */}
-            <TouchableOpacity
-              style={[styles.dropdownItem, { borderTopWidth: 1, borderTopColor: COLORS.background.lightGray }]}
+            <DropdownItem
+              hasBorder
               onPress={() => {
                 setIsOpen(false);
                 setIsCreateModalOpen(true);
               }}
             >
-              <View style={styles.folderIconWrapper}>
+              <FolderIconWrapper>
                 <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={COLORS.primary} strokeWidth={2}>
                   <Path d="M12 5v14M5 12h14" />
                 </Svg>
-              </View>
-              <View style={styles.textContainer}>
+              </FolderIconWrapper>
+              <TextContainer>
                 <StyledText fontSize={14} fontWeight={600} color={COLORS.primary}>
                   새 공유방 만들기
                 </StyledText>
-              </View>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </TouchableOpacity>
+              </TextContainer>
+            </DropdownItem>
+          </DropdownMenu>
+        </ModalOverlay>
       </Modal>
 
       {/* 공유방 생성 모달 */}
@@ -268,30 +269,27 @@ const FolderSelector = ({
         animationType="fade"
         onRequestClose={() => setIsCreateModalOpen(false)}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
+        <ModalOverlay
           activeOpacity={1}
           onPress={() => setIsCreateModalOpen(false)}
         >
-          <TouchableOpacity
+          <CreateRoomModal
             activeOpacity={1}
-            style={styles.createRoomModal}
             onPress={(e) => e.stopPropagation()}
           >
             <StyledText fontSize={18} fontWeight={700} color={COLORS.text.primary} style={{ marginBottom: 16 }}>
               새 공유방 만들기
             </StyledText>
-            <TextInput
-              style={styles.roomNameInput}
+            <RoomNameInput
               value={newRoomName}
               onChangeText={setNewRoomName}
               placeholder="공유방 이름을 입력하세요"
               placeholderTextColor={COLORS.text.secondary}
               autoFocus
             />
-            <View style={styles.createRoomButtonGroup}>
-              <TouchableOpacity
-                style={[styles.createRoomButton, styles.cancelButton]}
+            <CreateRoomButtonGroup>
+              <CreateRoomButton
+                variant="cancel"
                 onPress={() => {
                   setIsCreateModalOpen(false);
                   setNewRoomName('');
@@ -300,20 +298,20 @@ const FolderSelector = ({
                 <StyledText fontSize={14} fontWeight={600} color={COLORS.text.primary}>
                   취소
                 </StyledText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.createRoomButton, styles.confirmButton]}
+              </CreateRoomButton>
+              <CreateRoomButton
+                variant="confirm"
                 onPress={handleCreateRoom}
               >
                 <StyledText fontSize={14} fontWeight={600} color={COLORS.white}>
                   생성
                 </StyledText>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </TouchableOpacity>
+              </CreateRoomButton>
+            </CreateRoomButtonGroup>
+          </CreateRoomModal>
+        </ModalOverlay>
       </Modal>
-    </View>
+    </Container>
   );
 };
 

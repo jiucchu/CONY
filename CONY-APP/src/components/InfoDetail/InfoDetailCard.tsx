@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Alert } from 'react-native';
 import styled from 'styled-components/native';
 import { GifticonDetailResponseDto } from '@/types/gifticon/gifticon';
@@ -8,6 +8,7 @@ import { calculateDaysUntilExpiration } from '@/utils/DayUtils';
 import { StyledText } from '@/utils/StyledText';
 import { Svg, Path, Line } from 'react-native-svg';
 import BarcodeView from '@/components/common/barcode/BarcodeView';
+import ImageFullscreenModal from '@/components/common/image/ImageFullscreenModal';
 
 const Container = styled.View`
   background-color: #FFFFFF;
@@ -24,7 +25,7 @@ const Container = styled.View`
   position: relative;
 `;
 
-const ImageContainer = styled.View`
+const ImageContainer = styled.TouchableOpacity`
   width: 80%;
   aspect-ratio: 1;
   border-radius: 10px;
@@ -136,6 +137,7 @@ interface InfoDetailCardProps {
 }
 
 const InfoDetailCard = ({ coupon, barcodeNumber, onEdit, onDelete }: InfoDetailCardProps) => {
+  const [isImageModalVisible, setIsImageModalVisible] = useState(false);
   const daysUntilExpiration = calculateDaysUntilExpiration(coupon.expiryDate);
   const formattedExpiration = formatExpirationDate(coupon.expiryDate);
   const defaultBarcode = barcodeNumber || String(coupon.gifticonId).padStart(16, '0');
@@ -170,7 +172,14 @@ const InfoDetailCard = ({ coupon, barcodeNumber, onEdit, onDelete }: InfoDetailC
           </ActionButton>
         )}
       </ActionButtonsWrapper>
-      <ImageContainer>
+      <ImageContainer
+        activeOpacity={0.9}
+        onPress={() => {
+          if (imageUri && imageUri.trim() !== '') {
+            setIsImageModalVisible(true);
+          }
+        }}
+      >
         <DdayWrapper>
           <DdayView type="common" dday={daysUntilExpiration} size="Large" />
         </DdayWrapper>
@@ -200,6 +209,11 @@ const InfoDetailCard = ({ coupon, barcodeNumber, onEdit, onDelete }: InfoDetailC
           <View style={{ width: '100%', height: '100%', backgroundColor: '#E5E5E5', borderRadius: 10 }} />
         )}
       </ImageContainer>
+      <ImageFullscreenModal
+        visible={isImageModalVisible}
+        imageUrl={imageUri}
+        onClose={() => setIsImageModalVisible(false)}
+      />
       <InfoContainer>
         <View style={{ marginBottom: 5 }}>
           <StyledText fontSize={16} fontWeight={600} color={COLORS.text.secondary}>

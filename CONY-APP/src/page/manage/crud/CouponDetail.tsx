@@ -413,18 +413,7 @@ const CouponDetail = () => {
               daysLeft={daysLeftUntilAutoSell} 
               amount={autoSellAmount} 
             />
-          ) : (
-            __DEV__ && (
-              <DebugContainer>
-                <StyledText fontSize={12} color={COLORS.text.secondary}>
-                  [DEBUG] 자동 판매 정보 없음{'\n'}
-                  scheduledSaleDate: {coupon?.scheduledSaleDate || 'null'}{'\n'}
-                  plannedSalePrice: {coupon?.plannedSalePrice || 'null'}{'\n'}
-                  hasAutoSell: {String(hasAutoSell ?? false)}
-                </StyledText>
-              </DebugContainer>
-            )
-          )}
+          ) : null}
 
           <InfoDetailCard coupon={coupon} onEdit={handleEdit} />
 

@@ -57,6 +57,15 @@ export interface GifticonListResponseDto {
   expiryDate: string;
   status: GifticonStatus;
   imageUrl: string;
+  originalPrice?: number;
+  currentBalance?: number;
+  type?: GifticonType;
+  dDay?: string;
+  // 자동 판매 설정
+  scheduledSaleDate?: string;
+  plannedSalePrice?: number;
+  autoSellDate?: string; // scheduledSaleDate의 별칭
+  autoSellAmount?: number; // plannedSalePrice의 별칭
 }
 
 export interface GifticonDetailResponseDto {

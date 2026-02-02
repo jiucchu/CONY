@@ -71,12 +71,12 @@ const CouponStatTable = ({ myCouponCount, sharedCouponCount, soldCouponCount }: 
         </View>
         <View style={styles.cell}>
           <StyledText fontSize={14} fontWeight={400} color={COLORS.text.primary}>
-            {myCouponCount} 개
+            {sharedCouponCount} 개
           </StyledText>
         </View>
         <View style={[styles.cell, styles.lastCell]}>
           <StyledText fontSize={14} fontWeight={400} color={COLORS.text.primary}>
-            {sharedCouponCount} 개
+            {soldCouponCount} 개
           </StyledText>
         </View>
       </View>
