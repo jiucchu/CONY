@@ -10,13 +10,13 @@ export const LOCAL_PAYMENT_PORT = '8081'; // Payment 서버 포트 (React Native
 
 // 로컬 개발 서버 URL
 // 로컬에서는 /api/manage prefix 없이 직접 접근 (Nginx 없이 직접 실행)
-const LOCAL_API_BASE_URL = `http://${LOCAL_HOST}:${LOCAL_MANAGE_PORT}`;
+const LOCAL_API_BASE_URL = `https://${LOCAL_HOST}:${LOCAL_MANAGE_PORT}`;
 // Payment 서버는 context-path가 /api/payment로 설정되어 있음
-const LOCAL_PAYMENT_API_BASE_URL = `http://${LOCAL_HOST}:${LOCAL_PAYMENT_PORT}/api/payment`;
+const LOCAL_PAYMENT_API_BASE_URL = `https://${LOCAL_HOST}:${LOCAL_PAYMENT_PORT}/api/payment`;
 
 // 운영 서버 URL
-const PROD_API_BASE_URL = 'http://i14c106.p.ssafy.io/api/manage';
-const PROD_PAYMENT_API_BASE_URL = 'http://i14c106.p.ssafy.io/api/payment';
+const PROD_API_BASE_URL = 'https://i14c106.p.ssafy.io/api/manage';
+const PROD_PAYMENT_API_BASE_URL = 'https://i14c106.p.ssafy.io/api/payment';
 
 // 환경 변수로 강제 설정 가능 (환경 변수가 있으면 우선 사용)
 export const API_BASE_URL = isLocalDev ? LOCAL_API_BASE_URL : PROD_API_BASE_URL;

@@ -5,7 +5,7 @@ import MyInfoCard from '@/components/mypage/MyInfoCard';
 import ContentLayout from '@/components/layout/ContentLayout';
 import ConnectAccount from '@/components/mypage/ConnectAccount';
 import CouponStatTable from '@/components/mypage/CouponStatTable';
-import WithdrawButton from '@/components/mypage/WithdrawButton';
+import LogoutButton from '@/components/mypage/LogoutButton';
 import CouponList from '@/components/common/card/CouponList';
 import GeofenceTestCard from '@/components/mypage/GeofenceTestCard';
 import { COLORS } from '@/constants/colors';
@@ -92,7 +92,7 @@ const Mypage = () => {
           </View>
           <GeofenceTestCard />
           <ConnectAccount />
-          <WithdrawButton />
+          <LogoutButton />
         </View>
       </ScrollView>
     </ContentLayout>
