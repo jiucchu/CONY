@@ -19,18 +19,27 @@ async function apiCall<T>(
 ): Promise<ApiResponseData<T>> {
   const token = await AsyncStorage.getItem('accessToken');
 
+  // options에서 headers를 분리하여 병합
+  const { headers: optionsHeaders, ...restOptions } = options;
+  
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string>),
   };
+
+  // options.headers가 있고 빈 객체가 아닐 때만 병합
+  if (optionsHeaders && typeof optionsHeaders === 'object' && Object.keys(optionsHeaders).length > 0) {
+    Object.assign(headers, optionsHeaders);
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
   try {
+    console.log(`[paymentApi] ${options.method || 'GET'} ${PAYMENT_API_BASE_URL}${endpoint}`);
+    console.log(`[paymentApi] Authorization 헤더 존재:`, !!headers['Authorization']);
     const response = await fetch(`${PAYMENT_API_BASE_URL}${endpoint}`, {
-      ...options,
+      ...restOptions,
       headers,
     });
 

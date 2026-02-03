@@ -208,8 +208,26 @@ const CouponCreate = () => {
   const requestImagePermission = async (): Promise<boolean> => {
     if (Platform.OS === 'android') {
       try {
+        // Android 13 (API 33) 이상에서는 READ_MEDIA_IMAGES 사용
+        // Android 12 이하에서는 READ_EXTERNAL_STORAGE 사용
+        const androidVersion = Platform.Version;
+        let permission: string;
+        
+        if (androidVersion >= 33) {
+          permission = PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES;
+        } else {
+          permission = PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+        }
+
+        // 이미 권한이 있는지 확인
+        const checkResult = await PermissionsAndroid.check(permission);
+        if (checkResult) {
+          return true;
+        }
+
+        // 권한 요청
         const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+          permission,
           {
             title: '이미지 접근 권한',
             message: '이미지를 선택하려면 갤러리 접근 권한이 필요합니다.',
@@ -220,11 +238,12 @@ const CouponCreate = () => {
         );
         return granted === PermissionsAndroid.RESULTS.GRANTED;
       } catch (err) {
-        console.warn(err);
+        console.warn('권한 요청 오류:', err);
         return false;
       }
     }
     // iOS는 react-native-image-picker가 자동으로 권한을 처리합니다.
+    // Info.plist에 NSPhotoLibraryUsageDescription이 필요합니다.
     return true;
   };
 

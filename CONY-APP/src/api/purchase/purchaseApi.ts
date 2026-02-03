@@ -29,8 +29,10 @@ async function apiCall<T>(
   }
 
   try {
+    // options에서 headers를 분리하여 헤더 병합 문제 방지 (HTTPS 환경에서 중요)
+    const { headers: _, ...restOptions } = options;
     const response = await fetch(`${PAYMENT_API_BASE_URL}${endpoint}`, {
-      ...options,
+      ...restOptions,
       headers,
     });
 
