@@ -48,6 +48,8 @@ public class User extends BaseTimeEntity {
 
     private LocalDateTime suspensionEndAt; // 정지 해제일(영구정지 -> null)
 
+    private LocalDateTime withdrawnAt; // 탈퇴 일시
+
     @Builder
     public User(String email, String name, OAuthProvider oauthProvider, String oauthId, String profileImageUrl) {
         this.email = email;
@@ -119,6 +121,29 @@ public class User extends BaseTimeEntity {
             this.suspensionEndAt = null;           // 날짜 초기화
             // (JPA Dirty Checking으로 인해 Transaction이 끝나면 DB에 자동 저장됨)
         }
+    }
+
+    /**
+     * 회원 탈퇴 처리 (Manage 서버에서 동기화 호출)
+     * - 상태를 WITHDRAWN으로 변경
+     * - 개인정보 마스킹 처리
+     */
+    public void withdraw() {
+        this.status = UserStatus.WITHDRAWN;
+        this.withdrawnAt = LocalDateTime.now();
+
+        // 개인정보 마스킹
+        this.name = "탈퇴한 회원";
+        this.email = "withdrawn_" + this.id + "@deleted.com";
+        this.profileImageUrl = null;
+        this.oauthId = null;
+    }
+
+    /**
+     * 탈퇴 여부 확인
+     */
+    public boolean isWithdrawn() {
+        return this.status == UserStatus.WITHDRAWN;
     }
 
 }

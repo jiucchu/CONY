@@ -61,4 +61,9 @@ public interface GifticonRepository extends JpaRepository<Gifticon, Long>, JpaSp
 
     @Query("SELECT g FROM Gifticon g WHERE g.room.id = :roomId")
     Page<Gifticon> findAllByRoomId(@Param("roomId") Long roomId, Pageable pageable);
+
+    /**
+     * 사용자의 기프티콘 개수 조회 (마이페이지용)
+     */
+    long countByUserId(Long userId);
 }

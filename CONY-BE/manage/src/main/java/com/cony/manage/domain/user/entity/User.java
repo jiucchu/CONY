@@ -2,6 +2,7 @@ package com.cony.manage.domain.user.entity;
 
 import com.cony.manage.domain.user.enums.OAuthProvider;
 import com.cony.manage.domain.user.enums.Role;
+import com.cony.manage.domain.user.enums.UserStatus;
 import com.cony.manage.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -42,6 +43,12 @@ public class User extends BaseTimeEntity {
     @Column(name = "fcm_token", length = 500)
     private String fcmToken;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status = UserStatus.ACTIVE;
+
+    private LocalDateTime withdrawnAt;
+
     @Builder
     public User(String name, String email, String profileImageUrl, Role role, OAuthProvider oauthProvider, String oauthId) {
         this.name = name;
@@ -74,5 +81,29 @@ public class User extends BaseTimeEntity {
      */
     public void updateFcmToken(String fcmToken) {
         this.fcmToken = fcmToken;
+    }
+
+    /**
+     * 회원 탈퇴 처리
+     * - 상태를 WITHDRAWN으로 변경
+     * - 개인정보 마스킹 처리
+     */
+    public void withdraw() {
+        this.status = UserStatus.WITHDRAWN;
+        this.withdrawnAt = LocalDateTime.now();
+
+        // 개인정보 마스킹
+        this.name = "탈퇴한 회원";
+        this.email = "withdrawn_" + this.id + "@deleted.com";
+        this.profileImageUrl = null;
+        this.oauthId = null;
+        this.fcmToken = null;
+    }
+
+    /**
+     * 탈퇴 여부 확인
+     */
+    public boolean isWithdrawn() {
+        return this.status == UserStatus.WITHDRAWN;
     }
 }

@@ -32,7 +32,12 @@ public enum ErrorCode {
     FAIL_FILE_UPLOAD(HttpStatus.CONFLICT, "G006", "파일 업로드에 실패하였습니다."),
 
     // Geofence
-    INVALID_COORDINATES(HttpStatus.BAD_REQUEST, "F001", "위도, 경도 값이 잘못되었습니다.");
+    INVALID_COORDINATES(HttpStatus.BAD_REQUEST, "F001", "위도, 경도 값이 잘못되었습니다."),
+
+    // User Withdrawal
+    CANNOT_WITHDRAW(HttpStatus.BAD_REQUEST, "U004", "탈퇴할 수 없습니다."),
+    USER_ALREADY_WITHDRAWN(HttpStatus.BAD_REQUEST, "U005", "이미 탈퇴한 회원입니다."),
+    PAYMENT_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "U006", "결제 서버 연동 오류입니다.");
 
     // 개발중 필요한 에러가 있다면 이곳에 선언하시고 사용하면 됩니다.
 

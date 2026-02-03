@@ -1,0 +1,714 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>기능명세서</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+/* Override strong tags inside headings to maintain consistent weight */
+h1 strong,
+h2 strong,
+h3 strong {
+	font-weight: 600;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 10px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.collection-content td {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.column-list {
+	display: flex;
+	justify-content: space-between;
+}
+
+.column {
+	padding: 0 1em;
+}
+
+.column:first-child {
+	padding-left: 0;
+}
+
+.column:last-child {
+	padding-right: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+	border-collapse: collapse;
+}
+
+table {
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+	margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.callout img.notion-static-icon {
+	width: 1em;
+	height: 1em;
+}
+
+.callout p {
+	margin: 0;
+}
+
+.callout h1,
+.callout h2,
+.callout h3 {
+	margin: 0 0 0.6rem;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+blockquote.quote-large {
+	font-size: 1.25em;
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.highlight-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.highlight-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.highlight-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.highlight-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.highlight-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.highlight-default_background {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray_background {
+	background: rgba(42, 28, 0, 0.07);
+}
+.highlight-brown_background {
+	background: rgba(139, 46, 0, 0.086);
+}
+.highlight-orange_background {
+	background: rgba(224, 101, 1, 0.129);
+}
+.highlight-yellow_background {
+	background: rgba(211, 168, 0, 0.137);
+}
+.highlight-teal_background {
+	background: rgba(0, 100, 45, 0.09);
+}
+.highlight-blue_background {
+	background: rgba(0, 124, 215, 0.094);
+}
+.highlight-purple_background {
+	background: rgba(102, 0, 178, 0.078);
+}
+.highlight-pink_background {
+	background: rgba(197, 0, 93, 0.086);
+}
+.highlight-red_background {
+	background: rgba(223, 22, 0, 0.094);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.block-color-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.block-color-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.block-color-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.block-color-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.block-color-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(240, 239, 237, 1);
+}
+.block-color-brown_background {
+	background: rgba(245, 237, 233, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 235, 222, 1);
+}
+.block-color-yellow_background {
+	background: rgba(249, 243, 220, 1);
+}
+.block-color-teal_background {
+	background: rgba(232, 241, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(229, 242, 252, 1);
+}
+.block-color-purple_background {
+	background: rgba(243, 235, 249, 1);
+}
+.block-color-pink_background {
+	background: rgba(250, 233, 241, 1);
+}
+.block-color-red_background {
+	background: rgba(252, 233, 231, 1);
+}
+.select-value-color-default { background-color: rgba(42, 28, 0, 0.07); }
+.select-value-color-gray { background-color: rgba(28, 19, 1, 0.11); }
+.select-value-color-brown { background-color: rgba(127, 51, 0, 0.156); }
+.select-value-color-orange { background-color: rgba(196, 88, 0, 0.203); }
+.select-value-color-yellow { background-color: rgba(209, 156, 0, 0.282); }
+.select-value-color-green { background-color: rgba(0, 96, 38, 0.156); }
+.select-value-color-blue { background-color: rgba(0, 118, 217, 0.203); }
+.select-value-color-purple { background-color: rgba(92, 0, 163, 0.141); }
+.select-value-color-pink { background-color: rgba(183, 0, 78, 0.152); }
+.select-value-color-red { background-color: rgba(206, 24, 0, 0.164); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="2e1385c3-f99f-80fb-b675-dd2f6ea08af5" class="page sans"><header><div class="page-header-icon undefined"><span class="icon">🖨️</span></div><h1 class="page-title" dir="auto">기능명세서</h1><p class="page-description" dir="auto"></p></header><div class="page-body"><div style="display:contents" dir="ltr"><div id="2e3385c3-f99f-801f-8d4f-deaebc289fbb" class="collection-content"><h4 class="collection-title"></h4><table class="collection-content"><thead><tr><th><span class="icon property-icon"><img src="https://www.notion.so/icons/list_gray.svg" style="width:14px;height:14px;display:block"/></span>스프린트</th><th><span class="icon property-icon"><img src="https://www.notion.so/icons/font_gray.svg" style="width:14px;height:14px;display:block"/></span>화면</th><th><span class="icon property-icon"><img src="https://www.notion.so/icons/description_gray.svg" style="width:14px;height:14px;display:block"/></span>기능</th><th><span class="icon property-icon"><img src="https://www.notion.so/icons/description_gray.svg" style="width:14px;height:14px;display:block"/></span>세부사항</th><th><span class="icon property-icon"><img src="https://www.notion.so/icons/burst_gray.svg" style="width:14px;height:14px;display:block"/></span>중요도</th><th><span class="icon property-icon"><img src="https://www.notion.so/icons/checkmark-square_gray.svg" style="width:14px;height:14px;display:block"/></span>디자인</th><th><span class="icon property-icon"><img src="https://www.notion.so/icons/burst_gray.svg" style="width:14px;height:14px;display:block"/></span>상태</th></tr></thead><tbody><tr id="2e8385c3-f99f-8082-b81b-e3859fea4b70"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f8082b81be3859fea4b70?pvs=21">제목 없음</a></td><td class="cell-:DB@"><mark class="highlight-yellow_background"><strong># 기프티콘 관리 기능 </strong></mark></td><td class="cell-^MJD"></td><td class="cell-X~fG"></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-80e8-8b78-da303a43522b"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80e88b78da303a43522b?pvs=21">기프티콘 리스트</a></td><td class="cell-:DB@">개인 기프티콘 확인</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-80fc-801a-efb673655b28"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80fc801aefb673655b28?pvs=21">제목 없음</a></td><td class="cell-:DB@">기프티콘 판매 일자 설정</td><td class="cell-^MJD">- 어플리케이션 버전에서는 제거 필요<br/>- 특정 일자까지 사용되지 않을 시 자동으로 판매 등록이 되는 시스템 구현</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-8024-9de3-cc3ad5ca17df"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80249de3cc3ad5ca17df?pvs=21">제목 없음</a></td><td class="cell-:DB@">공유 기프티콘 확인</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-80f5-9587-ea8904b34033"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80f59587ea8904b34033?pvs=21">제목 없음</a></td><td class="cell-:DB@">기프티콘 전체 삭제</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-8085-a32c-fd915eb0c649"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f8085a32cfd915eb0c649?pvs=21">제목 없음</a></td><td class="cell-:DB@">기프티콘 사용 완료 처리</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-80f8-af9f-ff2da1fda113"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80f8af9fff2da1fda113?pvs=21">기프티콘 상세</a></td><td class="cell-:DB@">기프티콘 상세 정보 확인</td><td class="cell-^MJD">- 기프티콘 이름<br/>- 가격<br/>- 브랜드<br/>- 유효기간<br/>- 상품권 및 정액권 분리<br/>- 바코드 정보<br/>- 상품 이미지<br/>- 자동 판매 등록 일자</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-80e7-9e9b-f6c46f6777fa"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80e79e9bf6c46f6777fa?pvs=21">제목 없음</a></td><td class="cell-:DB@">정액 기프티콘 가격 수정</td><td class="cell-^MJD">- 정액 기프티콘의 잔여 금액을 수정할 수 있다.</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-809b-8966-ff3906e7c3b9"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f809b8966ff3906e7c3b9?pvs=21">제목 없음</a></td><td class="cell-:DB@">기프티콘 삭제</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-80e3-a382-e643fd8beb52"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80e3a382e643fd8beb52?pvs=21">제목 없음</a></td><td class="cell-:DB@">기프티콘 사용 완료 처리</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-80c7-916c-ca0f12e0234c"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80c7916cca0f12e0234c?pvs=21">기프티콘 사용 완료</a></td><td class="cell-:DB@">위치 기반의 기프티콘 사용 alert</td><td class="cell-^MJD">- 만약 스타벅스에 5분 이상 멈추어 있었으나, 어느 기프티콘도 사용완료 처리가 되지 않았다면 해당 기프티콘을 사용했는지 알림.</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-802e-84d2-de15755afdf6"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f802e84d2de15755afdf6?pvs=21">기프티콘 수정</a></td><td class="cell-:DB@">기프티콘 정보 수정</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e3385c3-f99f-8096-b4d9-ed3df533d4e4"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e3385c3f99f8096b4d9ed3df533d4e4?pvs=21">기프티콘 등록</a></td><td class="cell-:DB@">기프티콘 이미지를 OCR로 인식하여 등록</td><td class="cell-^MJD">+ 유효기간 만료된 기프티콘일 때 등록 못하게 설정 필요할 듯<br/><br/>- 기프티콘 이름<br/>- 가격<br/>- 브랜드<br/>- 유효기간<br/>- 상품권 및 정액권 분리<br/>- 바코드 정보<br/>- 상품 이미지<br/>- 자동 판매 등록 여부 및 일자<br/><br/>- 별도의 등록 페이지 없이 만약 등록된 정보가 틀렸다면 수정 페이지에서 수정할 수 있도록 한다?<br/>- 기프티콘 판매 일자를 각각 설정하고 싶을 수 있기 때문에 등록 시 폼 추가로 진행 하는건 어떨까요?</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-8030-b6e1-ec2aad50f315"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f8030b6e1ec2aad50f315?pvs=21">제목 없음</a></td><td class="cell-:DB@">객체인식을 통한 기프티콘 이미지 생성</td><td class="cell-^MJD">- AI</td><td class="cell-X~fG"></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-80ab-921d-dbd8699992fa"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80ab921ddbd8699992fa?pvs=21">제목 없음</a></td><td class="cell-:DB@">기프티콘 가격 추론</td><td class="cell-^MJD">- 상품명 및 브랜드 기반의 기프티콘 가격 추론</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-80e8-b837-c38ae3ffb918"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80e8b837c38ae3ffb918?pvs=21">제목 없음</a></td><td class="cell-:DB@">카테고리 지정</td><td class="cell-^MJD">- 유사도 분석을 통한 카테고리 자동 지정</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-80ca-9cb1-ffa61dbc3815"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80ca9cb1ffa61dbc3815?pvs=21">제목 없음</a></td><td class="cell-:DB@">갤러리 공유 기능을 이용한 기프티콘 등록</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-809a-8c81-e31e1802ec0e"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f809a8c81e31e1802ec0e?pvs=21">로그인 페이지</a></td><td class="cell-:DB@">OAuth를 이용한 로그인</td><td class="cell-^MJD">- 카카오, 구글, 애플을 통해 회원가입 및 로그인을 진행할 수 있다.</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-8000-a5a6-ef2c7b785065"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f8000a5a6ef2c7b785065?pvs=21">마이페이지</a></td><td class="cell-:DB@">회원 정보 수정</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-801a-bf35-d310c992a28a"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f801abf35d310c992a28a?pvs=21">제목 없음</a></td><td class="cell-:DB@">회원 탈퇴</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-8072-a876-d25fe2a4d58f"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f8072a876d25fe2a4d58f?pvs=21">위치 기반 기능</a></td><td class="cell-:DB@">인근 가게 정보를 활용한 기프티콘 알림</td><td class="cell-^MJD">- 근방 (000)m 내에 내가 소유한 기프티콘 매장이 있을 때 알림을 보낸다. </td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-8003-8f19-dde1d918e647"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80038f19dde1d918e647?pvs=21">유효기간 임박 알림</a></td><td class="cell-:DB@">유효기간 임박에 대한 알림 기능</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-80a7-b303-e2e8f5fcbb0d"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80a7b303e2e8f5fcbb0d?pvs=21">위젯</a></td><td class="cell-:DB@">브랜드별 기프티콘 확인</td><td class="cell-^MJD">- 브랜드 클릭 시 해당 브랜드의 기프티콘 목록으로 이동</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-8054-9b5d-d98be337bdb6"><td class="cell-]ty;"><span class="selected-value select-value-color-blue">Sprint 1</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80549b5dd98be337bdb6?pvs=21">제목 없음</a></td><td class="cell-:DB@">인근 가게 정보 기프티콘 알림</td><td class="cell-^MJD">- 위젯 클릭 시 바로 바코드로 이동할 수 있는 기능 제공</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-80c3-8178-c647d225c632"><td class="cell-]ty;"><span class="selected-value select-value-color-yellow">Sprint 2</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80c38178c647d225c632?pvs=21">제목 없음</a></td><td class="cell-:DB@"><mark class="highlight-yellow_background"><strong># 기프티콘 거래 기능 </strong></mark></td><td class="cell-^MJD"></td><td class="cell-X~fG"></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-801f-9d91-c0578c4f49de"><td class="cell-]ty;"><span class="selected-value select-value-color-yellow">Sprint 2</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f801f9d91c0578c4f49de?pvs=21">기프티콘 판매</a></td><td class="cell-:DB@">자동 기프티콘 판매 기능 구현</td><td class="cell-^MJD">- 등록 시 판매 일자 (유효 기간으로부터 한 달 전, 일 주 전 등)에 자동으로 판매 상태로 변경</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-80bb-97c9-f8faa8524088"><td class="cell-]ty;"><span class="selected-value select-value-color-yellow">Sprint 2</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80bb97c9f8faa8524088?pvs=21">제목 없음</a></td><td class="cell-:DB@">판매 금액 추천 기능 (AI)</td><td class="cell-^MJD">- 중고 거래 시세 분석을 통한 판매 금액 추천 기능</td><td class="cell-X~fG"><span class="status-value select-value-color-yellow"><div class="status-dot status-dot-color-yellow"></div>중</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-80a8-b403-ea566021f23a"><td class="cell-]ty;"><span class="selected-value select-value-color-yellow">Sprint 2</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80a8b403ea566021f23a?pvs=21">제목 없음</a></td><td class="cell-:DB@">OCR 인식을 통한 기프티콘 판매 정보 등록</td><td class="cell-^MJD">-  기프티콘 명<br/>- 기프티콘 금액<br/>- 브랜드<br/>- 유효 기간</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-8070-8e08-c5d2a2eb4ffa"><td class="cell-]ty;"><span class="selected-value select-value-color-yellow">Sprint 2</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80708e08c5d2a2eb4ffa?pvs=21">제목 없음</a></td><td class="cell-:DB@">바코드 보호를 위한 이미지  슬라이싱</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-801d-afab-d8aeb9a40c43"><td class="cell-]ty;"><span class="selected-value select-value-color-yellow">Sprint 2</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f801dafabd8aeb9a40c43?pvs=21">기프티콘 리스트</a></td><td class="cell-:DB@">구매 가능한 전체 기프티콘 리스트</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-8097-a670-c947b4e6fc76"><td class="cell-]ty;"><span class="selected-value select-value-color-yellow">Sprint 2</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f8097a670c947b4e6fc76?pvs=21">제목 없음</a></td><td class="cell-:DB@">브랜드 및 요식 분류 별 카테고리 분류</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-8082-b266-f7213fb56f1a"><td class="cell-]ty;"><span class="selected-value select-value-color-yellow">Sprint 2</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f8082b266f7213fb56f1a?pvs=21">기프티콘 구매</a></td><td class="cell-:DB@">기프티콘 구매</td><td class="cell-^MJD">- 기프티콘 구매 버튼을 통한 구매</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-804a-b59e-de79e70aec61"><td class="cell-]ty;"><span class="selected-value select-value-color-yellow">Sprint 2</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f804ab59ede79e70aec61?pvs=21">제목 없음</a></td><td class="cell-:DB@">위치 기반 기프티콘 구매 추천 (+AI)</td><td class="cell-^MJD">- 현재 위치를 기반으로 한 기프티콘 구매 추천</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2ed385c3-f99f-8074-bb73-f43828520ab3"><td class="cell-]ty;"><span class="selected-value select-value-color-yellow">Sprint 2</span></td><td class="cell-title"><a href="https://www.notion.so/2ed385c3f99f8074bb73f43828520ab3?pvs=21">제목 없음</a></td><td class="cell-:DB@">사용자 취향 기반 기프티콘 구매 추천 (+AI)</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-8045-b6d2-d5cb505f5b6e"><td class="cell-]ty;"><span class="selected-value select-value-color-yellow">Sprint 2</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f8045b6d2d5cb505f5b6e?pvs=21">마이페이지</a></td><td class="cell-:DB@">내가 판매하고 있는 기프티콘 관리</td><td class="cell-^MJD">- 삭제/내 지갑으로 이동</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-8083-b6a5-d875c0ae95c8"><td class="cell-]ty;"><span class="selected-value select-value-color-yellow">Sprint 2</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f8083b6a5d875c0ae95c8?pvs=21">제목 없음</a></td><td class="cell-:DB@">기프티콘 판매 금액 관리</td><td class="cell-^MJD">- 금융 API 이용 불가로 목데이터 활용</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-8085-82f2-fafb515a667a"><td class="cell-]ty;"><span class="selected-value select-value-color-yellow">Sprint 2</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f808582f2fafb515a667a?pvs=21">판매 기프티콘 상세</a></td><td class="cell-:DB@">기프티콘 판매 정보 확인 </td><td class="cell-^MJD">-  기프티콘 명<br/>- 기프티콘 금액<br/>- 브랜드<br/>- 유효 기간</td><td class="cell-X~fG"><span class="status-value select-value-color-red"><div class="status-dot status-dot-color-red"></div>상</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-8025-8866-eaba8173d4b7"><td class="cell-]ty;"><span class="selected-value select-value-color-yellow">Sprint 2</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f80258866eaba8173d4b7?pvs=21">기프티콘 선물</a></td><td class="cell-:DB@">선물 코드 및 smtp 등을 활용한 기프티콘 선물</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-blue"><div class="status-dot status-dot-color-blue"></div>하</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr><tr id="2e8385c3-f99f-809e-b64c-e84938b4cee1"><td class="cell-]ty;"><span class="selected-value select-value-color-yellow">Sprint 2</span></td><td class="cell-title"><a href="https://www.notion.so/2e8385c3f99f809eb64ce84938b4cee1?pvs=21">허위 기프티콘 신고 </a></td><td class="cell-:DB@">허위 기프티콘 신고 기능</td><td class="cell-^MJD"></td><td class="cell-X~fG"><span class="status-value select-value-color-yellow"><div class="status-dot status-dot-color-yellow"></div>중</span></td><td class="cell-hJgm"><div class="checkbox checkbox-off"></div></td><td class="cell-Hedc"><span class="status-value"><div class="status-dot"></div>시작 전</span></td></tr></tbody></table><br/><br/></div></div><div style="display:contents" dir="auto"><p id="2e3385c3-f99f-8048-ac9f-d2500675308d" class="">
+</p></div></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>
