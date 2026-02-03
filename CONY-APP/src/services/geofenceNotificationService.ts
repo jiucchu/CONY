@@ -19,7 +19,7 @@ import notifee, { AndroidImportance } from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getNearbyStores } from '@/api/geofence/geofenceApi';
 import { getMyGifticons, type GifticonListResponseDto } from '@/api/gifticon/gifticonApi';
-import { Platform, AppState, AppStateStatus } from 'react-native';
+import { Platform, AppState, AppStateStatus, PermissionsAndroid } from 'react-native';
 
 interface NotificationState {
   notifiedStores: Set<string>; // 이미 알림을 보낸 매장 ID들
@@ -59,12 +59,76 @@ class GeofenceNotificationService {
    * 위치 권한 요청
    */
   async requestLocationPermission(): Promise<boolean> {
-    return new Promise((resolve) => {
-      Geolocation.requestAuthorization(
-        () => resolve(true),
-        () => resolve(false)
+    if (Platform.OS !== 'android') {
+      // iOS는 Geolocation.requestAuthorization 사용
+      return new Promise((resolve) => {
+        Geolocation.requestAuthorization(
+          () => resolve(true),
+          () => resolve(false)
+        );
+      });
+    }
+
+    try {
+      // 이미 권한이 있는지 확인
+      const fineLocation = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
       );
-    });
+      const coarseLocation = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION
+      );
+
+      // 포그라운드 위치 권한이 없으면 먼저 요청
+      if (!fineLocation && !coarseLocation) {
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+        ]);
+
+        const hasForegroundPermission = 
+          granted[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] ===
+            PermissionsAndroid.RESULTS.GRANTED ||
+          granted[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] ===
+            PermissionsAndroid.RESULTS.GRANTED;
+
+        if (!hasForegroundPermission) {
+          return false;
+        }
+      }
+
+      // 포그라운드 위치 권한이 있으면 백그라운드 위치 권한 확인 및 요청
+      const backgroundLocation = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION
+      );
+
+      if (!backgroundLocation) {
+        // Android 10 (API 29) 이상에서만 백그라운드 위치 권한 요청
+        if (Platform.Version >= 29) {
+          try {
+            const bgGranted = await PermissionsAndroid.request(
+              PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION
+            );
+            if (bgGranted === PermissionsAndroid.RESULTS.GRANTED) {
+              console.log('[GeofenceService] 백그라운드 위치 권한이 허용되었습니다.');
+              return true;
+            } else {
+              console.log('[GeofenceService] 백그라운드 위치 권한이 거부되었습니다.');
+              // 백그라운드 권한이 없어도 포그라운드 권한은 있으므로 true 반환
+              return true;
+            }
+          } catch (bgErr) {
+            console.warn('[GeofenceService] 백그라운드 위치 권한 요청 오류:', bgErr);
+            // 에러가 나도 포그라운드 권한은 있으므로 true 반환
+            return true;
+          }
+        }
+      }
+
+      return true;
+    } catch (err) {
+      console.warn('[GeofenceService] 위치 권한 요청 오류:', err);
+      return false;
+    }
   }
 
   /**

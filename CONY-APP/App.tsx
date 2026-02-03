@@ -58,22 +58,53 @@ function App() {
         PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION
       );
 
-      if (fineLocation && coarseLocation) {
-        return true;
+      // 포그라운드 위치 권한이 없으면 먼저 요청
+      if (!fineLocation && !coarseLocation) {
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+        ]);
+
+        const hasForegroundPermission = 
+          granted[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] ===
+            PermissionsAndroid.RESULTS.GRANTED ||
+          granted[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] ===
+            PermissionsAndroid.RESULTS.GRANTED;
+
+        if (!hasForegroundPermission) {
+          return false;
+        }
       }
 
-      // 권한 요청
-      const granted = await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
-      ]);
-
-      return (
-        granted[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] ===
-          PermissionsAndroid.RESULTS.GRANTED ||
-        granted[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] ===
-          PermissionsAndroid.RESULTS.GRANTED
+      // 포그라운드 위치 권한이 있으면 백그라운드 위치 권한 확인 및 요청
+      const backgroundLocation = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION
       );
+
+      if (!backgroundLocation) {
+        // Android 10 (API 29) 이상에서만 백그라운드 위치 권한 요청
+        if (Platform.Version >= 29) {
+          try {
+            const bgGranted = await PermissionsAndroid.request(
+              PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION
+            );
+            if (bgGranted === PermissionsAndroid.RESULTS.GRANTED) {
+              console.log('[App] 백그라운드 위치 권한이 허용되었습니다.');
+              return true;
+            } else {
+              console.log('[App] 백그라운드 위치 권한이 거부되었습니다.');
+              // 백그라운드 권한이 없어도 포그라운드 권한은 있으므로 true 반환
+              return true;
+            }
+          } catch (bgErr) {
+            console.warn('[App] 백그라운드 위치 권한 요청 오류:', bgErr);
+            // 에러가 나도 포그라운드 권한은 있으므로 true 반환
+            return true;
+          }
+        }
+      }
+
+      return true;
     } catch (err) {
       console.warn('[App] 위치 권한 요청 오류:', err);
       return false;
