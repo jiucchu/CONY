@@ -40,8 +40,11 @@ async function apiCall<T>(
     console.log(`[Gifticon API] Request headers:`, JSON.stringify(headers, null, 2));
     console.log(`[Gifticon API] Authorization 헤더 존재:`, !!headers['Authorization']);
     console.log(`[Gifticon API] Request body:`, options.body);
+    
+    // options에서 headers를 분리하여 헤더 병합 문제 방지 (HTTPS 환경에서 중요)
+    const { headers: _, ...restOptions } = options;
     const response = await fetch(url, {
-      ...options,
+      ...restOptions,
       headers,
     });
 

@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, TouchableOpacity, Linking, Alert } from 'react-native';
 import { WebView, WebViewNavigation } from 'react-native-webview';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StyledText } from '@/utils/StyledText';
 import { COLORS } from '@/constants/colors';
 import { handleOAuthCallback } from '@/api/auth/authApi';
+import { approvePayment } from '@/api/payment/paymentApi';
+import { purchaseGifticon } from '@/api/purchase/purchaseApi';
 
 const OAuthWebView = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { url, provider } = (route.params as any) || {};
+  const { url, provider, paymentMode, partnerOrderId, saleId } = (route.params as any) || {};
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -29,8 +31,84 @@ const OAuthWebView = () => {
       return;
     }
 
+    // 결제 모드: 카카오페이 결제 완료 URL 감지
+    if (paymentMode && currentUrl.includes('pg_token=')) {
+      console.log('[OAuthWebView] 결제 완료 URL 감지');
+      setIsProcessing(true);
+      processedRef.current = true;
+
+      try {
+        // URL에서 pg_token 추출
+        const pgTokenMatch = currentUrl.match(/[?&]pg_token=([^&]+)/);
+        const pgToken = pgTokenMatch ? decodeURIComponent(pgTokenMatch[1]) : null;
+        
+        if (!pgToken || !partnerOrderId) {
+          throw new Error('결제 정보를 찾을 수 없습니다.');
+        }
+
+        console.log('[OAuthWebView] 결제 승인 요청:', { pgToken, partnerOrderId });
+        
+        // 결제 승인
+        await approvePayment(pgToken, partnerOrderId);
+        console.log('[OAuthWebView] 결제 승인 완료');
+
+        // 구매 진행
+        if (saleId) {
+          console.log('[OAuthWebView] 구매 진행:', saleId);
+          await purchaseGifticon(saleId);
+          console.log('[OAuthWebView] 구매 완료');
+          
+          Alert.alert('구매 완료', '기프티콘 구매가 완료되었습니다.', [
+            {
+              text: '확인',
+              onPress: () => {
+                (navigation as any).goBack();
+                // PaymentDetail 페이지로 돌아가기 위해 한 번 더 뒤로 가기
+                setTimeout(() => {
+                  (navigation as any).goBack();
+                }, 100);
+              },
+            },
+          ]);
+        } else {
+          Alert.alert('충전 완료', '포인트 충전이 완료되었습니다.', [
+            {
+              text: '확인',
+              onPress: () => {
+                (navigation as any).goBack();
+              },
+            },
+          ]);
+        }
+      } catch (error: any) {
+        console.error('[OAuthWebView] 결제/구매 오류:', error);
+        Alert.alert('오류', error.message || '결제 또는 구매 중 오류가 발생했습니다.');
+        setError(error.message || '결제 또는 구매 중 오류가 발생했습니다.');
+      } finally {
+        setIsProcessing(false);
+        processedRef.current = false;
+      }
+      return;
+    }
+
+    // 결제 취소/실패 URL 감지
+    if (paymentMode && (currentUrl.includes('/payment/cancel') || currentUrl.includes('/payment/fail'))) {
+      console.log('[OAuthWebView] 결제 취소/실패 감지');
+      Alert.alert('결제 취소', '결제가 취소되었습니다.', [
+        {
+          text: '확인',
+          onPress: () => {
+            (navigation as any).goBack();
+          },
+        },
+      ]);
+      setIsProcessing(false);
+      processedRef.current = false;
+      return;
+    }
+
     // 서버의 OAuth 성공 페이지 감지 (/login/oauth2/code/)
-    if (currentUrl.includes('/login/oauth2/code/') || currentUrl.includes('/api/manage/login/oauth2/code/')) {
+    if (!paymentMode && (currentUrl.includes('/login/oauth2/code/') || currentUrl.includes('/api/manage/login/oauth2/code/'))) {
       console.log('[OAuthWebView] OAuth 성공 페이지 감지 - 토큰 추출 시도');
       setIsProcessing(true);
       processedRef.current = true;
