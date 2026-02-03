@@ -84,7 +84,7 @@ public class GeofenceDto {
     public static class StoreSummary {
         private String id; // 매장 ID
         private String name; // 매장 이름
-        private Long brandId; // 브랜드 ID (로고 표시용)
+        private Integer brandId; // 브랜드 ID (로고 표시용)
         private double lat; // 개별 매장 위도
         private double lon; // 개별 매장 경도
     }
@@ -95,7 +95,7 @@ public class GeofenceDto {
     public static class InternalStoreData {
         private Long storeId;
         private String storeName;
-        private Long brandId;
+        private Integer brandId;
         private double lat;
         private double lon;
         private double distance; // 사용자로부터의 거리

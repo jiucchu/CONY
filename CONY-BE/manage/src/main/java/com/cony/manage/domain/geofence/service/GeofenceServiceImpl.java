@@ -112,7 +112,7 @@ public class GeofenceServiceImpl implements GeofenceService {
                 continue;
 
             try {
-                Long brandId = Long.parseLong(storeInfo.get("brandId"));
+                Integer brandId = Integer.parseInt(storeInfo.get("brandId"));
 
                 // [핵심 필터] 사용자가 보유한 기프티콘 브랜드인지 확인
                 if (userBrandSet.contains(brandId) || userBrandSet.isEmpty()) {
