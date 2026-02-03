@@ -29,78 +29,12 @@ const OAuthWebView = () => {
     }
 
     // 서버의 OAuth 성공 페이지 감지 (/login/oauth2/code/)
+    // 백엔드 HTML이 자동으로 postMessage를 보내므로 여기서는 처리 중 플래그만 설정
     if (currentUrl.includes('/login/oauth2/code/')) {
-      console.log('[OAuthWebView] OAuth 성공 페이지 감지');
+      console.log('[OAuthWebView] OAuth 성공 페이지 감지 - 백엔드 postMessage 대기 중');
       setIsProcessing(true);
       processedRef.current = true;
-
-      // WebView에서 HTML 내용을 읽어서 토큰 추출 시도
-      try {
-        // JavaScript를 실행하여 HTML에서 토큰 추출
-        const script = `
-          (function() {
-            try {
-              // 서버가 반환하는 HTML에서 JSON 데이터 찾기
-              const scripts = document.getElementsByTagName('script');
-              for (let i = 0; i < scripts.length; i++) {
-                const scriptContent = scripts[i].innerHTML;
-                if (scriptContent.includes('OAUTH_SUCCESS') || scriptContent.includes('accessToken')) {
-                  // postMessage에서 토큰 추출 시도
-                  const match = scriptContent.match(/accessToken['"]\\s*:\\s*['"]([^'"]+)['"]/);
-                  if (match && match[1]) {
-                    return JSON.stringify({
-                      accessToken: match[1],
-                      refreshToken: scriptContent.match(/refreshToken['"]\\s*:\\s*['"]([^'"]+)['"]/)?.[1] || ''
-                    });
-                  }
-                }
-              }
-              return null;
-            } catch(e) {
-              return null;
-            }
-          })();
-        `;
-
-        // WebView에서 JavaScript 실행하여 토큰 추출
-        webViewRef.current?.injectJavaScript(`
-          (function() {
-            try {
-              const scripts = document.getElementsByTagName('script');
-              for (let i = 0; i < scripts.length; i++) {
-                const scriptContent = scripts[i].innerHTML;
-                if (scriptContent.includes('OAUTH_SUCCESS') || scriptContent.includes('accessToken')) {
-                  const accessTokenMatch = scriptContent.match(/accessToken['"]\\s*:\\s*['"]([^'"]+)['"]/);
-                  const refreshTokenMatch = scriptContent.match(/refreshToken['"]\\s*:\\s*['"]([^'"]+)['"]/);
-                  if (accessTokenMatch && accessTokenMatch[1]) {
-                    window.ReactNativeWebView.postMessage(JSON.stringify({
-                      type: 'OAUTH_TOKEN',
-                      accessToken: accessTokenMatch[1],
-                      refreshToken: refreshTokenMatch?.[1] || ''
-                    }));
-                    return;
-                  }
-                }
-              }
-              // 토큰을 찾지 못한 경우 서버 API 호출 시도
-              window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'OAUTH_NEED_API_CALL',
-                url: '${currentUrl}'
-              }));
-            } catch(e) {
-              window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'OAUTH_ERROR',
-                error: e.message
-              }));
-            }
-          })();
-          true;
-        `);
-      } catch (err) {
-        console.error('[OAuthWebView] 토큰 추출 오류:', err);
-        setError('로그인 처리 중 오류가 발생했습니다.');
-        setIsProcessing(false);
-      }
+      // 백엔드 HTML의 JavaScript가 자동으로 postMessage를 보내므로 추가 작업 불필요
     }
 
     // 에러 페이지 감지
@@ -116,31 +50,19 @@ const OAuthWebView = () => {
       const data = JSON.parse(event.nativeEvent.data);
       console.log('[OAuthWebView] WebView 메시지:', data);
 
-      if (data.type === 'OAUTH_TOKEN' && data.accessToken) {
+      if ((data.type === 'OAUTH_TOKEN' || data.type === 'OAUTH_SUCCESS') && data.accessToken) {
         console.log('[OAuthWebView] 토큰 수신 성공');
+        setIsProcessing(false);
         await handleOAuthCallback(undefined, undefined, data.accessToken, data.refreshToken);
         (navigation as any).reset({
           index: 0,
           routes: [{ name: 'MainPage' }],
         });
-      } else if (data.type === 'OAUTH_NEED_API_CALL') {
-        // 서버 API를 통해 토큰 가져오기
-        console.log('[OAuthWebView] 서버 API 호출 필요');
-        // React Native에서 URLSearchParams.get이 지원되지 않을 수 있으므로 직접 파싱
-        const urlString = data.url;
-        const urlMatch = urlString.match(/[?&]code=([^&]+)/);
-        const code = urlMatch ? urlMatch[1] : null;
-        if (code) {
-          await handleOAuthCallback(code, undefined);
-          (navigation as any).reset({
-            index: 0,
-            routes: [{ name: 'MainPage' }],
-          });
-        } else {
-          throw new Error('인증 코드를 찾을 수 없습니다.');
-        }
       } else if (data.type === 'OAUTH_ERROR') {
+        setIsProcessing(false);
         throw new Error(data.error || '알 수 없는 오류');
+      } else {
+        console.warn('[OAuthWebView] 알 수 없는 메시지 타입:', data.type);
       }
     } catch (err) {
       console.error('[OAuthWebView] 메시지 처리 오류:', err);

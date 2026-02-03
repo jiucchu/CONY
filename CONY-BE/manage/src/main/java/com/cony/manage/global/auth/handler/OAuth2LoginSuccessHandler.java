@@ -59,13 +59,25 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                 "<html><body><script>" +
                         "  const res = " + json + ";" +
                         "  if (res.data) {" +
-                        "    const targetWindow = window.opener || window.parent;" + // 팝업과 iframe 모두 대응하는 안전한 코드
-                        "    targetWindow.postMessage({ " +
-                        "      type: 'OAUTH_SUCCESS', " +
-                        "      accessToken: res.data.accessToken, " +
-                        "      refreshToken: res.data.refreshToken " +
-                        "    }, '*');" +
-                        "    setTimeout(() => window.close(), 100);" + // 메시지 전달 시간을 위해 아주 짧은 딜레이 후 닫기
+                        "    // React Native WebView 지원" +
+                        "    if (window.ReactNativeWebView) {" +
+                        "      window.ReactNativeWebView.postMessage(JSON.stringify({ " +
+                        "        type: 'OAUTH_SUCCESS', " +
+                        "        accessToken: res.data.accessToken, " +
+                        "        refreshToken: res.data.refreshToken " +
+                        "      }));" +
+                        "    } else {" +
+                        "      // 웹 브라우저 지원 (팝업/iframe)" +
+                        "      const targetWindow = window.opener || window.parent;" +
+                        "      if (targetWindow) {" +
+                        "        targetWindow.postMessage({ " +
+                        "          type: 'OAUTH_SUCCESS', " +
+                        "          accessToken: res.data.accessToken, " +
+                        "          refreshToken: res.data.refreshToken " +
+                        "        }, '*');" +
+                        "        setTimeout(() => window.close(), 100);" +
+                        "      }" +
+                        "    }" +
                         "  }" +
                         "</script></body></html>");
         response.getWriter().flush();
