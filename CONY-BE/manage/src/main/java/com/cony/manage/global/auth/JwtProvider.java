@@ -5,6 +5,7 @@ import com.cony.manage.domain.user.repository.UserRepository;
 import com.cony.manage.global.error.CustomException;
 import com.cony.manage.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -20,6 +21,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtProvider {
@@ -79,13 +81,13 @@ public class JwtProvider {
                     .parseClaimsJws(token);
             return true;
         } catch (SecurityException | MalformedJwtException e) {
-            System.out.prinln("잘못된 JWT 서명입니다.\n" + e);
+            log.info("잘못된 JWT 서명입니다.\n {}", e);
         } catch (ExpiredJwtException e) {
-            System.out.prinln("만료된 JWT 토큰입니다.\n" + e);
+            log.info("만료된 JWT 토큰입니다.\n {}", e);
         } catch (UnsupportedJwtException e) {
-            System.out.prinln("지원되지 않는 JWT 토큰입니다.\n" + e);
+            log.info("지원되지 않는 JWT 토큰입니다.\n {}", e);
         } catch (IllegalArgumentException e) {
-            System.out.prinln("JWT 토큰이 잘못되었습니다.\n" + e);
+            log.info("JWT 토큰이 잘못되었습니다.\n {}", e);
         }
         return false;
     }
