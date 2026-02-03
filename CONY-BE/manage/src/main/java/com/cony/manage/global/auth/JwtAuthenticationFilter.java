@@ -25,9 +25,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        String token = resolveToken(request);
+        String requestURI = request.getRequestURI();
         log.info(">>> [JwtFilter] 요청 들어옴: {}", requestURI);
-
+        
+        String token = resolveToken(request);
         if(token == null) {
             log.warn(">>> [JwtFilter] 토큰을 찾을 수 없음 (헤더/쿠키 확인 필요)");
         } else {
