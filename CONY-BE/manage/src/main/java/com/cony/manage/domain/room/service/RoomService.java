@@ -4,6 +4,7 @@ import com.cony.manage.domain.gifticon.entity.Gifticon;
 import com.cony.manage.domain.gifticon.enums.GifticonStatus;
 import com.cony.manage.domain.gifticon.repository.GifticonRepository;
 import com.cony.manage.domain.room.dto.request.RoomCreateRequestDto;
+import com.cony.manage.domain.room.dto.request.RoomUpdateRequestDto;
 import com.cony.manage.domain.room.dto.response.GifticonRoomResponseDto;
 import com.cony.manage.domain.room.dto.response.RoomResponseDto;
 import com.cony.manage.domain.room.entity.Room;
@@ -93,6 +94,18 @@ public class RoomService {
         roomMemberRepository.save(roomMember);
 
         return room.getId();
+    }
+
+    @Transactional
+    public void updateRoomName(Long userId, Long roomId, RoomUpdateRequestDto requestDto) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
+
+        if (!room.getOwner().getId().equals(userId)) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
+
+        room.updateName(requestDto.getName());
     }
 
     public RoomResponseDto getRoomDetail(Long userId, Long roomId) {

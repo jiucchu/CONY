@@ -32,7 +32,11 @@ public enum ErrorCode {
     FAIL_FILE_UPLOAD(HttpStatus.CONFLICT, "G006", "파일 업로드에 실패하였습니다."),
 
     // Geofence
-    INVALID_COORDINATES(HttpStatus.BAD_REQUEST, "F001", "위도, 경도 값이 잘못되었습니다.");
+    // Geofence
+    INVALID_COORDINATES(HttpStatus.BAD_REQUEST, "F001", "위도, 경도 값이 잘못되었습니다."),
+
+    // Room
+    ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "방을 찾을 수 없습니다.");
 
     // 개발중 필요한 에러가 있다면 이곳에 선언하시고 사용하면 됩니다.
 

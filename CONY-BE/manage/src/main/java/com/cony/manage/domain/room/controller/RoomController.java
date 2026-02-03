@@ -2,6 +2,7 @@ package com.cony.manage.domain.room.controller;
 
 import com.cony.manage.domain.room.controller.docs.RoomControllerDocs;
 import com.cony.manage.domain.room.dto.request.RoomCreateRequestDto;
+import com.cony.manage.domain.room.dto.request.RoomUpdateRequestDto;
 import com.cony.manage.domain.room.dto.response.GifticonRoomResponseDto;
 import com.cony.manage.domain.room.dto.response.RoomResponseDto;
 import com.cony.manage.domain.room.enums.GifticonSearchStatus;
@@ -51,5 +52,15 @@ public class RoomController implements RoomControllerDocs {
             @PageableDefault(size = 10, sort = "expiryDate", direction = Sort.Direction.ASC) Pageable pageable,
             @AuthUser Long userId) {
         return ApiResponse.success(roomService.getGifticonsInRoom(userId, roomId, status, keyword, pageable));
+    }
+
+    @Override
+    @PutMapping("/{roomId}")
+    public ApiResponse<Void> updateRoomName(
+            @PathVariable("roomId") Long roomId,
+            @RequestBody RoomUpdateRequestDto requestDto,
+            @AuthUser Long userId) {
+        roomService.updateRoomName(userId, roomId, requestDto);
+        return ApiResponse.success(null);
     }
 }
