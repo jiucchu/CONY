@@ -24,10 +24,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String token = resolveToken(request);
+        log.info(">>> [JwtFilter] 요청 들어옴: {}", requestURI);
 
-        if (token != null && jwtProvider.validateToken(token)) {
-            Authentication auth = jwtProvider.getAuthentication(token);
-            SecurityContextHolder.getContext().setAuthentication(auth);
+        if(token == null) {
+            log.warn(">>> [JwtFilter] 토큰을 찾을 수 없음 (헤더/쿠키 확인 필요)");
+        } else {
+            log.info(">>> [JwtFilter] 토큰 발견됨: {}...", token.substring(0, Math.min(token.length(), 10)));
+
+            boolean isValid = jwtProvider.validateToken(token);
+            if(isValid) {
+                log.info(">>> [JwtFilter] 토큰 유효함. 인증 정보 저장 시작.");
+                Authentication auth = jwtProvider.getAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(auth);
+                log.info(">>> [JwtFilter] SecurityContext 저장 완료: {}", auth.getName());
+            } else {
+                log.warn(">>> [JwtFilter] 토큰이 유효하지 않음 (validateToken == false). 만료되었거나 서명 불일치.");
+            }
         }
 
         filterChain.doFilter(request, response);
@@ -35,6 +47,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private String resolveToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
+
+        log.info(">>> [JwtFilter] Authorization Header: {}", authHeader);
+
+
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
         }
